@@ -1,5 +1,6 @@
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <XiaoTuNetBox/Address.h>
+#include <XiaoTuNetBox/Socket.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -7,33 +8,16 @@
 #include <iostream>
 
 int main() {
-    int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (-1 == listen_fd) {
-        perror("创建socket失败");
-        exit(1);
-    }
+    xiaotu::net::IPv4 serverIp(65530);
+    xiaotu::net::Socket sock(AF_INET, SOCK_STREAM, 0);
 
-    struct sockaddr_in serv_addr;
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(65530);
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-
-    if (bind(listen_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("bind failed");
-        exit(1);
-    }
-
-    if (listen(listen_fd, 10) < 0) {
-        perror("listen failed");
-        exit(1);
-    }
+    sock.BindOrDie(serverIp);
+    sock.ListenOrDie(10);
 
     while (1) {
-        struct sockaddr_in cli_addr;
-        socklen_t len = sizeof(cli_addr);
-        int conn_fd = accept(listen_fd, (struct sockaddr *)&cli_addr, &len);
+        xiaotu::net::IPv4 client;
+        int conn_fd = sock.Accept(&client);
+
         if (-1 == conn_fd) {
             perror("连接失败");
             exit(1);
@@ -50,6 +34,5 @@ int main() {
             close(conn_fd);
         }
     }
-    close(listen_fd);
 }
 
