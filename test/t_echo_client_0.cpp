@@ -9,6 +9,10 @@
 
 int main() {
     int client_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (-1 == client_fd) {
+        perror("创建socket失败");
+        exit(1);
+    }
 
     struct sockaddr_in serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
