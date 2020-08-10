@@ -13,13 +13,6 @@ int main() {
         exit(1);
     }
 
-    int opt = 1;
-    if ((setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) ||
-        (setsockopt(listen_fd, SOL_SOCKET, SO_KEEPALIVE, &opt, sizeof(opt)) == -1) ) {
-        perror("配置socket失败");
-        exit(1);
-    }
-
     struct sockaddr_in serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
