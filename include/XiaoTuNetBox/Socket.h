@@ -20,7 +20,7 @@ namespace net {
             void BindOrDie(IPv4 const & ip);
             void ListenOrDie(int conn);
 
-            int Accept(IPv4 * pear);
+            int Accept(IPv4Ptr pear);
             int GetFd() const { return mFd; }
         private:
             int mFd;

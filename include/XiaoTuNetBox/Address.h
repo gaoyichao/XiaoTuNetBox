@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <string>
+#include <memory>
 
 namespace xiaotu {
 namespace net {
@@ -28,6 +29,8 @@ namespace net {
         private:
             struct sockaddr_in mSockAddr;
     };
+    typedef std::shared_ptr<IPv4> IPv4Ptr;
+    typedef std::shared_ptr<const IPv4> IPv4ConstPtr;
 }
 }
 

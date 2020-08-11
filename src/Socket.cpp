@@ -44,7 +44,7 @@ namespace net {
         }
     }
 
-    int Socket::Accept(IPv4 * pear) {
+    int Socket::Accept(IPv4Ptr pear) {
         struct sockaddr_in addr;
         socklen_t len = sizeof(addr);
         int fd = accept(mFd, (struct sockaddr *)&addr, &len);

@@ -1,6 +1,11 @@
 #include <XiaoTuNetBox/Address.h>
 #include <XiaoTuNetBox/Socket.h>
+#include <XiaoTuNetBox/PollLoop.h>
+#include <XiaoTuNetBox/Acceptor.h>
+#include <XiaoTuNetBox/Connection.h>
 
+#include <functional>
+#include <memory>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -8,63 +13,85 @@
 
 #include <iostream>
 
-int main() {
-    int max_conn = 3;
-    xiaotu::net::IPv4 serverIp(65530);
-    xiaotu::net::Socket sock(AF_INET, SOCK_STREAM, 0);
 
-    sock.SetReuseAddr(true);
-    sock.SetKeepAlive(true);
-    sock.BindOrDie(serverIp);
-    sock.ListenOrDie(max_conn);
+const int max_conn = 3;
+struct pollfd pollFds[max_conn + 1];
+typedef xiaotu::net::ConnectionPtr ConnectionPtr;
+ConnectionPtr connections[max_conn];
 
-    xiaotu::net::IPv4 connections[max_conn];
-    char buf[max_conn][1024];
+namespace xiaotu {
+namespace net {
+    using namespace std::placeholders;
+    class TcpServer {
+        public:
+            TcpServer(int port, int max_conn)
+                : mMaxConn(max_conn),
+                  mAcceptor(new Acceptor(port, max_conn))
+            {
+                mAcceptor->SetNewConnCallBk(std::bind(&TcpServer::OnNewConnection, this, _1, _2));
 
-    struct pollfd pollFds[max_conn + 1];
-    pollFds[max_conn].fd = sock.GetFd();
-    pollFds[max_conn].events = POLLRDNORM;
-    for (int i = 0; i < max_conn; i++)
-        pollFds[i].fd = -1;
-
-    while (1) {
-        int nready = poll(pollFds, max_conn + 1, 100000);
-        std::cout << "nready = " << nready << std::endl;
-
-        if (POLLRDNORM & pollFds[max_conn].revents) {
-            int idx = 0;
-            for (; idx < max_conn; idx++) {
-                if (pollFds[idx].fd < 0)
-                    break;
             }
 
-            std::cout << "idx = " << idx << std::endl;
-            int conn_fd = sock.Accept(&connections[idx]);
-            if (max_conn == idx) {
-                std::cout << "连接太多了" << std::endl;
-                close(conn_fd);
-            } else {
-                pollFds[idx].fd = conn_fd;
-                pollFds[idx].events = POLLRDNORM;
-            }
-        }
-
-        for (int i = 0; i < max_conn; i++) {
-            if (pollFds[i].fd < 0)
-                continue;
-
-            int conn_fd = pollFds[i].fd;
-            if (pollFds[i].revents & (POLLRDNORM | POLLERR)) {
-                int nread = read(conn_fd, buf[i], 1024);
-                if (nread <= 0) {
-                    std::cout << "close conn_fd = " << conn_fd << std::endl;
-                    close(conn_fd);
-                    pollFds[i].fd = -1;
+            void OnNewConnection(int fd, IPv4Ptr const &peer_addr) {
+                if (mConnList.size() >= mMaxConn) {
+                    std::cout << "连接太多了" << std::endl;
+                    close(fd);
                 } else {
-                    send(conn_fd, buf[i], nread, 0);
+                    ConnectionPtr conn(new Connection(fd, peer_addr));
+                    conn->SetCloseCallBk(std::bind(&TcpServer::OnCloseConnection, this, _1));
+                    mConnList.push_back(conn);
                 }
             }
-        }
-    }
+
+            void OnCloseConnection(Connection const * con) {
+                std::cout << __FUNCTION__ << std::endl;
+                for (auto it = mConnList.begin(); it != mConnList.end(); it++) {
+                    ConnectionPtr & ptr = *it;
+                    if (&(*ptr) == con) {
+                        mConnList.erase(it);
+                        break;
+                    }
+                }
+            }
+
+            void Run(int timeout) {
+                while (1) {
+                    std::vector<struct pollfd> pollFdList;
+                    std::vector<PollEventHandler*> handlerList;
+
+                    pollFdList.push_back(mAcceptor->GetHandler().GetPollFd());
+                    handlerList.push_back(&(mAcceptor->GetHandler()));
+
+                    for (int i = 0; i < mConnList.size(); i++) {
+                        ConnectionPtr & ptr = mConnList[i];
+                        pollFdList.push_back(ptr->GetHandler().GetPollFd());
+                        handlerList.push_back(&(ptr->GetHandler()));
+                    }
+
+                    int nready = poll(pollFdList.data(), pollFdList.size(), timeout);
+                    std::cout << "nready = " << nready << std::endl;
+                    for (int i = 0; i < pollFdList.size(); i++) {
+                        if (pollFdList[i].fd < 0)
+                            continue;
+                        handlerList[i]->HandleEvents(pollFdList[i]);
+                    }
+                }
+            }
+
+            Acceptor & GetAcceptor() { return *mAcceptor; }
+        private:
+            int mMaxConn;
+            std::shared_ptr<Acceptor> mAcceptor;
+            std::vector<ConnectionPtr> mConnList;
+
+    };
+}
+}
+
+
+int main() {
+    xiaotu::net::TcpServer tcp(65530, max_conn);
+
+    tcp.Run(1000);
 }
 

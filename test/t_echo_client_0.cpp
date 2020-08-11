@@ -7,7 +7,12 @@
 #include <iostream>
 #include <string>
 
-int main() {
+#include <cassert>
+
+int main(int argc, char *argv[]) {
+    assert(argc == 2);
+    std::cout << argv[1] << std::endl;
+
     int client_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (-1 == client_fd) {
         perror("创建socket失败");
@@ -18,7 +23,7 @@ int main() {
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(65530);
-    inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr);
+    inet_pton(AF_INET, argv[1], &serv_addr.sin_addr);
 
     if (connect(client_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         perror("连接失败");
