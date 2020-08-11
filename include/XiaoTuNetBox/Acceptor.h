@@ -12,7 +12,7 @@ namespace net {
     class Acceptor {
         public:
             Acceptor(int port, int qsize);
-            PollEventHandler & GetHandler() { return mEventHandler; }
+            PollEventHandlerPtr & GetHandler() { return mEventHandler; }
             Socket & GetSocket() { return mAccpSock; }
 
             typedef std::function<void(int, IPv4Ptr const &)> NewConnCallBk;
@@ -21,7 +21,7 @@ namespace net {
             void OnReadEvent();
         private:
             Socket mAccpSock;
-            PollEventHandler mEventHandler;
+            PollEventHandlerPtr mEventHandler;
             NewConnCallBk mNewConnCallBk;
     };
 }

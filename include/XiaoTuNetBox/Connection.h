@@ -12,7 +12,7 @@ namespace net {
             Connection(Connection const &) = delete;
             Connection & operator = (Connection const &) = delete;
 
-            PollEventHandler & GetHandler() { return mEventHandler; }
+            PollEventHandlerPtr & GetHandler() { return mEventHandler; }
 
             void OnReadEvent();
 
@@ -20,9 +20,8 @@ namespace net {
             void SetCloseCallBk(EventCallBk cb) { mCloseCallBk = std::move(cb); }
 
         private:
-            int mFd;
             IPv4Ptr mPeerAddr;
-            PollEventHandler mEventHandler;
+            PollEventHandlerPtr mEventHandler;
             char mReadBuf[1024];
 
             EventCallBk mCloseCallBk;

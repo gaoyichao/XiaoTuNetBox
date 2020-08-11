@@ -2,8 +2,10 @@
 #define XTNB_POLLLOOP_H
 
 #include <XiaoTuNetBox/EventHandler.h>
+
 #include <vector>
 #include <poll.h>
+#include <memory>
 
 namespace xiaotu {
 namespace net {
@@ -12,11 +14,17 @@ namespace net {
         public:
             void LoopOnce(int timeout);
 
-            void AddEventHandler(PollEventHandler *h) { mHandlerList.push_back(h); }
+            int Register(PollEventHandler* handler);
+            void UnRegister(PollEventHandler* handler);
+
         private:
+            std::vector<int> mIdleIdx;
             std::vector<struct pollfd> mPollFdList;
             std::vector<PollEventHandler*> mHandlerList;
     };
+    typedef std::shared_ptr<PollLoop> PollLoopPtr;
+    typedef std::shared_ptr<const PollLoop> PollLoopConstPtr;
+
 
 }
 }

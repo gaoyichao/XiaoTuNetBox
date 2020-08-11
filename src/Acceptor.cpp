@@ -7,8 +7,7 @@ namespace xiaotu {
 namespace net {
 
     Acceptor::Acceptor(int port, int qsize)
-        : mAccpSock(AF_INET, SOCK_STREAM, 0),
-          mEventHandler(mAccpSock.GetFd())
+        : mAccpSock(AF_INET, SOCK_STREAM, 0)
     {
         IPv4 addr(port);
         mAccpSock.SetReuseAddr(true);
@@ -16,9 +15,10 @@ namespace net {
         mAccpSock.BindOrDie(addr);
         mAccpSock.ListenOrDie(qsize);
 
-        mEventHandler.EnableRead(true);
-        mEventHandler.EnableWrite(false);
-        mEventHandler.SetReadCallBk(std::bind(&Acceptor::OnReadEvent, this));
+        mEventHandler = PollEventHandlerPtr(new PollEventHandler(mAccpSock.GetFd()));
+        mEventHandler->EnableRead(true);
+        mEventHandler->EnableWrite(false);
+        mEventHandler->SetReadCallBk(std::bind(&Acceptor::OnReadEvent, this));
     }
 
     void Acceptor::OnReadEvent() {
