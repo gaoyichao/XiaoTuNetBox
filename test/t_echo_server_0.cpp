@@ -9,14 +9,17 @@
 #include <iostream>
 
 int main() {
+    int max_conn = 3;
     xiaotu::net::IPv4 serverIp(65530);
     xiaotu::net::Socket sock(AF_INET, SOCK_STREAM, 0);
+
     sock.SetReuseAddr(true);
     sock.SetKeepAlive(true);
-
-    int max_conn = 3;
     sock.BindOrDie(serverIp);
     sock.ListenOrDie(max_conn);
+
+    xiaotu::net::IPv4 connections[max_conn];
+    char buf[max_conn][1024];
 
     struct pollfd pollFds[max_conn + 1];
     pollFds[max_conn].fd = sock.GetFd();
@@ -24,10 +27,6 @@ int main() {
     for (int i = 0; i < max_conn; i++)
         pollFds[i].fd = -1;
 
-    xiaotu::net::IPv4 connections[max_conn];
-    char buf[max_conn][1024];
-
-    std::cout << "~~~~~~~~~~~~~~~~~~~~~" << std::endl;
     while (1) {
         int nready = poll(pollFds, max_conn + 1, 100000);
         std::cout << "nready = " << nready << std::endl;
