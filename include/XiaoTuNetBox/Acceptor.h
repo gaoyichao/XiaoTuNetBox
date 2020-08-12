@@ -15,13 +15,16 @@ namespace net {
             PollEventHandlerPtr & GetHandler() { return mEventHandler; }
             Socket & GetSocket() { return mAccpSock; }
 
-            typedef std::function<void(int, IPv4Ptr const &)> NewConnCallBk;
-            void SetNewConnCallBk(NewConnCallBk cb) { mNewConnCallBk = std::move(cb); }
-
             void OnReadEvent();
         private:
             Socket mAccpSock;
             PollEventHandlerPtr mEventHandler;
+
+        public:
+            typedef std::function<void(int, IPv4Ptr const &)> NewConnCallBk;
+            void SetNewConnCallBk(NewConnCallBk cb) { mNewConnCallBk = std::move(cb); }
+
+        private:
             NewConnCallBk mNewConnCallBk;
     };
 }

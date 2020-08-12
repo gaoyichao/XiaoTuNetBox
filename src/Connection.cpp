@@ -26,8 +26,18 @@ namespace net {
             if (mCloseCallBk)
                 mCloseCallBk();
         } else {
-            send(md, mReadBuf, nread, 0);
+            if (mRecvRawCallBk) {
+                RawMsgPtr msg(new RawMsg(nread));
+                msg->assign(mReadBuf, mReadBuf + nread);
+                mRecvRawCallBk(msg);
+            }
         }
+    }
+
+
+    void Connection::SendRawData(char const * buf, int num) {
+        int md = mEventHandler->GetFd();
+        send(md, buf, num, 0);
     }
 
 

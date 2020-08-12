@@ -51,6 +51,7 @@ namespace net {
 
             typedef std::function<void()> EventCallBk;
             void SetReadCallBk(EventCallBk cb) { mReadCallBk = std::move(cb); }
+        private:
             EventCallBk mReadCallBk;
     };
 }
