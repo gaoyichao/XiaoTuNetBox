@@ -6,6 +6,16 @@
 * gcc 7.4.0
 * make 4.1
 
+## 安装:
+
+```
+$ make
+# 安装路径/usr/local，详细请查看Makefile
+$ sudo make install
+# 卸载
+$ sudo make uninstall
+```
+
 ## 依赖:
 
 ### 1. gtest
