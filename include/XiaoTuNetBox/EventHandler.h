@@ -37,6 +37,8 @@ namespace net {
             int GetFd() const { return mPollFd.fd; }
 
             int GetLoopIdx() const { return mLoopIdx; }
+            pid_t GetLoopTid() const;
+            void WakeUpLoop();
 
         friend void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
         friend void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
@@ -51,8 +53,10 @@ namespace net {
 
             typedef std::function<void()> EventCallBk;
             void SetReadCallBk(EventCallBk cb) { mReadCallBk = std::move(cb); }
+            void SetWriteCallBk(EventCallBk cb) { mWriteCallBk = std::move(cb); }
         private:
             EventCallBk mReadCallBk;
+            EventCallBk mWriteCallBk;
     };
 }
 }

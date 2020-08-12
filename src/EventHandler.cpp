@@ -31,14 +31,30 @@ namespace net {
 
     void PollEventHandler::HandleEvents(struct pollfd const & pollFd) {
         assert(mPollFd.fd == pollFd.fd);
-        assert(mPollFd.events == pollFd.events);
-
         mPollFd.revents = pollFd.revents;
 
-        if (pollFd.revents & POLLIN) {
+        if (mPollFd.revents & POLLIN) {
             if (mReadCallBk)
                 mReadCallBk();
         }
+
+        if ((mPollFd.events & POLLOUT) || (mPollFd.revents & POLLOUT)) {
+            if (mWriteCallBk)
+                mWriteCallBk();
+        }
+    }
+
+    pid_t PollEventHandler::GetLoopTid() const {
+        assert(mLoop);
+
+        return mLoop->GetTid();
+    }
+
+    void PollEventHandler::WakeUpLoop() {
+        assert(mLoop);
+
+        uint64_t idx = mLoopIdx;
+        mLoop->WakeUp(idx);
     }
 
 }

@@ -16,15 +16,26 @@ namespace net {
 
     void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
     void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
-
+    PollLoopPtr CreatePollLoop();
 
     class PollLoop {
+        friend PollLoopPtr CreatePollLoop();
         public:
-            void LoopOnce(int timeout);
+            PollLoop(PollLoop const &) = delete;
+            PollLoop & operator = (PollLoop const &) = delete;
+
+            void WakeUp(uint64_t u);
+
+            pid_t GetTid() const { return mTid; }
+            void Loop(int timeout);
 
         private:
+            PollLoop();
+            void LoopOnce(int timeout);
             int Register(PollEventHandlerPtr const & handler);
             void UnRegister(PollEventHandlerPtr const & handler);
+
+            void OnWakeUp();
 
         friend void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
         friend void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
@@ -33,7 +44,12 @@ namespace net {
             std::vector<int> mIdleIdx;
             std::vector<struct pollfd> mPollFdList;
             std::vector<PollEventHandlerPtr> mHandlerList;
+            PollEventHandlerPtr mWakeUpHandler;
+
+            pid_t mTid;
+            bool mLooping;
     };
+
 
 }
 }

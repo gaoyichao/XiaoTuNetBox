@@ -1,3 +1,13 @@
+/******************************************************************************
+ * 
+ * t_echo_server_0 - echo服务器例程
+ * 
+ * 单线程
+ * 
+ * 对应运行t_echo_client_0
+ * 
+ *****************************************************************************/
+
 #include <XiaoTuNetBox/TcpServer.h>
 
 #include <functional>
@@ -14,21 +24,21 @@ void OnCloseConnection(ConnectionPtr const & conn) {
 }
 
 void OnNewRawMsg(ConnectionPtr const & conn, RawMsgPtr const & msg) {
-    conn->SendRawData(msg->data(), msg->size());
+    conn->SendRawMsg(msg);
 }
 
 
 
 int main() {
-    PollLoopPtr loop(new xiaotu::net::PollLoop);
+    PollLoopPtr loop = CreatePollLoop();
     TcpServer tcp(loop, 65530, 3);
 
     tcp.SetNewConnCallBk(std::bind(OnNewConnection, _1));
     tcp.SetCloseConnCallBk(std::bind(OnCloseConnection, _1));
     tcp.SetNewRawMsgCallBk(std::bind(OnNewRawMsg, _1, _2));
 
-    while (1) {
-        loop->LoopOnce(100000);
-    }
+    loop->Loop(10000);
+
+    return 0;
 }
 

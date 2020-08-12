@@ -20,11 +20,17 @@ namespace net {
             PollEventHandlerPtr & GetHandler() { return mEventHandler; }
             IPv4 const & GetPeerAddr() const { return *mPeerAddr; }
 
+            void SendRawMsg(RawMsgPtr const & msg);
             void OnReadEvent();
+            void OnWriteEvent();
+        private:
+            void SendRawData(char const * buf, int num);
+
         private:
             IPv4Ptr mPeerAddr;
             PollEventHandlerPtr mEventHandler;
             char mReadBuf[1024];
+            std::vector<char> mWriteBuf;
 
         public:
             typedef std::function<void()> EventCallBk;
@@ -34,7 +40,6 @@ namespace net {
             void SetRecvRawCallBk(RawMsgCallBk cb) { mRecvRawCallBk = std::move(cb); }
 
 
-            void SendRawData(char const * buf, int num);
         private:
             EventCallBk mCloseCallBk;
             RawMsgCallBk mRecvRawCallBk;

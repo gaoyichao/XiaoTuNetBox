@@ -1,10 +1,53 @@
 #include <XiaoTuNetBox/PollLoop.h>
+#include <XiaoTuNetBox/ThreadTools.h>
 
+#include <sys/eventfd.h>
 #include <iostream>
 #include <cassert>
 
 namespace xiaotu {
 namespace net {
+
+    PollLoopPtr CreatePollLoop() {
+        PollLoopPtr loop = PollLoopPtr(new PollLoop);
+        ApplyHandlerOnLoop(loop->mWakeUpHandler, loop);
+        return loop;
+    }
+
+    PollLoop::PollLoop()
+        : mTid(0), mLooping(false)
+    {
+        mWakeUpHandler = PollEventHandlerPtr(new PollEventHandler(eventfd(0, EFD_CLOEXEC)));
+        mWakeUpHandler->EnableRead(true);
+        mWakeUpHandler->SetReadCallBk(std::bind(&PollLoop::OnWakeUp, this));
+    }
+
+    void PollLoop::WakeUp(uint64_t u) {
+        assert(0 != mTid);
+        assert(mTid != ThreadTools::GetCurrentTid());
+
+        int md = mWakeUpHandler->GetFd();
+        int s = write(md, &u, sizeof(u));
+    }
+
+    void PollLoop::OnWakeUp() {
+        uint64_t u;
+        int md = mWakeUpHandler->GetFd();
+        int nread = read(md, &u, sizeof(u));
+        std::cout << "poll loop wakeup, nread = " << nread << ", u = " << u << std::endl;
+    }
+
+    void PollLoop::Loop(int timeout) {
+        assert(0 == mTid);
+        mTid = ThreadTools::GetCurrentTid();
+        mLooping = true;
+
+        while (mLooping) {
+            LoopOnce(timeout);
+        }
+
+        mTid = 0;
+    }
 
     void PollLoop::LoopOnce(int timeout) {
         int nready = poll(mPollFdList.data(), mPollFdList.size(), timeout);
