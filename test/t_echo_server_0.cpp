@@ -12,6 +12,7 @@
 #include <poll.h>
 
 #include <iostream>
+#include <list>
 
 
 const int max_conn = 3;
@@ -30,7 +31,7 @@ namespace net {
                   mAcceptor(new Acceptor(port, max_conn))
             {
                 mAcceptor->SetNewConnCallBk(std::bind(&TcpServer::OnNewConnection, this, _1, _2));
-                mAcceptor->GetHandler()->Apply(mLoop);
+                ApplyHandlerOnLoop(mAcceptor->GetHandler(), mLoop);
             }
 
             void OnNewConnection(int fd, IPv4Ptr const &peer_addr) {
@@ -39,17 +40,17 @@ namespace net {
                     close(fd);
                 } else {
                     ConnectionPtr conn(new Connection(fd, peer_addr));
-                    conn->SetCloseCallBk(std::bind(&TcpServer::OnCloseConnection, this, _1));
-                    conn->GetHandler()->Apply(mLoop);
+                    conn->SetCloseCallBk(std::bind(&TcpServer::OnCloseConnection, this, conn));
+                    ApplyHandlerOnLoop(conn->GetHandler(), mLoop);
                     mConnList.push_back(conn);
                 }
             }
 
-            void OnCloseConnection(Connection const * con) {
+            void OnCloseConnection(ConnectionPtr const & con) {
                 for (auto it = mConnList.begin(); it != mConnList.end(); it++) {
                     ConnectionPtr & ptr = *it;
-                    if (&(*ptr) == con) {
-                        ptr->GetHandler()->UnApply();
+                    if (ptr == con) {
+                        UnApplyHandlerOnLoop(ptr->GetHandler(), mLoop);
                         mConnList.erase(it);
                         break;
                     }
@@ -61,7 +62,7 @@ namespace net {
             PollLoopPtr mLoop;
             int mMaxConn;
             std::shared_ptr<Acceptor> mAcceptor;
-            std::vector<ConnectionPtr> mConnList;
+            std::list<ConnectionPtr> mConnList;
 
     };
 }

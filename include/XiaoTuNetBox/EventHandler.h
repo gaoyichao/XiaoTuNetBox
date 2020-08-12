@@ -9,11 +9,16 @@ namespace xiaotu {
 namespace net {
 
     class PollLoop;
-    class PollEventHandler;
+    typedef std::shared_ptr<PollLoop> PollLoopPtr;
+    typedef std::shared_ptr<const PollLoop> PollLoopConstPtr;
 
+
+    class PollEventHandler;
     typedef std::shared_ptr<PollEventHandler> PollEventHandlerPtr;
     typedef std::shared_ptr<const PollEventHandler> PollEventHandlerConstPtr;
 
+    void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
+    void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
 
     class PollEventHandler : public std::enable_shared_from_this<PollEventHandler> {
         typedef std::shared_ptr<PollLoop> PollLoopPtr;
@@ -32,8 +37,9 @@ namespace net {
             int GetFd() const { return mPollFd.fd; }
 
             int GetLoopIdx() const { return mLoopIdx; }
-            void Apply(PollLoopPtr const & loop);
-            void UnApply();
+
+        friend void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
+        friend void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
 
         private:
             int mLoopIdx;

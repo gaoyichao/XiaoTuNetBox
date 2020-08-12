@@ -10,21 +10,30 @@
 namespace xiaotu {
 namespace net {
 
+    class PollLoop;
+    typedef std::shared_ptr<PollLoop> PollLoopPtr;
+    typedef std::shared_ptr<const PollLoop> PollLoopConstPtr;
+
+    void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
+    void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
+
+
     class PollLoop {
         public:
             void LoopOnce(int timeout);
 
-            int Register(PollEventHandler* handler);
-            void UnRegister(PollEventHandler* handler);
+        private:
+            int Register(PollEventHandlerPtr const & handler);
+            void UnRegister(PollEventHandlerPtr const & handler);
+
+        friend void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
+        friend void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
 
         private:
             std::vector<int> mIdleIdx;
             std::vector<struct pollfd> mPollFdList;
-            std::vector<PollEventHandler*> mHandlerList;
+            std::vector<PollEventHandlerPtr> mHandlerList;
     };
-    typedef std::shared_ptr<PollLoop> PollLoopPtr;
-    typedef std::shared_ptr<const PollLoop> PollLoopConstPtr;
-
 
 }
 }

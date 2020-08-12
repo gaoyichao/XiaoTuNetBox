@@ -24,7 +24,7 @@ namespace net {
             std::cout << "close fd = " << md << std::endl;
             close(md);
             if (mCloseCallBk)
-                mCloseCallBk(this);
+                mCloseCallBk();
         } else {
             send(md, mReadBuf, nread, 0);
         }

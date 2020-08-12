@@ -16,7 +16,7 @@ namespace net {
 
             void OnReadEvent();
 
-            typedef std::function<void(Connection const *)> EventCallBk;
+            typedef std::function<void()> EventCallBk;
             void SetCloseCallBk(EventCallBk cb) { mCloseCallBk = std::move(cb); }
 
         private:
