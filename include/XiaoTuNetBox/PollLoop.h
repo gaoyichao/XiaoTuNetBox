@@ -27,11 +27,15 @@ namespace net {
             void WakeUp(uint64_t u);
 
             pid_t GetTid() const { return mTid; }
+
             void Loop(int timeout);
+            /*
+             * 慎用
+             */
+            void LoopOnce(int timeout);
 
         private:
             PollLoop();
-            void LoopOnce(int timeout);
             int Register(PollEventHandlerPtr const & handler);
             void UnRegister(PollEventHandlerPtr const & handler);
 
