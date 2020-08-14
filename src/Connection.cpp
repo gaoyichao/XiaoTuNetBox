@@ -17,6 +17,12 @@ namespace net {
         mEventHandler->EnableWrite(false);
         mEventHandler->SetReadCallBk(std::bind(&Connection::OnReadEvent, this));
         mEventHandler->SetWriteCallBk(std::bind(&Connection::OnWriteEvent, this));
+        mEventHandler->SetClosingCallBk(std::bind(&Connection::OnClosingEvent, this));
+    }
+
+    void Connection::Close() {
+        mEventHandler->SetClosing(true);
+        mEventHandler->WakeUpLoop();
     }
 
     void Connection::OnWriteEvent() {
@@ -42,6 +48,14 @@ namespace net {
         }
     }
 
+    void Connection::OnClosingEvent() {
+        std::cout << __FUNCTION__ << std::endl;
+        int md = mEventHandler->GetFd();
+        close(md);
+        if (mCloseCallBk)
+            mCloseCallBk();
+    }
+
     void Connection::SendRawMsg(RawMsgPtr const & msg) {
         if (mEventHandler->GetLoopTid() == ThreadTools::GetCurrentTid())
             SendRawData(msg->data(), msg->size());
@@ -57,6 +71,7 @@ namespace net {
     void Connection::SendRawData(char const * buf, int num) {
         int md = mEventHandler->GetFd();
         send(md, buf, num, 0);
+        mEventHandler->EnableWrite(false);
     }
 
 

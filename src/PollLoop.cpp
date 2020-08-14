@@ -37,6 +37,14 @@ namespace net {
         std::cout << "poll loop wakeup, nread = " << nread << ", u = " << u << std::endl;
     }
 
+
+    void PollLoop::PreLoop() {
+        assert(0 == mTid);
+        mTid = ThreadTools::GetCurrentTid();
+        mLooping = true;
+    }
+
+
     void PollLoop::Loop(int timeout) {
         assert(0 == mTid);
         mTid = ThreadTools::GetCurrentTid();
@@ -51,7 +59,6 @@ namespace net {
 
     void PollLoop::LoopOnce(int timeout) {
         int nready = poll(mPollFdList.data(), mPollFdList.size(), timeout);
-        std::cout << "nready = " << nready << std::endl;
 
         for (int i = 0; i < mPollFdList.size(); i++) {
             if (mPollFdList[i].fd < 0) {

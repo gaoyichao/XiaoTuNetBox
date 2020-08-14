@@ -12,6 +12,8 @@ namespace net {
         mPollFd.fd = fd;
         mPollFd.events = 0;
         mPollFd.revents = 0;
+
+        mIsClosing = false;
     }
 
 
@@ -29,6 +31,10 @@ namespace net {
             mPollFd.events &= ~POLLOUT;
     }
 
+    void PollEventHandler::SetClosing(bool en) {
+        mIsClosing = en;
+    }
+
     void PollEventHandler::HandleEvents(struct pollfd const & pollFd) {
         assert(mPollFd.fd == pollFd.fd);
         mPollFd.revents = pollFd.revents;
@@ -41,6 +47,11 @@ namespace net {
         if ((mPollFd.events & POLLOUT) || (mPollFd.revents & POLLOUT)) {
             if (mWriteCallBk)
                 mWriteCallBk();
+        }
+
+        if (mIsClosing) {
+            if (mClosingCallBk)
+                mClosingCallBk();
         }
     }
 

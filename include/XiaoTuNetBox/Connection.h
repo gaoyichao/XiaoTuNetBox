@@ -20,9 +20,11 @@ namespace net {
             PollEventHandlerPtr & GetHandler() { return mEventHandler; }
             IPv4 const & GetPeerAddr() const { return *mPeerAddr; }
 
+            void Close();
             void SendRawMsg(RawMsgPtr const & msg);
             void OnReadEvent();
             void OnWriteEvent();
+            void OnClosingEvent();
         private:
             void SendRawData(char const * buf, int num);
 

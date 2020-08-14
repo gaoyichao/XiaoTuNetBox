@@ -32,6 +32,7 @@ namespace net {
             /*
              * 慎用
              */
+            void PreLoop();
             void LoopOnce(int timeout);
 
         private:

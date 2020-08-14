@@ -28,6 +28,9 @@ namespace net {
             PollEventHandler(PollEventHandler const &) = delete;
             PollEventHandler & operator = (PollEventHandler const &) = delete;
 
+
+            void SetClosing(bool en);
+
             void EnableRead(bool en);
             void EnableWrite(bool en);
             void DisableAll() { mPollFd.events = 0; }
@@ -47,6 +50,7 @@ namespace net {
             int mLoopIdx;
             PollLoopPtr mLoop;
             struct pollfd mPollFd;
+            bool mIsClosing;
 
         public:
             void HandleEvents(struct pollfd const & pollFd);
@@ -54,9 +58,11 @@ namespace net {
             typedef std::function<void()> EventCallBk;
             void SetReadCallBk(EventCallBk cb) { mReadCallBk = std::move(cb); }
             void SetWriteCallBk(EventCallBk cb) { mWriteCallBk = std::move(cb); }
+            void SetClosingCallBk(EventCallBk cb) { mClosingCallBk = std::move(cb); }
         private:
             EventCallBk mReadCallBk;
             EventCallBk mWriteCallBk;
+            EventCallBk mClosingCallBk;
     };
 }
 }
