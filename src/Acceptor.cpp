@@ -6,6 +6,12 @@
 namespace xiaotu {
 namespace net {
 
+    AcceptorPtr CreateAcceptor(int port, int qsize) {
+        AcceptorPtr re = AcceptorPtr(new Acceptor(port, qsize));
+        return re;
+    }
+
+
     Acceptor::Acceptor(int port, int qsize)
         : mAccpSock(AF_INET, SOCK_STREAM, 0)
     {

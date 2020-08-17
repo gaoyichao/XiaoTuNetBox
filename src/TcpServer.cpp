@@ -8,11 +8,11 @@ using namespace std::placeholders;
 
     TcpServer::TcpServer(PollLoopPtr const & loop, int port, int max_conn)
         : mLoop(loop),
-          mMaxConn(max_conn),
-          mAcceptor(new Acceptor(port, max_conn))
+          mMaxConn(max_conn)
     {
+        mAcceptor = CreateAcceptor(port, max_conn);
         mAcceptor->SetNewConnCallBk(std::bind(&TcpServer::OnNewConnection, this, _1, _2));
-        ApplyHandlerOnLoop(mAcceptor->GetHandler(), mLoop);
+        ApplyOnLoop(mAcceptor, mLoop);
     }
 
 
@@ -25,7 +25,7 @@ using namespace std::placeholders;
             conn->SetCloseCallBk(std::bind(&TcpServer::OnCloseConnection, this, conn));
             conn->SetRecvRawCallBk(std::bind(&TcpServer::OnNewRawMsg, this, conn, _1));
 
-            ApplyHandlerOnLoop(conn->GetHandler(), mLoop);
+            ApplyOnLoop(conn, mLoop);
             mConnList.push_back(conn);
 
             if (mNewConnCallBk)
@@ -37,7 +37,7 @@ using namespace std::placeholders;
         for (auto it = mConnList.begin(); it != mConnList.end(); it++) {
             ConnectionPtr & ptr = *it;
             if (ptr == con) {
-                UnApplyHandlerOnLoop(ptr->GetHandler(), mLoop);
+                UnApplyOnLoop(ptr, mLoop);
                 mConnList.erase(it);
 
                 if (mCloseConnCallBk)

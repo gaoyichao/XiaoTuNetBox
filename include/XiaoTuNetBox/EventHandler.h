@@ -12,13 +12,22 @@ namespace net {
     typedef std::shared_ptr<PollLoop> PollLoopPtr;
     typedef std::shared_ptr<const PollLoop> PollLoopConstPtr;
 
-
     class PollEventHandler;
     typedef std::shared_ptr<PollEventHandler> PollEventHandlerPtr;
     typedef std::shared_ptr<const PollEventHandler> PollEventHandlerConstPtr;
 
     void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
     void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
+
+    template <typename ObjPtr>
+    void ApplyOnLoop(ObjPtr const & obj, PollLoopPtr const & loop) {
+        ApplyHandlerOnLoop(obj->GetHandler(), loop);
+    }
+
+    template <typename ObjPtr>
+    void UnApplyOnLoop(ObjPtr const & obj, PollLoopPtr const & loop) {
+        UnApplyHandlerOnLoop(obj->GetHandler(), loop);
+    }
 
     class PollEventHandler : public std::enable_shared_from_this<PollEventHandler> {
         typedef std::shared_ptr<PollLoop> PollLoopPtr;
