@@ -10,11 +10,6 @@ namespace xiaotu {
 namespace net {
 
     Timer::Timer() {
-        if (clock_gettime(CLOCK_REALTIME, &mOriTime) == -1) {
-            perror("clock_gettime failed!");
-            exit(1);
-        }
-
         mFd = timerfd_create(CLOCK_REALTIME, 0);
         if (mFd < 0) {
             perror("创建Socket失败");
@@ -31,20 +26,40 @@ namespace net {
         close(mFd);
     }
 
-    void Timer::RunAt(const timespec & time, EventCallBk cb) {
+    void Timer::RunAfter(const timespec & time, EventCallBk cb) {
+        if (clock_gettime(CLOCK_REALTIME, &mOriTime) == -1) {
+            perror("clock_gettime failed!");
+            exit(1);
+        }
+
         struct itimerspec new_value;
         new_value.it_value.tv_sec = mOriTime.tv_sec + time.tv_sec;
         new_value.it_value.tv_nsec = mOriTime.tv_nsec + time.tv_nsec;
-        new_value.it_interval.tv_sec = 1;
+        new_value.it_interval.tv_sec = 0;
         new_value.it_interval.tv_nsec = 0;
 
+		if (timerfd_settime(mFd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1) {
+            std::cout << errno << std::endl;
+            perror("timerfd_settime");
+            exit(1);
+		}
 
-        std::cout << "mFd = " << mFd << std::endl;
-        std::cout << "ori time = " << mOriTime.tv_sec << ":" << mOriTime.tv_nsec << std::endl;
-        std::cout << "new_value time = " << new_value.it_value.tv_sec << ":" << new_value.it_value.tv_nsec << std::endl;
+        mTimeOutCb = std::move(cb);
+    }
+
+    void Timer::RunEvery(const timespec & time, EventCallBk cb) {
+        if (clock_gettime(CLOCK_REALTIME, &mOriTime) == -1) {
+            perror("clock_gettime failed!");
+            exit(1);
+        }
+
+        struct itimerspec new_value;
+        new_value.it_value.tv_sec = mOriTime.tv_sec;
+        new_value.it_value.tv_nsec = mOriTime.tv_nsec;
+        new_value.it_interval.tv_sec = time.tv_sec;
+        new_value.it_interval.tv_nsec = time.tv_nsec;
 
 		if (timerfd_settime(mFd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1) {
-        std::cout << "mFd = " << mFd << std::endl;
             std::cout << errno << std::endl;
             perror("timerfd_settime");
             exit(1);
@@ -54,7 +69,6 @@ namespace net {
     }
 
     void Timer::OnReadEvent() {
-        std::cout << __FUNCTION__ << std::endl;
         uint64_t exp;
         ssize_t s = read(mFd, &exp, sizeof(exp));
 

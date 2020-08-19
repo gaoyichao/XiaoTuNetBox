@@ -4,7 +4,7 @@ INCLUDE_PATH += -I.
 LIB_PATH += -L../build
 LD_FLAGS += ${LIB_PATH} -lXiaoTuNetBox -lgtest -lgtest_main -lpthread -lrt
 
-LIB_FILES += ${OUTPUT_PATH}/libBasicData.a
+LIB_FILES += ${OUTPUT_PATH}/libXiaoTuNetBox.a
 
 
 C_FILE = $(wildcard *.c)

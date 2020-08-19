@@ -25,7 +25,8 @@ namespace net {
             PollEventHandlerPtr & GetHandler() { return mEventHandler; }
 
             typedef std::function<void()> EventCallBk;
-            void RunAt(const timespec & time, EventCallBk cb);
+            void RunAfter(const timespec & time, EventCallBk cb);
+            void RunEvery(const timespec & time, EventCallBk cb);
             EventCallBk mTimeOutCb;
 
             void OnReadEvent();

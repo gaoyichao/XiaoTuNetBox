@@ -19,8 +19,7 @@ int main(int argc, char *argv[])
     struct timespec t;
     t.tv_sec = 1;
     t.tv_nsec = 0;
-    time->RunAt(t, std::bind(&CallBack));
-
+    time->RunEvery(t, std::bind(&CallBack));
 
     ApplyOnLoop(time, loop);
 

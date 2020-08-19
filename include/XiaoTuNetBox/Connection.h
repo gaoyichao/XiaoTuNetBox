@@ -11,6 +11,10 @@ namespace net {
     typedef std::shared_ptr<RawMsg> RawMsgPtr;
     typedef std::shared_ptr<const RawMsg> RawMsgConstPtr;
 
+    class Connection;
+    typedef std::shared_ptr<Connection> ConnectionPtr;
+    typedef std::shared_ptr<const Connection> ConnectionConstPtr;
+
     class Connection {
         public:
             Connection(int fd, IPv4Ptr const & peer);
@@ -46,10 +50,6 @@ namespace net {
             EventCallBk mCloseCallBk;
             RawMsgCallBk mRecvRawCallBk;
     };
-
-    typedef std::shared_ptr<Connection> ConnectionPtr;
-    typedef std::shared_ptr<const Connection> ConnectionConstPtr;
-
 }
 }
 

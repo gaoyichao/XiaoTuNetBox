@@ -22,7 +22,6 @@ namespace net {
 
     void Connection::Close() {
         mEventHandler->SetClosing(true);
-        mEventHandler->WakeUpLoop();
     }
 
     void Connection::OnWriteEvent() {

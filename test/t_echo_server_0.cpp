@@ -33,9 +33,11 @@ int main() {
     PollLoopPtr loop = CreatePollLoop();
     TcpServer tcp(loop, 65530, 3);
 
+    tcp.SetTimeOut(1, 0, 5);
     tcp.SetNewConnCallBk(std::bind(OnNewConnection, _1));
     tcp.SetCloseConnCallBk(std::bind(OnCloseConnection, _1));
     tcp.SetNewRawMsgCallBk(std::bind(OnNewRawMsg, _1, _2));
+
 
     loop->Loop(10000);
 
