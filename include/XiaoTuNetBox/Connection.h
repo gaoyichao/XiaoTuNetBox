@@ -12,6 +12,7 @@ namespace net {
     typedef std::shared_ptr<const RawMsg> RawMsgConstPtr;
 
     class Connection;
+    typedef std::weak_ptr<Connection> ConnectionWeakPtr;
     typedef std::shared_ptr<Connection> ConnectionPtr;
     typedef std::shared_ptr<const Connection> ConnectionConstPtr;
 
@@ -25,6 +26,7 @@ namespace net {
             IPv4 const & GetPeerAddr() const { return *mPeerAddr; }
 
             void Close();
+            void SendBytes(char const * buf, int num);
             void SendRawMsg(RawMsgPtr const & msg);
             void OnReadEvent();
             void OnWriteEvent();

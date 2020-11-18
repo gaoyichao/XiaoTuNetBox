@@ -55,6 +55,18 @@ namespace net {
             mCloseCallBk();
     }
 
+    void Connection::SendBytes(char const *buf, int num) {
+        if (mEventHandler->GetLoopTid() == ThreadTools::GetCurrentTid())
+            SendRawData(buf, num);
+        else {
+            auto it = mWriteBuf.end();
+            mWriteBuf.insert(it, buf, buf+num);
+            std::cout << "writebuf.size = " << mWriteBuf.size() << std::endl;
+            mEventHandler->EnableWrite(true);
+            mEventHandler->WakeUpLoop();
+        }
+    }
+
     void Connection::SendRawMsg(RawMsgPtr const & msg) {
         if (mEventHandler->GetLoopTid() == ThreadTools::GetCurrentTid())
             SendRawData(msg->data(), msg->size());
