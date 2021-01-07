@@ -30,6 +30,6 @@ $ sudo make install
 ```
 
 ## 关联
-* [计算机网络与信息安全](https://gaoyichao.com/Xiaotu/?book=network_and_security&title=index)
+* [Linux下的事件与网络编程](https://gaoyichao.com/Xiaotu/?book=Linux下的事件与网络编程&title=index)
 
 
