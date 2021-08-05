@@ -1,5 +1,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -7,6 +8,18 @@
 
 #include <iostream>
 #include <chrono>
+
+int GetSockSendBufSize(int fd) {
+    int send_buf_size = 0;
+    socklen_t optlen = sizeof(send_buf_size);
+    int err = getsockopt(fd, SOL_SOCKET, SO_SNDBUF, &send_buf_size, &optlen);
+    if (err < 0) {
+        perror("获取发送缓冲区大小失败\n");
+        exit(1);
+    }
+
+    return send_buf_size;
+}
 
 int main() {
     int listen_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
@@ -40,9 +53,18 @@ int main() {
             int fl = fcntl(conn_fd, F_GETFL);
             printf("fl: 0x%x, O_RDWR: 0x%x, O_NONBLOCK: 0x%x\n", fl, O_RDWR, O_NONBLOCK);
 
-            char buf[1024];
+            int send_buf_size = GetSockSendBufSize(conn_fd);
+            int sbuf_size = 2 * send_buf_size;
+            printf("发送缓冲区大小:%d字节\n", send_buf_size);
+            printf("申请发送缓存:%d字节\n", sbuf_size);
+
+            char rcv_buf[1024];
+            char * as = (char *)malloc(sbuf_size);
+            memset(as, 'A', sbuf_size);
+            
+
             while (1) {
-                int nread = read(conn_fd, buf, 1024);
+                int nread = read(conn_fd, rcv_buf, 1024);
                 if (-1 == nread) {
                     int eno = errno;
                     if (EAGAIN & eno || EWOULDBLOCK & eno)
@@ -56,12 +78,10 @@ int main() {
 
                 printf("nread = %d\n", nread);
 
-                std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-                for (int i = 0; i < 100; i++)
-                    send(conn_fd, buf, nread, 0);
-                std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-                std::chrono::duration<double> td = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
-                std::cout << "send td: " << td.count() << std::endl;
+                int nsend = send(conn_fd, as, sbuf_size, 0);
+                printf("nsend = %d\n", nsend);
+                nsend = send(conn_fd, rcv_buf, nread, 0);
+                printf("nsend = %d\n", nsend);
             }
 
             close(conn_fd);
