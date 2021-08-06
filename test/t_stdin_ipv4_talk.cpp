@@ -12,7 +12,9 @@
 #include <XiaoTuNetBox/Address.h>
 #include <XiaoTuNetBox/PollLoop.h>
 
+int n_bytes_rcvd = 0;
 void OnStdinRawMsg(int fd, xiaotu::net::RawMsgPtr const & msg) {
+    n_bytes_rcvd = 0;
     send(fd, msg->data(), msg->size()-1, 0);
 }
 
@@ -21,6 +23,9 @@ void OnTcpRawMsg(xiaotu::net::RawMsgPtr const & msg) {
         std::cout << (*msg)[i];
 
     std::cout << std::endl;
+
+    n_bytes_rcvd += msg->size();
+    std::cout << "接收到 " << n_bytes_rcvd << " 个字节" << std::endl;
 }
 
 int main(int argc, char * argv[]) {

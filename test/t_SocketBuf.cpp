@@ -9,26 +9,9 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-int GetSockSendBufSize(int fd) {
-    int send_buf_size = 0;
-    socklen_t optlen = sizeof(send_buf_size);
-    int err = getsockopt(fd, SOL_SOCKET, SO_SNDBUF, &send_buf_size, &optlen);
-    if (err < 0) {
-        perror("获取发送缓冲区大小失败\n");
-        exit(1);
-    }
+#include <XiaoTuNetBox/Utils.h>
 
-    return send_buf_size;
-}
-
-void SetSockSendBufSize(int fd, int send_buf_size) {
-    socklen_t optlen = sizeof(send_buf_size);
-    int err = setsockopt(fd, SOL_SOCKET, SO_SNDBUF, &send_buf_size, optlen);
-    if (err < 0) {
-        perror("设置发送缓冲区大小失败\n");
-        exit(1);
-    }
-}
+using namespace xiaotu::net;
 
 int main(int argc, char *argv[]) {
     assert(argc == 2);

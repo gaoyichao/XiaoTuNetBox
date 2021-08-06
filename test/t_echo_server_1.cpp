@@ -9,17 +9,7 @@
 #include <iostream>
 #include <chrono>
 
-int GetSockSendBufSize(int fd) {
-    int send_buf_size = 0;
-    socklen_t optlen = sizeof(send_buf_size);
-    int err = getsockopt(fd, SOL_SOCKET, SO_SNDBUF, &send_buf_size, &optlen);
-    if (err < 0) {
-        perror("获取发送缓冲区大小失败\n");
-        exit(1);
-    }
-
-    return send_buf_size;
-}
+#include <XiaoTuNetBox/Utils.h>
 
 int main() {
     int listen_fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
@@ -53,7 +43,8 @@ int main() {
             int fl = fcntl(conn_fd, F_GETFL);
             printf("fl: 0x%x, O_RDWR: 0x%x, O_NONBLOCK: 0x%x\n", fl, O_RDWR, O_NONBLOCK);
 
-            int send_buf_size = GetSockSendBufSize(conn_fd);
+            //xiaotu::net::SetSockSendBufSize(conn_fd, 4096);
+            int send_buf_size = xiaotu::net::GetSockSendBufSize(conn_fd);
             int sbuf_size = 2 * send_buf_size;
             printf("发送缓冲区大小:%d字节\n", send_buf_size);
             printf("申请发送缓存:%d字节\n", sbuf_size);
@@ -78,9 +69,9 @@ int main() {
 
                 printf("nread = %d\n", nread);
 
-                //int nsend = send(conn_fd, as, sbuf_size, 0);
-                //printf("nsend = %d\n", nsend);
-                int nsend = send(conn_fd, rcv_buf, nread, 0);
+                int nsend = send(conn_fd, as, sbuf_size, 0);
+                printf("nsend = %d\n", nsend);
+                nsend = send(conn_fd, rcv_buf, nread, 0);
                 printf("nsend = %d\n", nsend);
             }
 
