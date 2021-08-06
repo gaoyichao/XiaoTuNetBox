@@ -38,12 +38,11 @@ int main() {
     while (1) {
         struct sockaddr_in cli_addr;
         socklen_t len = sizeof(cli_addr);
-        int conn_fd = accept4(listen_fd, (struct sockaddr *)&cli_addr, &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
+        int conn_fd = accept4(listen_fd, (struct sockaddr *)&cli_addr, &len, SOCK_CLOEXEC);
         if (-1 != conn_fd) {
             int fl = fcntl(conn_fd, F_GETFL);
             printf("fl: 0x%x, O_RDWR: 0x%x, O_NONBLOCK: 0x%x\n", fl, O_RDWR, O_NONBLOCK);
 
-            //xiaotu::net::SetSockSendBufSize(conn_fd, 4096);
             int send_buf_size = xiaotu::net::GetSockSendBufSize(conn_fd);
             int sbuf_size = 2 * send_buf_size;
             printf("发送缓冲区大小:%d字节\n", send_buf_size);
@@ -53,7 +52,6 @@ int main() {
             char * as = (char *)malloc(sbuf_size);
             memset(as, 'A', sbuf_size);
             
-
             while (1) {
                 int nread = read(conn_fd, rcv_buf, 1024);
                 if (-1 == nread) {
@@ -69,10 +67,18 @@ int main() {
 
                 printf("nread = %d\n", nread);
 
+                std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
                 int nsend = send(conn_fd, as, sbuf_size, 0);
-                printf("nsend = %d\n", nsend);
+                std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
+                std::chrono::duration<double> td = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
+                std::cout << "请求发送 " << sbuf_size << " 个字节, 实际发送 " << nsend << " 个字节, 共耗时 " << td.count() * 1000 << " ms" << std::endl; 
+                if (nsend < 0)
+                    perror("发送出错");
+
                 nsend = send(conn_fd, rcv_buf, nread, 0);
                 printf("nsend = %d\n", nsend);
+                if (nsend < 0)
+                    perror("发送出错");
             }
 
             close(conn_fd);
