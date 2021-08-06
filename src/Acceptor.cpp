@@ -12,6 +12,14 @@ namespace net {
     }
 
 
+    /*
+     * 构造函数
+     * 
+     * 当有新的连接请求到来，而此时队列已满，客户端将接收到一个ECONNREFUSED的错误
+     * 
+     * @port: 监听端口
+     * @qsize: 等待连接的队列长度
+     */
     Acceptor::Acceptor(int port, int qsize)
         : mAccpSock(AF_INET, SOCK_STREAM, 0)
     {

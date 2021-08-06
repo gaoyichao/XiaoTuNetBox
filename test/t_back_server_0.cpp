@@ -25,13 +25,13 @@ ConnectionPtr newconn;
 std::mutex gmutex;
 
 void OnNewConnection(ConnectionPtr const & conn) {
-    std::cout << "新建连接:" << conn->GetPeerAddr().GetIpPort() << std::endl;
+    std::cout << "新建连接:" << conn->GetInfo() << std::endl;
     std::lock_guard<std::mutex> guard(gmutex);
     newconn = conn;
 }
 
 void OnCloseConnection(ConnectionPtr const & conn) {
-    std::cout << "关闭连接:" << conn->GetPeerAddr().GetIpPort() << std::endl;
+    std::cout << "关闭连接:" << conn->GetInfo() << std::endl;
     std::lock_guard<std::mutex> guard(gmutex);
     if (conn == newconn)
         newconn.reset();

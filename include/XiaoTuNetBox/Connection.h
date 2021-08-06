@@ -18,12 +18,17 @@ namespace net {
 
     class Connection {
         public:
+            Connection(int fd, std::string const & info);
             Connection(int fd, IPv4Ptr const & peer);
+
             Connection(Connection const &) = delete;
             Connection & operator = (Connection const &) = delete;
+        private:
+            void SetFd(int fd);
 
+        public:
             PollEventHandlerPtr & GetHandler() { return mEventHandler; }
-            IPv4 const & GetPeerAddr() const { return *mPeerAddr; }
+            std::string const & GetInfo() const { return mInfoStr; }
 
             void Close();
             void SendBytes(char const * buf, int num);
@@ -35,7 +40,7 @@ namespace net {
             void SendRawData(char const * buf, int num);
 
         private:
-            IPv4Ptr mPeerAddr;
+            std::string mInfoStr;
             PollEventHandlerPtr mEventHandler;
             char mReadBuf[1024];
             std::vector<char> mWriteBuf;

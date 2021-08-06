@@ -16,11 +16,11 @@ using namespace std::placeholders;
 using namespace xiaotu::net;
 
 void OnNewConnection(ConnectionPtr const & conn) {
-    std::cout << "新建连接:" << conn->GetPeerAddr().GetIpPort() << std::endl;
+    std::cout << "新建连接:" << conn->GetInfo() << std::endl;
 }
 
 void OnCloseConnection(ConnectionPtr const & conn) {
-    std::cout << "关闭连接:" << conn->GetPeerAddr().GetIpPort() << std::endl;
+    std::cout << "关闭连接:" << conn->GetInfo() << std::endl;
 }
 
 void OnNewRawMsg(ConnectionPtr const & conn, RawMsgPtr const & msg) {

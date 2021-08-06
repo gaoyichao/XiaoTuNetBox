@@ -9,9 +9,19 @@
 namespace xiaotu {
 namespace net {
 
-    Connection::Connection(int fd, IPv4Ptr const & peer)
-        : mPeerAddr(peer)
+    Connection::Connection(int fd, std::string const & info)
+        : mInfoStr(info)
     {
+        SetFd(fd);
+    }
+
+    Connection::Connection(int fd, IPv4Ptr const & peer)
+        : mInfoStr(peer->GetIpPort())
+    {
+        SetFd(fd);
+    }
+
+    void Connection::SetFd(int fd) {
         mEventHandler = PollEventHandlerPtr(new PollEventHandler(fd));
         mEventHandler->EnableRead(true);
         mEventHandler->EnableWrite(false);

@@ -7,8 +7,7 @@ namespace xiaotu {
 namespace net {
     class Socket {
         public:
-            Socket(int fd) : mFd(fd) {}
-            Socket(int domain, int type, int protocol);
+            Socket(int domain = AF_INET, int type = SOCK_STREAM, int protocol = 0);
             ~Socket();
             Socket(Socket const &) = delete;
             Socket & operator = (Socket const &) = delete;
@@ -17,6 +16,7 @@ namespace net {
             bool SetReuseAddr(bool on);
             bool SetKeepAlive(bool on);
 
+            void ConnectOrDie(IPv4 const & ip);
             void BindOrDie(IPv4 const & ip);
             void ListenOrDie(int conn);
 

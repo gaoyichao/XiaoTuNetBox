@@ -78,9 +78,9 @@ int main() {
 
                 printf("nread = %d\n", nread);
 
-                int nsend = send(conn_fd, as, sbuf_size, 0);
-                printf("nsend = %d\n", nsend);
-                nsend = send(conn_fd, rcv_buf, nread, 0);
+                //int nsend = send(conn_fd, as, sbuf_size, 0);
+                //printf("nsend = %d\n", nsend);
+                int nsend = send(conn_fd, rcv_buf, nread, 0);
                 printf("nsend = %d\n", nsend);
             }
 
