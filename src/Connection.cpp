@@ -35,9 +35,18 @@ namespace net {
     }
 
     void Connection::OnWriteEvent() {
-        SendRawData(mWriteBuf.data(), mWriteBuf.size());
-        mWriteBuf.clear();
-        mEventHandler->EnableWrite(false);
+        assert(!mWriteBuf.Empty());
+
+        int n = mWriteBuf.Folded() ? mWriteBuf.FoldedHead() : mWriteBuf.Size();
+        int nsend = SendRawData(mWriteBuf.GetBeginAddr(), n);
+        std::cout << __FUNCTION__ << ":" << n  << ":" << nsend<< std::endl;
+
+        mWriteBuf.DropFront(nsend);
+
+        if (mWriteBuf.Empty())
+            mEventHandler->EnableWrite(false);
+        else
+            mEventHandler->EnableWrite(true);
     }
 
     void Connection::OnReadEvent() {
@@ -66,33 +75,37 @@ namespace net {
     }
 
     void Connection::SendBytes(char const *buf, int num) {
-        if (mEventHandler->GetLoopTid() == ThreadTools::GetCurrentTid())
-            SendRawData(buf, num);
-        else {
-            auto it = mWriteBuf.end();
-            mWriteBuf.insert(it, buf, buf+num);
-            std::cout << "writebuf.size = " << mWriteBuf.size() << std::endl;
+        int nsend = 0;
+        if (mEventHandler->GetLoopTid() == ThreadTools::GetCurrentTid() && mWriteBuf.Empty()) {
+            nsend = SendRawData(buf, num);
+            num -= nsend;
+            buf += nsend;
+        }
+
+        if (num > 0) {
+            mWriteBuf.PushBack(buf, num);
+            std::cout << "writebuf.size = " << mWriteBuf.Size() << std::endl;
             mEventHandler->EnableWrite(true);
-            mEventHandler->WakeUpLoop();
+            if (mEventHandler->GetLoopTid() != ThreadTools::GetCurrentTid())
+                mEventHandler->WakeUpLoop();
         }
     }
 
     void Connection::SendRawMsg(RawMsgPtr const & msg) {
-        if (mEventHandler->GetLoopTid() == ThreadTools::GetCurrentTid())
-            SendRawData(msg->data(), msg->size());
-        else {
-            auto it = mWriteBuf.end();
-            mWriteBuf.insert(it, msg->begin(), msg->end());
-            std::cout << "writebuf.size = " << mWriteBuf.size() << std::endl;
-            mEventHandler->EnableWrite(true);
-            mEventHandler->WakeUpLoop();
-        }
+        SendBytes(msg->data(), msg->size());
     }
 
-    void Connection::SendRawData(char const * buf, int num) {
+    int Connection::SendRawData(char const * buf, int num) {
         int md = mEventHandler->GetFd();
-        send(md, buf, num, 0);
-        mEventHandler->EnableWrite(false);
+        int nsend = send(md, buf, num, 0);
+
+        if (nsend < 0) {
+            nsend = 0;
+            int eno = errno;
+            if (!(EAGAIN & eno || EWOULDBLOCK & eno))
+                perror("发送出错");
+        }
+        return nsend;
     }
 
 

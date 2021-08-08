@@ -37,8 +37,8 @@ namespace net {
             PollEventHandler(PollEventHandler const &) = delete;
             PollEventHandler & operator = (PollEventHandler const &) = delete;
 
-
             void SetClosing(bool en);
+            bool SetNonBlock(bool en);
 
             void EnableRead(bool en);
             void EnableWrite(bool en);

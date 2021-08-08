@@ -1,6 +1,9 @@
 #include <XiaoTuNetBox/PollLoop.h>
 #include <XiaoTuNetBox/EventHandler.h>
+
 #include <poll.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include <cassert>
 #include <iostream>
@@ -34,6 +37,22 @@ namespace net {
     void PollEventHandler::SetClosing(bool en) {
         mIsClosing = en;
     }
+
+    bool PollEventHandler::SetNonBlock(bool en) {
+        int fl = fcntl(mPollFd.fd, F_GETFL);
+
+        if (en)
+            fl |= O_NONBLOCK;
+        else
+            fl &= ~O_NONBLOCK;
+
+        if (-1 == fcntl(mPollFd.fd, F_SETFL, fl)) {
+            perror("修改NONBLOCK出错");
+            return false;
+        }
+        return true;
+    }
+
 
     void PollEventHandler::HandleEvents(struct pollfd const & pollFd) {
         assert(mPollFd.fd == pollFd.fd);

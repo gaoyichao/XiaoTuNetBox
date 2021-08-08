@@ -1,6 +1,7 @@
 #ifndef XTNB_CONNECTION_H
 #define XTNB_CONNECTION_H
 
+#include <XiaoTuNetBox/DataQueue.hpp>
 #include <XiaoTuNetBox/Address.h>
 #include <XiaoTuNetBox/EventHandler.h>
 #include <vector>
@@ -37,13 +38,13 @@ namespace net {
             void OnWriteEvent();
             void OnClosingEvent();
         private:
-            void SendRawData(char const * buf, int num);
+            int SendRawData(char const * buf, int num);
 
         private:
             std::string mInfoStr;
             PollEventHandlerPtr mEventHandler;
             char mReadBuf[1024];
-            std::vector<char> mWriteBuf;
+            DataQueue<char> mWriteBuf;
 
         public:
             typedef std::function<void()> EventCallBk;

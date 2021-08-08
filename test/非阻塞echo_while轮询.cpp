@@ -43,8 +43,9 @@ int main() {
             int fl = fcntl(conn_fd, F_GETFL);
             printf("fl: 0x%x, O_RDWR: 0x%x, O_NONBLOCK: 0x%x\n", fl, O_RDWR, O_NONBLOCK);
 
+            xiaotu::net::SetSockSendBufSize(conn_fd, 4096);
             int send_buf_size = xiaotu::net::GetSockSendBufSize(conn_fd);
-            int sbuf_size = 2 * send_buf_size;
+            int sbuf_size = 5253120;
             printf("发送缓冲区大小:%d字节\n", send_buf_size);
             printf("申请发送缓存:%d字节\n", sbuf_size);
 
