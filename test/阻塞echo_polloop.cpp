@@ -23,7 +23,7 @@ void OnCloseConnection(ConnectionPtr const & conn) {
     std::cout << "关闭连接:" << conn->GetInfo() << std::endl;
 }
 
-char * as = NULL;
+uint8_t * as = NULL;
 const int aslen = 5253120;
 void OnNewRawMsg(ConnectionPtr const & conn, RawMsgPtr const & msg) {
     conn->SendBytes(as, aslen);
@@ -33,7 +33,7 @@ void OnNewRawMsg(ConnectionPtr const & conn, RawMsgPtr const & msg) {
 
 
 int main() {
-    as = (char *)malloc(aslen);
+    as = (uint8_t *)malloc(aslen);
     assert(NULL != as);
     memset(as, 'A', aslen);
 

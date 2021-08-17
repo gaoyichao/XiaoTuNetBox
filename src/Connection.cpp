@@ -74,7 +74,7 @@ namespace net {
             mCloseCallBk();
     }
 
-    void Connection::SendBytes(char const *buf, int num) {
+    void Connection::SendBytes(uint8_t const *buf, int num) {
         int nsend = 0;
         if (mEventHandler->GetLoopTid() == ThreadTools::GetCurrentTid() && mWriteBuf.Empty()) {
             nsend = SendRawData(buf, num);
@@ -95,7 +95,7 @@ namespace net {
         SendBytes(msg->data(), msg->size());
     }
 
-    int Connection::SendRawData(char const * buf, int num) {
+    int Connection::SendRawData(uint8_t const * buf, int num) {
         int md = mEventHandler->GetFd();
         int nsend = send(md, buf, num, 0);
 

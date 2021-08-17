@@ -4,14 +4,11 @@
 #include <XiaoTuNetBox/DataQueue.hpp>
 #include <XiaoTuNetBox/Address.h>
 #include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/Types.h>
 #include <vector>
 
 namespace xiaotu {
 namespace net {
-    typedef std::vector<char> RawMsg;
-    typedef std::shared_ptr<RawMsg> RawMsgPtr;
-    typedef std::shared_ptr<const RawMsg> RawMsgConstPtr;
-
     class Connection;
     typedef std::weak_ptr<Connection> ConnectionWeakPtr;
     typedef std::shared_ptr<Connection> ConnectionPtr;
@@ -32,19 +29,19 @@ namespace net {
             std::string const & GetInfo() const { return mInfoStr; }
 
             void Close();
-            void SendBytes(char const * buf, int num);
+            void SendBytes(uint8_t const * buf, int num);
             void SendRawMsg(RawMsgPtr const & msg);
             void OnReadEvent();
             void OnWriteEvent();
             void OnClosingEvent();
         private:
-            int SendRawData(char const * buf, int num);
+            int SendRawData(uint8_t const * buf, int num);
 
         private:
             std::string mInfoStr;
             PollEventHandlerPtr mEventHandler;
-            char mReadBuf[1024];
-            DataQueue<char> mWriteBuf;
+            uint8_t mReadBuf[1024];
+            DataQueue<uint8_t> mWriteBuf;
 
         public:
             typedef std::function<void()> EventCallBk;
