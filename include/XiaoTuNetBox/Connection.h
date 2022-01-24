@@ -40,7 +40,7 @@ namespace net {
         private:
             std::string mInfoStr;
             PollEventHandlerPtr mEventHandler;
-            uint8_t mReadBuf[1024];
+            DataQueue<uint8_t> mReadBuf;
             DataQueue<uint8_t> mWriteBuf;
 
         public:

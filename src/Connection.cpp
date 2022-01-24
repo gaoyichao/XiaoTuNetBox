@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <cassert>
 
+#include <sys/uio.h>
 
 namespace xiaotu {
 namespace net {
@@ -51,23 +52,42 @@ namespace net {
 
     void Connection::OnReadEvent() {
         int md = mEventHandler->GetFd();
-        int nread = read(md, mReadBuf, 1024);
-        if (nread <= 0) {
+
+        int iovcnt = 3;
+        struct iovec vec[3];
+        uint8_t extrabuf[1024];
+
+        vec[0].iov_base = mReadBuf.Empty() ? mReadBuf.GetStorBeginAddr() : mReadBuf.GetEndAddr();
+        vec[0].iov_len = mReadBuf.FreeTail();
+        vec[1].iov_base = mReadBuf.GetStorBeginAddr();
+        vec[1].iov_len = mReadBuf.FreeHead();
+        vec[2].iov_base = extrabuf;
+        vec[2].iov_len = 1024;
+
+        size_t n = readv(md, vec, iovcnt);
+        if (n <= 0) {
             std::cout << "close fd = " << md << std::endl;
             close(md);
             if (mCloseCallBk)
                 mCloseCallBk();
         } else {
+            int ava = mReadBuf.Available();
+            if (n > ava) {
+                mReadBuf.AcceptBack(ava);
+                mReadBuf.PushBack(extrabuf, n - ava);
+            } else {
+                mReadBuf.AcceptBack(n);
+            }
+
             if (mRecvRawCallBk) {
-                RawMsgPtr msg(new RawMsg(nread));
-                msg->assign(mReadBuf, mReadBuf + nread);
+                RawMsgPtr msg(new RawMsg(mReadBuf.Size()));
+                mReadBuf.PopFront(msg->data(), mReadBuf.Size());
                 mRecvRawCallBk(msg);
             }
         }
     }
 
     void Connection::OnClosingEvent() {
-        std::cout << __FUNCTION__ << std::endl;
         int md = mEventHandler->GetFd();
         close(md);
         if (mCloseCallBk)

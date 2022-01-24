@@ -85,7 +85,27 @@ namespace net {
                 return mEnd - mStorBegin;
             }
 
+            /*
+             * FreeTail - 获取队尾空闲空间大小
+             */
+            int FreeTail() const
+            {
+                if (Empty())
+                    return Capacity();
 
+                if (Folded())
+                    return mBegin - mEnd;
+                else
+                    return mStorEnd - mEnd;
+            }
+            /*
+             * FreeHead - 获取队首空闲空间大小
+             */
+            int FreeHead() const {
+                if (Folded())
+                    return 0;
+                return mBegin - mStorBegin;
+            }
             /*
              * Empty - 判定队列是否为空
              */
@@ -227,7 +247,7 @@ namespace net {
                 return true;
             }
             /*
-             * DropFront - 从対首获取数据 size = size - n
+             * DropFront - 抛弃队首的数据 size = size - n
              * 
              * @n: 数量
              */
@@ -259,6 +279,42 @@ namespace net {
                         mBegin = mStorBegin;
                         mEnd = 0;
                     }
+                }
+
+                return true;
+            }
+
+            /*
+             * AcceptBack - 接受队尾之后的数据 size = size + n
+             * 
+             * @n: 数量
+             */
+            bool AcceptBack(int n) {
+                if (0 == n)
+                    return true;
+
+                assert(n > 0 && n <= Available());
+
+                if (Full())
+                    return false;
+
+                if (Empty())
+                    mEnd = mBegin;
+
+                if (mEnd >= mBegin) {
+                    int s1 = mStorEnd - mEnd;
+                    s1 = (s1 < n) ? s1 : n;
+
+                    n -= s1;
+                    mEnd += s1;
+                    if (mEnd == mStorEnd)
+                        mEnd = mStorBegin;
+                }
+
+                if (n > 0) {
+                    int s2 = mBegin - mEnd;
+                    assert(s2 >= n);
+                    mEnd += n;
                 }
 
                 return true;
@@ -370,7 +426,6 @@ namespace net {
                 return true;
             }
 
-            T const * GetBeginAddr() const { return mBegin; }
             /*
              * Enqueue - 进队，插入数据到队尾
              */
@@ -422,6 +477,18 @@ namespace net {
                 return tmp;
             }
 
+        public:
+            T const * GetStorBeginAddr() const { return mStorBegin; }
+            T const * GetStorEndAddr() const { return mStorEnd; }
+            T const * GetBeginAddr() const { return mBegin; }
+            T const * GetEndAddr() const { return mEnd; }
+
+            T * GetStorBeginAddr() { return mStorBegin; }
+            T * GetStorEndAddr() { return mStorEnd; }
+            T * GetBeginAddr() { return mBegin; }
+            T * GetEndAddr() { return mEnd; }
+
+        protected:
             T *mStorBegin;
             T *mStorEnd;
             T *mBegin;

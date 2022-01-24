@@ -24,20 +24,13 @@ void OnCloseConnection(ConnectionPtr const & conn) {
     std::cout << "关闭连接:" << conn->GetInfo() << std::endl;
 }
 
-uint8_t * as = NULL;
-const int aslen = 5253120;
 void OnNewRawMsg(ConnectionPtr const & conn, RawMsgPtr const & msg) {
-    conn->SendBytes(as, aslen);
     conn->SendRawMsg(msg);
 }
 
 
 
 int main() {
-    as = (uint8_t *)malloc(aslen);
-    assert(NULL != as);
-    memset(as, 'A', aslen);
-
     PollLoopPtr loop = CreatePollLoop();
     TcpServer tcp(loop, 65530, 3);
 
@@ -46,7 +39,7 @@ int main() {
     tcp.SetCloseConnCallBk(std::bind(OnCloseConnection, _1));
     tcp.SetNewRawMsgCallBk(std::bind(OnNewRawMsg, _1, _2));
 
-    loop->Loop(1000);
+    loop->Loop(10);
 
     return 0;
 }

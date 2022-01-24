@@ -67,6 +67,7 @@ using namespace std::placeholders;
     }
 
     void TcpServer::OnCloseConnection(ConnectionNode * con) {
+        std::cout << __FUNCTION__ << std::endl;
         if (mCloseConnCallBk)
             mCloseConnCallBk(con->conn);
 
