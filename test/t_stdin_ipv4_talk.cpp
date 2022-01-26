@@ -11,20 +11,34 @@
 #include <XiaoTuNetBox/Socket.h>
 #include <XiaoTuNetBox/Address.h>
 #include <XiaoTuNetBox/PollLoop.h>
+#include <XiaoTuNetBox/InBufObserver.h>
+
+xiaotu::net::InBufObserverPtr stdin_obs;
+xiaotu::net::InBufObserverPtr tcp_obs;
 
 int n_bytes_rcvd = 0;
-void OnStdinRawMsg(int fd, xiaotu::net::RawMsgPtr const & msg) {
+void OnStdinMsg(int fd, xiaotu::net::InBufObserverPtr const & obs) {
     n_bytes_rcvd = 0;
-    send(fd, msg->data(), msg->size()-1, 0);
+    std::cout << obs->Size() << std::endl;
+
+    size_t size = obs->Size();
+    std::vector<uint8_t> msg(size);
+    obs->PopFront(msg.data(), size);
+
+    send(fd, msg.data(), msg.size()-1, 0);
 }
 
-void OnTcpRawMsg(xiaotu::net::RawMsgPtr const & msg) {
-    for (unsigned int i = 0; i < msg->size(); i++)
-        std::cout << (*msg)[i];
+void OnTcpMsg(xiaotu::net::InBufObserverPtr const & obs) {
+    size_t size = obs->Size();
+    std::vector<uint8_t> msg(size);
+    obs->PopFront(msg.data(), size);
+
+    for (unsigned int i = 0; i < msg.size(); i++)
+        std::cout << msg[i];
 
     std::cout << std::endl;
 
-    n_bytes_rcvd += msg->size();
+    n_bytes_rcvd += msg.size();
     std::cout << "接收到 " << n_bytes_rcvd << " 个字节" << std::endl;
 }
 
@@ -43,14 +57,14 @@ int main(int argc, char * argv[]) {
     socket.ConnectOrDie(*peer_ip);
     int client_fd = socket.GetFd();
     xiaotu::net::ConnectionPtr conn = xiaotu::net:: ConnectionPtr(new xiaotu::net::Connection(client_fd, peer_ip));
-    conn->SetRecvRawCallBk(std::bind(&OnTcpRawMsg, std::placeholders::_1));
-
+    tcp_obs = conn->GetInputBuffer().CreateObserver();
+    tcp_obs->SetRecvCallBk(std::bind(&OnTcpMsg, tcp_obs));
     xiaotu::net::ApplyOnLoop(conn, gLoop);
 
     xiaotu::net::ConnectionPtr stdin_conn = xiaotu::net:: ConnectionPtr(new xiaotu::net::Connection(0, "标准输入:stdin:0"));
-    stdin_conn->SetRecvRawCallBk(std::bind(&OnStdinRawMsg, client_fd, std::placeholders::_1));
+    stdin_obs = stdin_conn->GetInputBuffer().CreateObserver();
+    stdin_obs->SetRecvCallBk(std::bind(&OnStdinMsg, client_fd, stdin_obs));
     std::cout << stdin_conn->GetInfo() << std::endl;
-
     xiaotu::net::ApplyOnLoop(stdin_conn, gLoop);
 
     gLoop->Loop(1000);

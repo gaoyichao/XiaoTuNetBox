@@ -1,0 +1,77 @@
+#ifndef XTNB_INPUT_BUFFER_H
+#define XTNB_INPUT_BUFFER_H
+
+#include <XiaoTuNetBox/Types.h>
+#include <XiaoTuNetBox/DataQueue.hpp>
+
+#include <mutex>
+#include <memory>
+#include <vector>
+
+namespace xiaotu {
+namespace net {
+ 
+    class InBufObserver;
+
+    class InputBuffer {
+        public:
+            /*
+             * Read - 读文件描述符中的数据
+             */
+            size_t Read(int md);
+
+            inline int Size()
+            {
+                int re = 0;
+                {
+                    std::lock_guard<std::mutex> lock(mMutex);
+                    re = mReadBuf.Size();
+                }
+                return re;
+            }
+
+            inline bool PeekFront(uint8_t *buf, int n, size_t offset = 0)
+            {
+                bool re = false;
+                {
+                    std::lock_guard<std::mutex> lock(mMutex);
+                    re = mReadBuf.PeekFront(buf, n, offset);
+                }
+                return re;
+            }
+
+            inline bool DropFront(int n)
+            {
+                bool re = false;
+                {
+                    std::lock_guard<std::mutex> lock(mMutex);
+                    re = mReadBuf.DropFront(n);
+                }
+                return re;
+            }
+
+        private:
+            DataQueue<uint8_t> mReadBuf;
+            std::mutex mMutex;
+
+        public:
+            friend class InBufObserver;
+            typedef std::shared_ptr<InBufObserver> InBufObserverPtr;
+            InBufObserverPtr CreateObserver();
+
+            inline void ReleaseObserver(size_t idx)
+            {
+                mObservers[idx].reset();
+                mObsHoles.push_back(idx);
+            }
+
+            void ObserverCallBack();
+            
+        private:
+            std::vector<InBufObserverPtr> mObservers;
+            std::vector<size_t> mObsHoles;
+    };
+}
+}
+
+#endif

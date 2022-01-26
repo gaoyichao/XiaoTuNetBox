@@ -40,7 +40,6 @@ namespace net {
 
         int n = mWriteBuf.Folded() ? mWriteBuf.FoldedHead() : mWriteBuf.Size();
         int nsend = SendRawData(mWriteBuf.GetBeginAddr(), n);
-        std::cout << __FUNCTION__ << ":" << n  << ":" << nsend<< std::endl;
 
         mWriteBuf.DropFront(nsend);
 
@@ -52,38 +51,18 @@ namespace net {
 
     void Connection::OnReadEvent() {
         int md = mEventHandler->GetFd();
+        size_t n = mReadBuf.Read(md);
 
-        int iovcnt = 3;
-        struct iovec vec[3];
-        uint8_t extrabuf[1024];
-
-        vec[0].iov_base = mReadBuf.Empty() ? mReadBuf.GetStorBeginAddr() : mReadBuf.GetEndAddr();
-        vec[0].iov_len = mReadBuf.FreeTail();
-        vec[1].iov_base = mReadBuf.GetStorBeginAddr();
-        vec[1].iov_len = mReadBuf.FreeHead();
-        vec[2].iov_base = extrabuf;
-        vec[2].iov_len = 1024;
-
-        size_t n = readv(md, vec, iovcnt);
         if (n <= 0) {
             std::cout << "close fd = " << md << std::endl;
             close(md);
             if (mCloseCallBk)
                 mCloseCallBk();
         } else {
-            int ava = mReadBuf.Available();
-            if (n > ava) {
-                mReadBuf.AcceptBack(ava);
-                mReadBuf.PushBack(extrabuf, n - ava);
-            } else {
-                mReadBuf.AcceptBack(n);
-            }
-
             if (mRecvRawCallBk) {
-                RawMsgPtr msg(new RawMsg(mReadBuf.Size()));
-                mReadBuf.PopFront(msg->data(), mReadBuf.Size());
-                mRecvRawCallBk(msg);
+                mRecvRawCallBk(nullptr);
             }
+            mReadBuf.ObserverCallBack();
         }
     }
 
@@ -96,6 +75,7 @@ namespace net {
 
     void Connection::SendBytes(uint8_t const *buf, int num) {
         int nsend = 0;
+
         if (mEventHandler->GetLoopTid() == ThreadTools::GetCurrentTid() && mWriteBuf.Empty()) {
             nsend = SendRawData(buf, num);
             num -= nsend;

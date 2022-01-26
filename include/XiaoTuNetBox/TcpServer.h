@@ -43,7 +43,10 @@ namespace net {
 
             void SetNewConnCallBk(ConnCallBk cb) { mNewConnCallBk = std::move(cb); }
             void SetCloseConnCallBk(ConnCallBk cb) { mCloseConnCallBk = std::move(cb); }
-            void SetNewRawMsgCallBk(RawMsgCallBk cb) { mNewRawMsgCallBk = std::move(cb); }
+            void SetNewRawMsgCallBk(RawMsgCallBk cb) {
+                //! @deprecated
+                std::cerr << __FUNCTION__ << " is deprecated!!!" << std::endl;
+            }
             /*
              * SetTimeOut - 超时关闭连接
              *

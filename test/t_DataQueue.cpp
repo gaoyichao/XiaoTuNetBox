@@ -122,6 +122,67 @@ TEST(DataQueue, push_back_pop_front)
     delete pQueue;
 }
 
+TEST(DataQueue, push_back_peek_front)
+{
+    DataQueue<double> *pQueue = new DataQueue<double>();
+
+    double tmp;
+    for (int i = 0; i < 13; i++) {
+        EXPECT_TRUE(pQueue->PushBack(1.2 * i));
+        EXPECT_EQ(pQueue->Size(), i+1);
+    }
+
+    EXPECT_EQ(pQueue->Size(), 13);
+    EXPECT_EQ(pQueue->Capacity(), 16);
+    pQueue->PeekFront(tmp);
+    EXPECT_EQ(tmp, 0);
+    pQueue->PeekBack(tmp);
+    EXPECT_EQ(tmp, 1.2 * 12);
+
+    for (int i = 0; i < 11; i++) {
+        EXPECT_TRUE(pQueue->PopFront(tmp));
+        EXPECT_EQ(tmp, 1.2 * i);
+    }
+    EXPECT_EQ(pQueue->Size(), 2);
+    EXPECT_EQ(pQueue->Capacity(), 16);
+
+    for (int i = 13; i < 20; i++) {
+        EXPECT_TRUE(pQueue->PushBack(1.2 * i));
+    }
+    EXPECT_EQ(pQueue->Size(), 9);
+    EXPECT_EQ(pQueue->Capacity(), 16);
+
+    pQueue->PeekFront(tmp);
+    EXPECT_EQ(tmp, 1.2 * 11);
+
+    for (int i = 0; i < 9; i++) {
+        pQueue->PeekFront(tmp, i);
+        EXPECT_EQ(tmp, 1.2 * (11 + i));
+    }
+
+    for (int i = 9; i < 16; i++) {
+        EXPECT_FALSE(pQueue->PeekFront(tmp, i));
+    }
+
+    double tmp_array[9];
+    bool suc = pQueue->PeekFront(tmp_array, 9, 0);
+    EXPECT_TRUE(suc);
+
+    for (int i = 0; i < 9; i++) {
+        EXPECT_EQ(tmp_array[i], 1.2 * (11 + i));
+    }
+
+    suc = pQueue->PeekFront(tmp_array, 9, 1);
+    EXPECT_FALSE(suc);
+
+    suc = pQueue->PeekFront(tmp_array, 4, 3);
+    for (int i = 0; i < 4; i++) {
+        EXPECT_EQ(tmp_array[i], 1.2 * (11 + 3 + i));
+    }
+
+    delete pQueue;
+}
+
 TEST(DataQueue, push_front_pop_back)
 {
     DataQueue<double> *pQueue = new DataQueue<double>();

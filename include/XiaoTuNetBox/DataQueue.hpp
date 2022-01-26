@@ -93,6 +93,9 @@ namespace net {
                 if (Empty())
                     return Capacity();
 
+                if (Full())
+                    return 0;
+
                 if (Folded())
                     return mBegin - mEnd;
                 else
@@ -102,6 +105,9 @@ namespace net {
              * FreeHead - 获取队首空闲空间大小
              */
             int FreeHead() const {
+                if (Full())
+                    return 0;
+
                 if (Folded())
                     return 0;
                 return mBegin - mStorBegin;
@@ -228,6 +234,7 @@ namespace net {
                     n -= s1;
                     buf += s1;
                     mBegin += s1;
+
                     if (mBegin == mStorEnd)
                         mBegin = mStorBegin;
                 }
@@ -237,12 +244,13 @@ namespace net {
                     assert(s2 >= n);
                     memcpy(buf, mBegin, n * sizeof(T));
                     mBegin += n;
-
-                    if (mBegin == mEnd) {
-                        mBegin = mStorBegin;
-                        mEnd = 0;
-                    }
                 }
+
+                if (mBegin == mEnd) {
+                    mBegin = mStorBegin;
+                    mEnd = 0;
+                }
+
 
                 return true;
             }
@@ -274,11 +282,11 @@ namespace net {
                     int s2 = mEnd - mBegin;
                     assert(s2 >= n);
                     mBegin += n;
+                }
 
-                    if (mBegin == mEnd) {
-                        mBegin = mStorBegin;
-                        mEnd = 0;
-                    }
+                if (mBegin == mEnd) {
+                    mBegin = mStorBegin;
+                    mEnd = 0;
                 }
 
                 return true;
@@ -407,9 +415,65 @@ namespace net {
                     return false;
 
                 buf = mBegin[0];
+                return true;
+            }
+            
+            T * __Offset__(size_t offset)
+            {
+                if (Empty())
+                    return NULL;
+
+                if(offset >= Size())
+                    return NULL;
+
+                T * ptr = mBegin + offset;
+                if (ptr >= mStorEnd)
+                    ptr = mStorBegin + (ptr - mStorEnd);
+
+                return ptr;
+            }
+
+            bool PeekFront(T & buf, size_t offset)
+            {
+                T * ptr = __Offset__(offset);
+                if (NULL == ptr)
+                    return false;
+
+                buf = ptr[0];
+                return true;
+            }
+
+            bool PeekFront(T * buf, int n, size_t offset = 0)
+            {
+                T * begin = __Offset__(offset); 
+                if (NULL == begin)
+                    return false;
+
+                if ((n + offset) > Size())
+                    return false;
+
+                if (begin >= mEnd) {
+                    int s1 = mStorEnd - begin;
+                    s1 = (s1 < n) ? s1 : n;
+                    memcpy(buf, begin, s1 * sizeof(T));
+
+                    n -= s1;
+                    buf += s1;
+                    begin += s1;
+                    if (begin == mStorEnd)
+                        begin = mStorBegin;
+                }
+
+                if (n > 0) {
+                    int s2 = mEnd - begin;
+                    assert(s2 >= n);
+                    memcpy(buf, begin, n * sizeof(T));
+                }
 
                 return true;
             }
+
+
             /*
              * PeekBack - 窥视队尾数据 size = size
              */
@@ -433,7 +497,7 @@ namespace net {
             /*
              * Dequeue - 出队，从対首取出数据
              */
-            bool Dequeue(T & buf) { return PopPront(buf); }
+            bool Dequeue(T & buf) { return PopFront(buf); }
 
         protected:
             /*

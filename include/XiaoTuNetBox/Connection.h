@@ -2,10 +2,10 @@
 #define XTNB_CONNECTION_H
 
 #include <XiaoTuNetBox/DataQueue.hpp>
+#include <XiaoTuNetBox/InBufObserver.h>
 #include <XiaoTuNetBox/Address.h>
 #include <XiaoTuNetBox/EventHandler.h>
 #include <XiaoTuNetBox/Types.h>
-#include <vector>
 
 namespace xiaotu {
 namespace net {
@@ -18,7 +18,6 @@ namespace net {
         public:
             Connection(int fd, std::string const & info);
             Connection(int fd, IPv4Ptr const & peer);
-
             Connection(Connection const &) = delete;
             Connection & operator = (Connection const &) = delete;
         private:
@@ -37,10 +36,12 @@ namespace net {
         private:
             int SendRawData(uint8_t const * buf, int num);
 
+        public:
+            InputBuffer & GetInputBuffer() { return mReadBuf; }
         private:
             std::string mInfoStr;
             PollEventHandlerPtr mEventHandler;
-            DataQueue<uint8_t> mReadBuf;
+            InputBuffer mReadBuf;
             DataQueue<uint8_t> mWriteBuf;
 
         public:
