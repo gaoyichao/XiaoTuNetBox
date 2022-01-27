@@ -20,17 +20,34 @@ namespace net {
         public:
             inline int Size()
             {
-                return mBuffer.Size() - mStartIdx;
+                size_t idx = 0;
+                {
+                    std::lock_guard<std::mutex> lock(mBuffer.mBufMutex);
+                    idx = mStartIdx;
+                }
+                return mBuffer.Size() - idx;
             }
 
             inline bool PeekFront(uint8_t * buf, int n)
             {
-                return mBuffer.PeekFront(buf, n, mStartIdx);
+                size_t idx = 0;
+                {
+                    std::lock_guard<std::mutex> lock(mBuffer.mBufMutex);
+                    idx = mStartIdx;
+                }
+                return mBuffer.PeekFront(buf, n, idx);
             }
 
             inline bool PopFront(uint8_t *buf, int n)
             {
-                bool suc = mBuffer.PeekFront(buf, n, mStartIdx);
+                size_t idx = 0;
+                {
+                    std::lock_guard<std::mutex> lock(mBuffer.mBufMutex);
+                    idx = mStartIdx;
+                }
+                bool suc = mBuffer.PeekFront(buf, n, idx);
+
+                std::lock_guard<std::mutex> lock(mBuffer.mBufMutex);
                 if (suc)
                     mStartIdx += n;
                 return suc;
@@ -39,6 +56,8 @@ namespace net {
             inline bool DropFront(int n)
             {
                 assert(n < Size());
+
+                std::lock_guard<std::mutex> lock(mBuffer.mBufMutex);
                 mStartIdx += n;
             }
 

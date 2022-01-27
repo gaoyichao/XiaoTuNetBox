@@ -24,7 +24,7 @@ namespace net {
             {
                 int re = 0;
                 {
-                    std::lock_guard<std::mutex> lock(mMutex);
+                    std::lock_guard<std::mutex> lock(mBufMutex);
                     re = mReadBuf.Size();
                 }
                 return re;
@@ -34,7 +34,7 @@ namespace net {
             {
                 bool re = false;
                 {
-                    std::lock_guard<std::mutex> lock(mMutex);
+                    std::lock_guard<std::mutex> lock(mBufMutex);
                     re = mReadBuf.PeekFront(buf, n, offset);
                 }
                 return re;
@@ -44,15 +44,16 @@ namespace net {
             {
                 bool re = false;
                 {
-                    std::lock_guard<std::mutex> lock(mMutex);
+                    std::lock_guard<std::mutex> lock(mBufMutex);
                     re = mReadBuf.DropFront(n);
                 }
                 return re;
             }
 
+            void DropHead();
         private:
             DataQueue<uint8_t> mReadBuf;
-            std::mutex mMutex;
+            std::mutex mBufMutex;
 
         public:
             friend class InBufObserver;
@@ -61,6 +62,7 @@ namespace net {
 
             inline void ReleaseObserver(size_t idx)
             {
+                std::lock_guard<std::mutex> lock(mObsMutex);
                 mObservers[idx].reset();
                 mObsHoles.push_back(idx);
             }
@@ -68,6 +70,7 @@ namespace net {
             void ObserverCallBack();
             
         private:
+            std::mutex mObsMutex;
             std::vector<InBufObserverPtr> mObservers;
             std::vector<size_t> mObsHoles;
     };

@@ -10,9 +10,31 @@
 namespace xiaotu {
 namespace net {
  
+    void InputBuffer::DropHead()
+    {
+        std::lock_guard<std::mutex> lock(mBufMutex);
+
+        size_t min_idx = mReadBuf.Size();
+        for (size_t i = 0; i < mObservers.size(); ++i) {
+            if (nullptr == mObservers[i])
+                continue;
+            if (min_idx > mObservers[i]->mStartIdx)
+                min_idx = mObservers[i]->mStartIdx;
+        }
+
+        mReadBuf.DropFront(min_idx);
+
+        for (size_t i = 0; i < mObservers.size(); ++i) {
+            if (nullptr == mObservers[i])
+                continue;
+            mObservers[i]->mStartIdx -= min_idx;
+        }
+    }
+
     size_t InputBuffer::Read(int md)
     {
-        std::lock_guard<std::mutex> lock(mMutex);
+        DropHead();
+        std::lock_guard<std::mutex> lock(mBufMutex);
 
         int iovcnt = 3;
         struct iovec vec[3];
@@ -40,6 +62,7 @@ namespace net {
 
     InBufObserverPtr InputBuffer::CreateObserver()
     {
+        std::lock_guard<std::mutex> lock(mObsMutex);
         int idx = 0;
         if (mObsHoles.empty()) {
             idx = mObservers.size();
@@ -58,6 +81,7 @@ namespace net {
 
     void InputBuffer::ObserverCallBack()
     {
+        std::lock_guard<std::mutex> lock(mObsMutex);
         int n = mObservers.size();
         for (int i = 0; i < n; ++i) {
             if (nullptr == mObservers[i])
