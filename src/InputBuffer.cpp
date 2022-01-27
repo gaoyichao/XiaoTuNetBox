@@ -6,9 +6,19 @@
 
 #include <sys/uio.h>
 
-
 namespace xiaotu {
 namespace net {
+
+    InputBuffer::InputBuffer()
+    {
+        mExtraBufSize = 1024;
+        mExtraBuf = new uint8_t[mExtraBufSize];
+    }
+
+    InputBuffer::~InputBuffer()
+    {
+        delete [] mExtraBuf;
+    }
  
     void InputBuffer::DropHead()
     {
@@ -38,21 +48,20 @@ namespace net {
 
         int iovcnt = 3;
         struct iovec vec[3];
-        uint8_t extrabuf[1024];
 
         vec[0].iov_base = mReadBuf.Empty() ? mReadBuf.GetStorBeginAddr() : mReadBuf.GetEndAddr();
         vec[0].iov_len = mReadBuf.FreeTail();
         vec[1].iov_base = mReadBuf.GetStorBeginAddr();
         vec[1].iov_len = mReadBuf.FreeHead();
-        vec[2].iov_base = extrabuf;
-        vec[2].iov_len = 1024;
+        vec[2].iov_base = mExtraBuf;
+        vec[2].iov_len = mExtraBufSize;
 
         size_t n = readv(md, vec, iovcnt);
         if (n > 0) {
             int ava = mReadBuf.Available();
             if (n > ava) {
                 mReadBuf.AcceptBack(ava);
-                mReadBuf.PushBack(extrabuf, n - ava);
+                mReadBuf.PushBack(mExtraBuf, n - ava);
             } else {
                 mReadBuf.AcceptBack(n);
             }

@@ -4,7 +4,7 @@
 namespace xiaotu {
 namespace net {
 
-using namespace std::placeholders;
+    using namespace std::placeholders;
 
     TcpServer::TcpServer(PollLoopPtr const & loop, int port, int max_conn)
         : mLoop(loop),

@@ -20,12 +20,11 @@ namespace net {
             TcpServer(PollLoopPtr const & loop, int port, int max_conn);
             Acceptor & GetAcceptor() { return *mAcceptor; }
 
-        private:
+        protected:
             void OnNewConnection(int fd, IPv4Ptr const &peer_addr);
             void OnCloseConnection(ConnectionNode * con);
             void OnNewRawMsg(ConnectionNode * con, RawMsgPtr const & msg);
             void OnTimeOut();
-
 
             PollLoopPtr mLoop;
             int mMaxConn;
@@ -59,8 +58,7 @@ namespace net {
              */
             void SetTimeOut(time_t sec, long nsec, int n); 
 
-
-        private:
+        protected:
             ConnCallBk mNewConnCallBk;
             ConnCallBk mCloseConnCallBk;
             RawMsgCallBk mNewRawMsgCallBk;

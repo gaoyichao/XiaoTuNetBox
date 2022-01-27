@@ -15,6 +15,8 @@ namespace net {
 
     class InputBuffer {
         public:
+            InputBuffer();
+            ~InputBuffer();
             /*
              * Read - 读文件描述符中的数据
              */
@@ -52,6 +54,8 @@ namespace net {
 
             void DropHead();
         private:
+            size_t mExtraBufSize;
+            uint8_t * mExtraBuf;
             DataQueue<uint8_t> mReadBuf;
             std::mutex mBufMutex;
 
