@@ -52,7 +52,12 @@ namespace net {
                 return re;
             }
 
-            void DropHead();
+        private:
+            int Size(InBufObserver & obs);
+            bool PeekFront(uint8_t * buf, int n, InBufObserver & obs);
+            bool PopFront(uint8_t * buf, int n, InBufObserver & obs);
+            bool DropFront(int n, InBufObserver & obs);
+            
         private:
             size_t mExtraBufSize;
             uint8_t * mExtraBuf;

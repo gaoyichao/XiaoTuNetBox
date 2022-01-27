@@ -18,53 +18,11 @@ namespace net {
 
             }
         public:
-            inline int Size()
-            {
-                size_t idx = 0;
-                {
-                    std::lock_guard<std::mutex> lock(mBuffer.mBufMutex);
-                    idx = mStartIdx;
-                }
-                return mBuffer.Size() - idx;
-            }
-
-            inline bool PeekFront(uint8_t * buf, int n)
-            {
-                size_t idx = 0;
-                {
-                    std::lock_guard<std::mutex> lock(mBuffer.mBufMutex);
-                    idx = mStartIdx;
-                }
-                return mBuffer.PeekFront(buf, n, idx);
-            }
-
-            inline bool PopFront(uint8_t *buf, int n)
-            {
-                size_t idx = 0;
-                {
-                    std::lock_guard<std::mutex> lock(mBuffer.mBufMutex);
-                    idx = mStartIdx;
-                }
-                bool suc = mBuffer.PeekFront(buf, n, idx);
-
-                std::lock_guard<std::mutex> lock(mBuffer.mBufMutex);
-                if (suc)
-                    mStartIdx += n;
-                return suc;
-            }
-
-            inline bool DropFront(int n)
-            {
-                assert(n < Size());
-
-                std::lock_guard<std::mutex> lock(mBuffer.mBufMutex);
-                mStartIdx += n;
-            }
-
-            inline void Release()
-            {
-                mBuffer.ReleaseObserver(mIdx);
-            }
+            inline int Size() { return mBuffer.Size(*this); }
+            inline bool PeekFront(uint8_t * buf, int n) { return mBuffer.PeekFront(buf, n, *this); }
+            inline bool PopFront(uint8_t *buf, int n) { return mBuffer.PopFront(buf, n, *this); }
+            inline bool DropFront(int n) { return mBuffer.DropFront(n, *this); }
+            inline void Release() { mBuffer.ReleaseObserver(mIdx); }
 
         public:
             typedef std::function<void()> EventCallBk;
@@ -76,7 +34,6 @@ namespace net {
             InputBuffer & mBuffer;
             //! 有效缓存数据的起始索引
             size_t mStartIdx;
-
             //! 在 #mBuffer 的观察者列表中的索引位置
             size_t mIdx;
     };
