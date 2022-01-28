@@ -1,5 +1,5 @@
-#ifndef XTNB_DATAQUEUE_H
-#define XTNB_DATAQUEUE_H
+#ifndef XTNB_DATA_QUEUE_HPP
+#define XTNB_DATA_QUEUE_HPP
 
 #include <cstdlib>
 #include <cstring>

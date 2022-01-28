@@ -1,9 +1,20 @@
+/*****************************************************************************************
+ * 
+ * +-------------------+------------------+------------------+
+ * | prependable bytes |  readable bytes  |  writable bytes  |
+ * |                   |     (CONTENT)    |                  |
+ * +-------------------+------------------+------------------+
+ * |                   |                  |                  |
+ * 0      <=      readerIndex   <=   writerIndex    <=     size
+ * 
+ ****************************************************************************************/
 #ifndef XTNB_INPUT_BUFFER_H
 #define XTNB_INPUT_BUFFER_H
 
 #include <XiaoTuNetBox/Types.h>
-#include <XiaoTuNetBox/DataQueue.hpp>
+#include <XiaoTuNetBox/DataArray.hpp>
 
+#include <string.h>
 #include <mutex>
 #include <memory>
 #include <vector>
@@ -15,54 +26,67 @@ namespace net {
 
     class InputBuffer {
         public:
+            static const size_t mDefaultPrependSize;
+            static const size_t mInitialSize;
+            static const size_t mExtraBufSize;
+
+        public:
             InputBuffer();
             ~InputBuffer();
-            /*
-             * Read - 读文件描述符中的数据
-             */
-            size_t Read(int md);
 
-            inline int Size()
+        public:
+            inline size_t Size()
             {
-                int re = 0;
-                {
-                    std::lock_guard<std::mutex> lock(mBufMutex);
-                    re = mReadBuf.Size();
-                }
-                return re;
+                std::lock_guard<std::mutex> lock(mBufMutex);
+                return ReadableBytes();
             }
 
             inline bool PeekFront(uint8_t *buf, int n, size_t offset = 0)
             {
-                bool re = false;
-                {
-                    std::lock_guard<std::mutex> lock(mBufMutex);
-                    re = mReadBuf.PeekFront(buf, n, offset);
-                }
-                return re;
+                std::lock_guard<std::mutex> lock(mBufMutex);
+                assert(n <= (ReadableBytes() - offset));
+                memcpy(buf, mReadBuf.Data() + offset, n); 
+                return true;
+            }
+
+            inline bool DropAll()
+            {
+                std::lock_guard<std::mutex> lock(mBufMutex);
+                mReadIdx = 0;
+                mWriteIdx = 0;
+                return true;
             }
 
             inline bool DropFront(int n)
             {
-                bool re = false;
-                {
-                    std::lock_guard<std::mutex> lock(mBufMutex);
-                    re = mReadBuf.DropFront(n);
-                }
-                return re;
-            }
+                std::lock_guard<std::mutex> lock(mBufMutex);
+                int nread = ReadableBytes();
+                assert(n <= nread);
 
+                if (n == nread)
+                    return DropAll();
+                mReadIdx += n;
+                return true;
+            }
         private:
             int Size(InBufObserver & obs);
             bool PeekFront(uint8_t * buf, int n, InBufObserver & obs);
             bool PopFront(uint8_t * buf, int n, InBufObserver & obs);
             bool DropFront(int n, InBufObserver & obs);
-            
         private:
-            size_t mExtraBufSize;
-            uint8_t * mExtraBuf;
-            DataQueue<uint8_t> mReadBuf;
+            inline size_t ReadableBytes() const { return mWriteIdx - mReadIdx; }
+            inline size_t WritableBytes() const { return mReadBuf.Size() - mWriteIdx; }
+            inline size_t PrependableBytes() const { return mReadIdx; }
+           
+        private:
+            DataArray<uint8_t> mReadBuf;
             std::mutex mBufMutex;
+            size_t mReadIdx;
+            size_t mWriteIdx;
+            uint8_t * mExtraBuf;
+
+        public:
+            size_t Read(int fd);
 
         public:
             friend class InBufObserver;
