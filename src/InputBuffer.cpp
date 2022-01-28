@@ -124,12 +124,16 @@ namespace net {
         return re;
 
     }
+
     bool InputBuffer::DropFront(int n, InBufObserver & obs)
     {
         std::lock_guard<std::mutex> lock(mBufMutex);
+        int idx = obs.mStartIdx + n;
+        if (idx >= mReadBuf.Size())
+            return false;
         obs.mStartIdx += n;
+        return true;
     }
- 
 }
 }
 
