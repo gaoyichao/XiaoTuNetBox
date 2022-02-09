@@ -37,11 +37,14 @@ target_link_libraries(${PROJECT_NAME})
 #
 ############################################################################
 
+add_executable(u_stdin_ipv4_talk utils/u_stdin_ipv4_talk.cpp)
+target_link_libraries(u_stdin_ipv4_talk ${PROJECT_NAME})
+
 add_executable(u_echo_server utils/u_echo_server.cpp)
 target_link_libraries(u_echo_server ${PROJECT_NAME})
 
-add_executable(u_stdin_ipv4_talk utils/u_stdin_ipv4_talk.cpp)
-target_link_libraries(u_stdin_ipv4_talk ${PROJECT_NAME})
+add_executable(u_http_server utils/u_http_server.cpp)
+target_link_libraries(u_http_server ${PROJECT_NAME})
 
 ############################################################################
 #
