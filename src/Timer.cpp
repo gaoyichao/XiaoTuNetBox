@@ -1,6 +1,5 @@
 #include <XiaoTuNetBox/Timer.h>
 
-#include <sys/timerfd.h>
 #include <functional>
 #include <unistd.h>
 

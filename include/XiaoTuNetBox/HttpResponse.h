@@ -48,6 +48,8 @@ namespace net {
             void SetStatusMessage(std::string const & msg) { mStatusMessage = msg; }
             std::string const & GetStatusMessage() const { return mStatusMessage; }
 
+            void SetClosing(bool close) { mCloseConnection = close; }
+
             bool CloseConnection()
             {
                 return mCloseConnection || (e200_OK != mStatusCode);

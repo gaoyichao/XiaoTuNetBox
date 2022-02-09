@@ -25,7 +25,7 @@ namespace net {
             SessionPtr OnNewConnection(ConnectionPtr const & conn);
             void OnCloseConnection(ConnectionPtr const & conn, SessionPtr const & session);
             void OnMessage(ConnectionPtr const & con, SessionPtr const & session);
-            void HandleRequest(ConnectionPtr const & con, HttpRequestPtr const & req);
+            void HandleRequest(ConnectionPtr const & con, HttpSessionPtr const & session);
     
         public:
             typedef std::function< void (HttpRequestPtr const &, HttpResponsePtr const &)> RequestCallBk;

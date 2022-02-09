@@ -20,10 +20,8 @@ namespace net {
 
     HttpSession::HttpSession(ConnectionPtr const & conn)
     {
-        mRequest = std::make_shared<HttpRequest>();
-        mState = eExpectRequestLine;
+        Reset();
         mInBuf = conn->GetInputBuffer().CreateObserver();
-        //mInBuf->SetRecvCallBk(std::bind(&HttpSession::HandleMsg, this));
     }
 
     bool HttpSession::ParseRequestLine(uint8_t const * begin, uint8_t const * end)
@@ -128,7 +126,7 @@ namespace net {
         mInBuf->PopFront(mRequest->mContent.data() + n0, n);
     }
 
-    HttpRequestPtr HttpSession::HandleMsg(ConnectionPtr const & conn)
+    HttpRequestPtr HttpSession::HandleRequest(ConnectionPtr const & conn)
     {
         while (!mInBuf->Empty()) {
             if (eExpectRequestLine == mState)
@@ -140,11 +138,8 @@ namespace net {
                 OnReadingBody(conn);
         }
 
-        if (eResponsing == mState || eError == mState) {
-            HttpRequestPtr request = mRequest;
-            mRequest = std::make_shared<HttpRequest>();
-            return request;
-        }
+        if (eResponsing == mState || eError == mState)
+            return mRequest;
         return nullptr;
     }
     

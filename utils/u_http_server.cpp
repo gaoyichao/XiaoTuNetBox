@@ -16,6 +16,8 @@
 #include <endian.h>
 #include <string.h>
 
+#include <thread>
+
 using namespace std::placeholders;
 using namespace xiaotu::net;
 
@@ -30,12 +32,16 @@ void OnOkHttpRequest(HttpRequestPtr const & req,
 
 int main() {
     PollLoopPtr loop = CreatePollLoop();
-    HttpServer http(loop, 65530, 3);
 
-    http.SetRequestCallBk(std::bind(&OnOkHttpRequest, _1, _2));
+    //HttpServer http(loop, 65530, 3);
+    //http.SetRequestCallBk(std::bind(&OnOkHttpRequest, _1, _2));
 
-    loop->Loop(10);
+    std::thread t([loop]{loop->Loop(10);});
 
+    sleep(1);
+    loop->WakeUp(1024);
+
+    t.join();
     return 0;
 }
 

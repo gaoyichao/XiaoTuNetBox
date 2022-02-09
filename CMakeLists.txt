@@ -3,7 +3,7 @@ project(XiaoTuNetBox)
 set(PACKAGE_VERSION "0.0.7")
 
 add_compile_options(-std=c++17)
-set(CMAKE_BUILD_TYPE RELEASE)
+set(CMAKE_BUILD_TYPE DEBUG)
 
 message("${PROJECT_NAME}")
 message("${PROJECT_SOURCE_DIR}")
@@ -44,7 +44,7 @@ add_executable(u_echo_server utils/u_echo_server.cpp)
 target_link_libraries(u_echo_server ${PROJECT_NAME})
 
 add_executable(u_http_server utils/u_http_server.cpp)
-target_link_libraries(u_http_server ${PROJECT_NAME})
+target_link_libraries(u_http_server pthread ${PROJECT_NAME})
 
 ############################################################################
 #

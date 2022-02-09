@@ -2,6 +2,7 @@
 #define XTNB_POLLLOOP_H
 
 #include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/WakeUpper.h>
 
 #include <vector>
 #include <memory>
@@ -48,7 +49,7 @@ namespace net {
             std::vector<int> mIdleIdx;
             std::vector<struct pollfd> mPollFdList;
             std::vector<PollEventHandlerPtr> mHandlerList;
-            PollEventHandlerPtr mWakeUpHandler;
+            WakeUpperPtr mWakeUpper;
 
             pid_t mTid;
             bool mLooping;

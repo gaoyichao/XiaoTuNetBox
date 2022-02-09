@@ -43,8 +43,9 @@ namespace net {
         return ptr;
     }
 
-    void HttpServer::HandleRequest(ConnectionPtr const & con, HttpRequestPtr const & req)
+    void HttpServer::HandleRequest(ConnectionPtr const & con, HttpSessionPtr const & session)
     {
+        HttpRequestPtr req = session->GetRequest();
         //req->PrintHeaders();
         std::string con_key("Connection");
         std::string con_header;
@@ -54,7 +55,8 @@ namespace net {
             ToLower(con_header);
 
         bool close = !has_con || (con_header != "keep-alive");
-        HttpResponsePtr res(new HttpResponse(close));
+        HttpResponsePtr res = session->GetResponse();
+        res->SetClosing(close);
         
         res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
 
@@ -66,6 +68,8 @@ namespace net {
         con->SendBytes(buf.data(), buf.size());
         if (res->CloseConnection())
             con->Close();
+
+        session->Reset();
     }
 
     void HttpServer::OnMessage(ConnectionPtr const & con, SessionPtr const & session)
@@ -73,12 +77,13 @@ namespace net {
         std::cout << "接收到了消息" << std::endl;
         HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(session);
         std::cout << ptr->ToCString() << std::endl;
+        std::cout << ptr->GetStateStr() << std::endl;
 
-        HttpRequestPtr request = ptr->HandleMsg(con);
+        assert(ptr->InRequestPhase());
+        HttpRequestPtr request = ptr->HandleRequest(con);
 
         if (HttpSession::eResponsing == ptr->mState) {
-            HandleRequest(con, request);
-            ptr->mState = HttpSession::eExpectRequestLine;
+            HandleRequest(con, ptr);
         } else if (HttpSession::eError == ptr->mState) {
             con->SendString("HTTP/1.1 400 Bad Request\r\n\r\n");
             con->Close();

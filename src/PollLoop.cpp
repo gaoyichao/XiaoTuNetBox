@@ -10,31 +10,27 @@ namespace net {
 
     PollLoopPtr CreatePollLoop() {
         PollLoopPtr loop = PollLoopPtr(new PollLoop);
-        ApplyHandlerOnLoop(loop->mWakeUpHandler, loop);
+        
+        ApplyOnLoop(loop->mWakeUpper, loop);
         return loop;
     }
 
     PollLoop::PollLoop()
         : mTid(0), mLooping(false)
     {
-        mWakeUpHandler = PollEventHandlerPtr(new PollEventHandler(eventfd(0, EFD_CLOEXEC)));
-        mWakeUpHandler->EnableRead(true);
-        mWakeUpHandler->SetReadCallBk(std::bind(&PollLoop::OnWakeUp, this));
+        mWakeUpper = std::make_shared<WakeUpper>();
+        mWakeUpper->SetWakeUpCallBk(std::bind(&PollLoop::OnWakeUp, this));
     }
 
     void PollLoop::WakeUp(uint64_t u) {
         assert(0 != mTid);
         assert(mTid != ThreadTools::GetCurrentTid());
 
-        int md = mWakeUpHandler->GetFd();
-        int s = write(md, &u, sizeof(u));
+        mWakeUpper->WakeUp(u);
     }
 
     void PollLoop::OnWakeUp() {
-        uint64_t u;
-        int md = mWakeUpHandler->GetFd();
-        int nread = read(md, &u, sizeof(u));
-        std::cout << "poll loop wakeup, nread = " << nread << ", u = " << u << std::endl;
+        std::cout << "poll loop wakeup" << std::endl;
     }
 
 
