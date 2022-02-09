@@ -1,5 +1,4 @@
 #include <XiaoTuNetBox/HttpServer.h>
-#include <XiaoTuNetBox/HttpResponse.h>
 #include <XiaoTuNetBox/Utils.h>
 
 #include <cassert>
@@ -38,9 +37,29 @@ namespace net {
             mSessions[idx] = nullptr;
         }
         HttpSessionPtr ptr(new HttpSession(conn));
-        ptr->mIdx = idx;
         mSessions[idx] = ptr;
+
+        ptr->mIdx = idx;
+        ptr->mWakeUpper = std::make_shared<WakeUpper>();
+        ApplyOnLoop(ptr->mWakeUpper, mServer.GetPollLoop());
+        ptr->mWakeUpper->SetWakeUpCallBk(std::bind(&HttpServer::HandleReponse, this, conn, ptr));
+
         return ptr;
+    }
+
+    void HttpServer::HandleReponse(ConnectionPtr const & con, HttpSessionPtr const & session)
+    {
+        std::cout << __FUNCTION__ << std::endl;
+
+        HttpResponsePtr res = session->GetResponse();
+
+        std::vector<uint8_t> buf;
+        res->ToUint8Vector(buf);
+        con->SendBytes(buf.data(), buf.size());
+        if (res->CloseConnection())
+            con->Close();
+
+        session->Reset();
     }
 
     void HttpServer::HandleRequest(ConnectionPtr const & con, HttpSessionPtr const & session)
@@ -54,22 +73,26 @@ namespace net {
         if (has_con)
             ToLower(con_header);
 
-        bool close = !has_con || (con_header != "keep-alive");
         HttpResponsePtr res = session->GetResponse();
+        bool close = !has_con || (con_header != "keep-alive");
         res->SetClosing(close);
-        
         res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
 
         if (mRequestCB)
             mRequestCB(req, res);
 
-        std::vector<uint8_t> buf;
-        res->ToUint8Vector(buf);
-        con->SendBytes(buf.data(), buf.size());
-        if (res->CloseConnection())
-            con->Close();
+        session->mWakeUpper->WakeUp(4096);
+    }
 
-        session->Reset();
+    void HttpServer::FinishTasks()
+    {
+        if (mTaskFifo.empty())
+            return;
+
+        HttpTaskPtr task = mTaskFifo.front();
+        mTaskFifo.pop_front();
+
+        task->Finish();
     }
 
     void HttpServer::OnMessage(ConnectionPtr const & con, SessionPtr const & session)
@@ -83,7 +106,10 @@ namespace net {
         HttpRequestPtr request = ptr->HandleRequest(con);
 
         if (HttpSession::eResponsing == ptr->mState) {
-            HandleRequest(con, ptr);
+            HttpTaskPtr task(new HttpTask);
+            task->SetTaskFunc(std::bind(&HttpServer::HandleRequest, this, con, ptr));
+            mTaskFifo.push_back(task);
+            //HandleRequest(con, ptr);
         } else if (HttpSession::eError == ptr->mState) {
             con->SendString("HTTP/1.1 400 Bad Request\r\n\r\n");
             con->Close();

@@ -21,6 +21,7 @@ namespace net {
             TcpServer(PollLoopPtr const & loop, int port, int max_conn);
             Acceptor & GetAcceptor() { return *mAcceptor; }
 
+            PollLoopPtr & GetPollLoop() { return mLoop; }
         protected:
             void OnNewConnection(int fd, IPv4Ptr const &peer_addr);
             void OnCloseConnection(ConnectionNode * con);

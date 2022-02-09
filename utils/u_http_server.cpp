@@ -33,13 +33,17 @@ void OnOkHttpRequest(HttpRequestPtr const & req,
 int main() {
     PollLoopPtr loop = CreatePollLoop();
 
-    //HttpServer http(loop, 65530, 3);
-    //http.SetRequestCallBk(std::bind(&OnOkHttpRequest, _1, _2));
+    HttpServer http(loop, 65530, 3);
+    http.SetRequestCallBk(std::bind(&OnOkHttpRequest, _1, _2));
 
-    std::thread t([loop]{loop->Loop(10);});
+    std::thread t([&]{
+        loop->PreLoop();
 
-    sleep(1);
-    loop->WakeUp(1024);
+        while (true) {
+            loop->LoopOnce(10);
+            http.FinishTasks();
+        }
+    });
 
     t.join();
     return 0;

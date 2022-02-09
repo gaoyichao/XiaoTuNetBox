@@ -6,6 +6,7 @@
 #ifndef XTNB_HTTP_SESSION_H
 #define XTNB_HTTP_SESSION_H
 
+#include <XiaoTuNetBox/WakeUpper.h>
 #include <XiaoTuNetBox/ConnectionNode.h>
 #include <XiaoTuNetBox/HttpRequest.h>
 #include <XiaoTuNetBox/HttpResponse.h>
@@ -69,6 +70,7 @@ namespace net {
 
             bool ParseRequestLine(uint8_t const * begin, uint8_t const * end);
             HttpRequestPtr HandleRequest(ConnectionPtr const & conn);
+
             HttpRequestPtr GetRequest() { return mRequest; }
             HttpResponsePtr GetResponse() { return mResponse; }
         
@@ -81,12 +83,19 @@ namespace net {
 
         private:
             //! @todo 增加输出缓存
+            
+            //! 输入缓存 InputBuffer 的观测器
             InBufObserverPtr mInBuf;
+            //! #mInBuf 在 HttpServer 的会话列表中的索引
             size_t mIdx;
 
             EState mState;
             HttpRequestPtr mRequest;
             HttpResponsePtr mResponse;
+
+        private:
+            //! PollLoop 唤醒器
+            WakeUpperPtr mWakeUpper;
     };
 
     typedef std::shared_ptr<HttpSession> HttpSessionPtr;

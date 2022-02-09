@@ -24,6 +24,9 @@ namespace net {
         mInBuf = conn->GetInputBuffer().CreateObserver();
     }
 
+    //! @brief 解析 Http 请求的起始行
+    //! @param begin 行的起始地址
+    //! @param end 行的结束地址
     bool HttpSession::ParseRequestLine(uint8_t const * begin, uint8_t const * end)
     {
         uint8_t const * space = FindString(begin, end, (uint8_t const *)" ", 1);

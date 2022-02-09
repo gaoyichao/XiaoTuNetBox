@@ -48,6 +48,7 @@ namespace net {
             struct pollfd const & GetPollFd() const { return mPollFd; }
             int GetFd() const { return mPollFd.fd; }
 
+            inline PollLoopPtr & GetPollLoop() { return mLoop; }
             int GetLoopIdx() const { return mLoopIdx; }
             pid_t GetLoopTid() const;
             void WakeUpLoop();

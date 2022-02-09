@@ -10,9 +10,10 @@
 #include <XiaoTuNetBox/HttpSession.h>
 #include <XiaoTuNetBox/HttpRequest.h>
 #include <XiaoTuNetBox/HttpResponse.h>
-
+#include <XiaoTuNetBox/HttpTask.h>
 
 #include <vector>
+#include <deque>
 
 namespace xiaotu {
 namespace net {
@@ -25,7 +26,9 @@ namespace net {
             SessionPtr OnNewConnection(ConnectionPtr const & conn);
             void OnCloseConnection(ConnectionPtr const & conn, SessionPtr const & session);
             void OnMessage(ConnectionPtr const & con, SessionPtr const & session);
+
             void HandleRequest(ConnectionPtr const & con, HttpSessionPtr const & session);
+            void HandleReponse(ConnectionPtr const & con, HttpSessionPtr const & session);
     
         public:
             typedef std::function< void (HttpRequestPtr const &, HttpResponsePtr const &)> RequestCallBk;
@@ -39,6 +42,11 @@ namespace net {
             std::vector<size_t> mHoles;
             TcpServer mServer;
 
+        public:
+            void FinishTasks();
+        private:
+            //! @todo 加锁
+            std::deque<HttpTaskPtr> mTaskFifo;
     };
 
 }
