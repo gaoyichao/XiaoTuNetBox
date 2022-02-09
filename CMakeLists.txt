@@ -39,17 +39,36 @@ target_link_libraries(${PROJECT_NAME})
 #
 ############################################################################
 
+add_executable(u_echo_server utils/u_echo_server.cpp)
+target_link_libraries(u_echo_server ${PROJECT_NAME})
+
+add_executable(u_stdin_ipv4_talk utils/u_stdin_ipv4_talk.cpp)
+target_link_libraries(u_stdin_ipv4_talk ${PROJECT_NAME})
+
 ############################################################################
 #
 # tests 
 #
 ############################################################################
 
-add_executable(t_Address test/t_Address.cpp)
-target_link_libraries(t_Address gtest gtest_main pthread rt ${PROJECT_NAME})
+enable_testing()
 
-#add_executable(t_HttpServer test/非阻塞HttpServer.cpp)
-#target_link_libraries(t_HttpServer ${PROJECT_NAME})
+set(TEST_DEPENDS gtest gtest_main pthread rt)
+
+function(build_test_case NAME EXEC TSRC)
+    message(STATUS "build_test_case:"  ${NAME})
+    message(STATUS "EXEC = " ${EXEC})
+    message(STATUS "TSRC = " ${TSRC})
+
+    add_executable(${EXEC} ${TSRC})
+    target_link_libraries(${EXEC} ${TEST_DEPENDS} ${PROJECT_NAME})
+    add_test(NAME ${NAME} COMMAND ${EXEC})
+endfunction()
+
+build_test_case(DataArray t_DataArray test/t_DataArray.cpp)
+build_test_case(DataQueue t_DataQueue test/t_DataQueue.cpp)
+build_test_case(Address t_Address test/t_Address.cpp)
+build_test_case(Socket t_Socket test/t_Socket.cpp)
 
 ############################################################################
 #
