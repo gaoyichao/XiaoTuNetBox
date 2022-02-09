@@ -35,15 +35,29 @@ namespace net {
             ~InputBuffer();
 
         public:
-            inline size_t Size()
+            inline size_t ReadableBytes() const { return mWriteIdx - mReadIdx; }
+            inline size_t WritableBytes() const { return mReadBuf.Size() - mWriteIdx; }
+            inline size_t PrependableBytes() const { return mReadIdx; }
+
+            inline size_t Size() { return ReadableBytes(); }
+
+            inline uint8_t const * Begin()
             {
-                std::lock_guard<std::mutex> lock(mBufMutex);
-                return ReadableBytes();
+                return mReadBuf.Data() + mReadIdx;
+            }
+
+            inline uint8_t const * End()
+            {
+                return mReadBuf.Data() + mWriteIdx;
+            }
+
+            inline uint8_t const * Peek()
+            {
+                return Begin();
             }
 
             inline bool PeekFront(uint8_t *buf, int n, size_t offset = 0)
             {
-                std::lock_guard<std::mutex> lock(mBufMutex);
                 assert(n <= (ReadableBytes() - offset));
                 memcpy(buf, mReadBuf.Data() + offset, n); 
                 return true;
@@ -51,7 +65,6 @@ namespace net {
 
             inline bool DropAll()
             {
-                std::lock_guard<std::mutex> lock(mBufMutex);
                 mReadIdx = 0;
                 mWriteIdx = 0;
                 return true;
@@ -59,7 +72,6 @@ namespace net {
 
             inline bool DropFront(int n)
             {
-                std::lock_guard<std::mutex> lock(mBufMutex);
                 int nread = ReadableBytes();
                 assert(n <= nread);
 
@@ -69,18 +81,7 @@ namespace net {
                 return true;
             }
         private:
-            int Size(InBufObserver & obs);
-            bool PeekFront(uint8_t * buf, int n, InBufObserver & obs);
-            bool PopFront(uint8_t * buf, int n, InBufObserver & obs);
-            bool DropFront(int n, InBufObserver & obs);
-        private:
-            inline size_t ReadableBytes() const { return mWriteIdx - mReadIdx; }
-            inline size_t WritableBytes() const { return mReadBuf.Size() - mWriteIdx; }
-            inline size_t PrependableBytes() const { return mReadIdx; }
-           
-        private:
             DataArray<uint8_t> mReadBuf;
-            std::mutex mBufMutex;
             size_t mReadIdx;
             size_t mWriteIdx;
             uint8_t * mExtraBuf;
@@ -95,15 +96,15 @@ namespace net {
 
             inline void ReleaseObserver(size_t idx)
             {
-                std::lock_guard<std::mutex> lock(mObsMutex);
                 mObservers[idx].reset();
                 mObsHoles.push_back(idx);
             }
 
-            void ObserverCallBack();
-            
+            inline size_t ObserverSize() const { return mObservers.size(); }
+            inline size_t NumHoles() const { return mObsHoles.size(); }
+            inline size_t NumObservers() const { return ObserverSize() - NumHoles(); }
+
         private:
-            std::mutex mObsMutex;
             std::vector<InBufObserverPtr> mObservers;
             std::vector<size_t> mObsHoles;
     };

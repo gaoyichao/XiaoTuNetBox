@@ -31,7 +31,6 @@ namespace net {
 
     size_t InputBuffer::Read(int fd)
     {
-        std::lock_guard<std::mutex> lock(mBufMutex);
         // 清理队首数据
         size_t min_idx = mReadBuf.Size();
         for (size_t i = 0; i < mObservers.size(); ++i) {
@@ -45,6 +44,10 @@ namespace net {
             if (nullptr == mObservers[i])
                 continue;
             mObservers[i]->mStartIdx -= min_idx;
+        }
+        
+        if (mWriteIdx == mReadBuf.Capacity()) {
+            mReadBuf.AdjustCapacity(2 * mWriteIdx);
         }
 
         // 搬运内核数据
@@ -68,7 +71,6 @@ namespace net {
 
     InBufObserverPtr InputBuffer::CreateObserver()
     {
-        std::lock_guard<std::mutex> lock(mObsMutex);
         int idx = 0;
         if (mObsHoles.empty()) {
             idx = mObservers.size();
@@ -82,54 +84,6 @@ namespace net {
         InBufObserverPtr ptr(new InBufObserver(*this, idx));
         mObservers[idx] = ptr;
         return ptr;
-    }
-
-
-    void InputBuffer::ObserverCallBack()
-    {
-        std::lock_guard<std::mutex> lock(mObsMutex);
-        int n = mObservers.size();
-        for (int i = 0; i < n; ++i) {
-            if (nullptr == mObservers[i])
-                continue;
-
-            if (mObservers[i]->mRecvCallBk)
-                mObservers[i]->mRecvCallBk();
-        }
-    }
-
-    int InputBuffer::Size(InBufObserver & obs)
-    {
-        std::lock_guard<std::mutex> lock(mBufMutex);
-        return (ReadableBytes() - obs.mStartIdx);
-    }
-
-    bool InputBuffer::PeekFront(uint8_t * buf, int n, InBufObserver & obs)
-    {
-        std::lock_guard<std::mutex> lock(mBufMutex);
-        assert(n <= (ReadableBytes() - obs.mStartIdx));
-        memcpy(buf, mReadBuf.Data() + mReadIdx + obs.mStartIdx, n); 
-        return true;
-    }
-
-    bool InputBuffer::PopFront(uint8_t * buf, int n, InBufObserver & obs)
-    {
-        std::lock_guard<std::mutex> lock(mBufMutex);
-        assert(n <= (ReadableBytes() - obs.mStartIdx));
-        memcpy(buf, mReadBuf.Data() + mReadIdx + obs.mStartIdx, n); 
-        obs.mStartIdx += n;
-        return true;
-
-    }
-
-    bool InputBuffer::DropFront(int n, InBufObserver & obs)
-    {
-        std::lock_guard<std::mutex> lock(mBufMutex);
-        int idx = mReadIdx + obs.mStartIdx + n;
-        if (idx >= mWriteIdx)
-            return false;
-        obs.mStartIdx += n;
-        return true;
     }
 }
 }

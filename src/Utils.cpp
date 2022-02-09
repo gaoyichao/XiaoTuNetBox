@@ -37,6 +37,53 @@ namespace net {
         }
     }
 
+
+    uint8_t const * FindString(uint8_t const * begin, uint8_t const * end,
+                               uint8_t const * pattern, size_t np)
+    {
+        int nm = end - begin;
+        if (nm < np)
+            return NULL;
+
+        for (uint8_t const * addr = begin; addr != end; ++addr) {
+            for (nm = 0; nm < np; ++nm) {
+                if (addr[nm] != pattern[nm]) {
+                    addr += nm;
+                    break;
+                }
+            }
+        
+            if (nm == np)
+                return addr;
+        }
+        return NULL;
+    }
+
+    const char UpperToLower = 'a' - 'A';
+    void ToLower(std::string & str)
+    {
+        for (size_t i = 0; i < str.size(); ++i) {
+            if (IsUpper(str[i]))
+                str[i] += UpperToLower;
+        }
+    }
+
+    uint8_t const * EatByte(uint8_t const * begin, uint8_t const * end, uint8_t c)
+    {
+        for (uint8_t const * it = begin; it != end; ++it)
+            if (c != *it)
+                return it;
+        return end;
+    }
+    uint8_t const * InvEatByte(uint8_t const * begin, uint8_t const * end, uint8_t c)
+    {
+        for (uint8_t const * it = (end - 1); it != begin; --it)
+            if (c != *it)
+                return it;
+        return begin;
+    }
+
+
     uint32_t RollLeft(uint32_t value, uint32_t bits)
     {
         return (value << bits) | (value >> (32 - bits));

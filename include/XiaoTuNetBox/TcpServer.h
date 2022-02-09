@@ -6,6 +6,7 @@
 #include <XiaoTuNetBox/PollLoop.h>
 #include <XiaoTuNetBox/EventHandler.h>
 #include <XiaoTuNetBox/Timer.h>
+#include <XiaoTuNetBox/InputBuffer.h>
 
 #include <list>
 #include <deque>
@@ -23,7 +24,7 @@ namespace net {
         protected:
             void OnNewConnection(int fd, IPv4Ptr const &peer_addr);
             void OnCloseConnection(ConnectionNode * con);
-            void OnNewRawMsg(ConnectionNode * con, RawMsgPtr const & msg);
+            void OnMessage(ConnectionNode * con);
             void OnTimeOut();
 
             PollLoopPtr mLoop;
@@ -38,14 +39,13 @@ namespace net {
 
         public:
             typedef std::function<void(ConnectionPtr const & con)> ConnCallBk;
-            typedef std::function<void(ConnectionPtr const & con, RawMsgPtr const &)> RawMsgCallBk;
+            typedef std::function<SessionPtr(ConnectionPtr const & con)> NewConnCalBk;
+            typedef std::function<void(ConnectionPtr const & con, SessionPtr const & session)> SessionCallBk;
 
-            void SetNewConnCallBk(ConnCallBk cb) { mNewConnCallBk = std::move(cb); }
-            void SetCloseConnCallBk(ConnCallBk cb) { mCloseConnCallBk = std::move(cb); }
-            void SetNewRawMsgCallBk(RawMsgCallBk cb) {
-                //! @deprecated
-                std::cerr << __FUNCTION__ << " is deprecated!!!" << std::endl;
-            }
+            void SetNewConnCallBk(NewConnCalBk cb) { mNewConnCallBk = std::move(cb); }
+            void SetCloseConnCallBk(SessionCallBk cb) { mCloseConnCallBk = std::move(cb); }
+            void SetMessageCallBk(SessionCallBk cb) { mMessageCallBk = std::move(cb); }
+
             /*
              * SetTimeOut - 超时关闭连接
              *
@@ -59,9 +59,9 @@ namespace net {
             void SetTimeOut(time_t sec, long nsec, int n); 
 
         protected:
-            ConnCallBk mNewConnCallBk;
-            ConnCallBk mCloseConnCallBk;
-            RawMsgCallBk mNewRawMsgCallBk;
+            NewConnCalBk mNewConnCallBk;
+            SessionCallBk mCloseConnCallBk;
+            SessionCallBk mMessageCallBk;
     };
 }
 }

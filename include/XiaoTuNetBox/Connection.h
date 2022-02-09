@@ -30,6 +30,7 @@ namespace net {
             void Close();
             void SendBytes(uint8_t const * buf, int num);
             void SendRawMsg(RawMsgPtr const & msg);
+            void SendString(std::string const & msg);
             void OnReadEvent();
             void OnWriteEvent();
             void OnClosingEvent();
@@ -46,15 +47,13 @@ namespace net {
 
         public:
             typedef std::function<void()> EventCallBk;
-            typedef std::function<void(RawMsgPtr const &)> RawMsgCallBk;
 
             void SetCloseCallBk(EventCallBk cb) { mCloseCallBk = std::move(cb); }
-            void SetRecvRawCallBk(RawMsgCallBk cb) { mRecvRawCallBk = std::move(cb); }
-
+            void SetMsgCallBk(EventCallBk cb) { mMsgCallBk = std::move(cb); }
 
         private:
             EventCallBk mCloseCallBk;
-            RawMsgCallBk mRecvRawCallBk;
+            EventCallBk mMsgCallBk;
     };
 }
 }

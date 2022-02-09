@@ -1,8 +1,10 @@
 /******************************************************************************
  * 
- * u_echo_server - echo服务器例程
+ * t_echo_server_0 - echo服务器例程
  * 
  * 单线程
+ * 
+ * 对应运行t_echo_client_0
  * 
  *****************************************************************************/
 
@@ -12,17 +14,17 @@
 #include <memory>
 #include <vector>
 #include <functional>
+#include <typeinfo>
 
 using namespace std::placeholders;
 using namespace xiaotu::net;
 
-class Session {
+class EchoSession : public Session {
     public:
-        Session(ConnectionPtr const & conn)
+        EchoSession(ConnectionPtr const & conn)
             : mConn(conn)
         {
             mObserver = conn->GetInputBuffer().CreateObserver();
-            mObserver->SetRecvCallBk(std::bind(&Session::Echo, this));
         }
 
         void Echo()
@@ -41,23 +43,36 @@ class Session {
             mConn->SendBytes(msg.data(), msg.size());
         }
 
+        virtual char const * ToCString() { return typeid(*this).name(); }
+
     private:
         ConnectionPtr mConn;
         InBufObserverPtr mObserver;
 };
 
-typedef std::shared_ptr<Session> SessionPtr;
-std::vector<SessionPtr> sessions;
+typedef std::shared_ptr<EchoSession> EchoSessionPtr;
+std::vector<EchoSessionPtr> sessions;
 
-void OnNewConnection(ConnectionPtr const & conn) {
+SessionPtr OnNewConnection(ConnectionPtr const & conn) {
     std::cout << "新建连接:" << conn->GetInfo() << std::endl;
     conn->GetHandler()->SetNonBlock(true);
 
-    sessions.push_back(SessionPtr(new Session(conn)));
+    EchoSessionPtr ptr(new EchoSession(conn));
+    sessions.push_back(ptr);
+    return ptr;
 }
 
 void OnCloseConnection(ConnectionPtr const & conn) {
     std::cout << "关闭连接:" << conn->GetInfo() << std::endl;
+}
+
+void OnMessage(ConnectionPtr const & con, SessionPtr const & session)
+{
+    std::cout << "接收到了消息" << std::endl;
+    EchoSessionPtr ptr = std::static_pointer_cast<EchoSession>(session);
+    std::cout << ptr->ToCString() << std::endl;
+
+    ptr->Echo();
 }
 
 
@@ -68,6 +83,7 @@ int main() {
     tcp.SetTimeOut(10, 0, 5);
     tcp.SetNewConnCallBk(std::bind(OnNewConnection, _1));
     tcp.SetCloseConnCallBk(std::bind(OnCloseConnection, _1));
+    tcp.SetMessageCallBk(std::bind(OnMessage, _1, _2));
 
     loop->Loop(10);
 

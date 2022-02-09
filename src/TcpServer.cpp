@@ -51,16 +51,16 @@ namespace net {
             ConnectionPtr conn(new Connection(fd, peer_addr));
             ApplyOnLoop(conn, mLoop);
 
-            ConnectionNode *node = new ConnectionNode();
+            ConnectionNode * node = new ConnectionNode();
             node->conn = conn;
             ConnectionNode * head = mTimeWheel.back();
             AddTail(node, head);
 
-            conn->SetCloseCallBk(std::bind(&TcpServer::OnCloseConnection, this, node));
-            conn->SetRecvRawCallBk(std::bind(&TcpServer::OnNewRawMsg, this, node, _1));
-
             if (mNewConnCallBk)
-                mNewConnCallBk(conn);
+                node->session = mNewConnCallBk(conn);
+
+            conn->SetCloseCallBk(std::bind(&TcpServer::OnCloseConnection, this, node));
+            conn->SetMsgCallBk(std::bind(&TcpServer::OnMessage, this, node));
 
             mConnNum++;
         }
@@ -69,7 +69,7 @@ namespace net {
     void TcpServer::OnCloseConnection(ConnectionNode * con) {
         std::cout << __FUNCTION__ << std::endl;
         if (mCloseConnCallBk)
-            mCloseConnCallBk(con->conn);
+            mCloseConnCallBk(con->conn, con->session.lock());
 
         UnApplyOnLoop(con->conn, mLoop);
         Delete(con);
@@ -77,9 +77,10 @@ namespace net {
         mConnNum--;
     }
 
-    void TcpServer::OnNewRawMsg(ConnectionNode * con, RawMsgPtr const & msg) {
-        if (mNewRawMsgCallBk)
-            mNewRawMsgCallBk(con->conn, msg);
+    void TcpServer::OnMessage(ConnectionNode * con)
+    {
+        if (mMessageCallBk)
+            mMessageCallBk(con->conn, con->session.lock());
 
         ConnectionNode * head = mTimeWheel.back();
         Delete(con);

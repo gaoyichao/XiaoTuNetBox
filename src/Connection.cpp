@@ -59,10 +59,8 @@ namespace net {
             if (mCloseCallBk)
                 mCloseCallBk();
         } else {
-            if (mRecvRawCallBk) {
-                mRecvRawCallBk(nullptr);
-            }
-            mReadBuf.ObserverCallBack();
+            if (mMsgCallBk)
+                mMsgCallBk();
         }
     }
 
@@ -93,6 +91,11 @@ namespace net {
 
     void Connection::SendRawMsg(RawMsgPtr const & msg) {
         SendBytes(msg->data(), msg->size());
+    }
+
+    void Connection::SendString(std::string const & msg)
+    {
+        SendBytes((uint8_t const *)msg.c_str(), msg.size());
     }
 
     int Connection::SendRawData(uint8_t const * buf, int num) {

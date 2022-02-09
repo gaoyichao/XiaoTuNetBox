@@ -2,9 +2,11 @@
 #define XTNB_INBUF_OBSERVER_H
 
 #include <XiaoTuNetBox/InputBuffer.h>
+#include <XiaoTuNetBox/Utils.h>
 
 #include <memory>
 #include <functional>
+#include <cassert>
 
 namespace xiaotu {
 namespace net {
@@ -18,17 +20,70 @@ namespace net {
 
             }
         public:
-            inline int Size() { return mBuffer.Size(*this); }
-            inline bool PeekFront(uint8_t * buf, int n) { return mBuffer.PeekFront(buf, n, *this); }
-            inline bool PopFront(uint8_t *buf, int n) { return mBuffer.PopFront(buf, n, *this); }
-            inline bool DropFront(int n) { return mBuffer.DropFront(n, *this); }
-            inline void Release() { mBuffer.ReleaseObserver(mIdx); }
+            inline size_t Size()
+            {
+                return mBuffer.ReadableBytes() - mStartIdx;
+            }
 
-        public:
-            typedef std::function<void()> EventCallBk;
-            void SetRecvCallBk(EventCallBk cb) { mRecvCallBk = std::move(cb); }
-        private:
-            EventCallBk mRecvCallBk;
+            inline uint8_t const * Peek()
+            {
+                return mBuffer.Peek() + mStartIdx;
+            }
+
+            inline uint8_t const * Begin()
+            {
+                return Peek();
+            }
+
+            inline uint8_t const * End()
+            {
+                return mBuffer.End();
+            }
+
+            inline bool Empty() { return Begin() == End(); }
+
+            //! @brief 窥视缓存数据，找到第一个满足 pattern 的地址
+            //!
+            //! @param pattern 模板起始地址
+            //! @param np 模板长度
+            //! @return 第一个匹配的起始地址, 如果没有找到返回NULL
+            inline uint8_t const * PeekFor(uint8_t const * pattern, int np)
+            {
+                return FindString(Begin(), End(), pattern, np);
+            }
+
+            inline bool PeekFront(uint8_t * buf, int n)
+            {
+                assert(n <= (mBuffer.ReadableBytes() - mStartIdx));
+                memcpy(buf, Begin(), n); 
+                return true;
+            }
+
+            inline bool PopFront(uint8_t *buf, int n)
+            {
+                assert(n <= (mBuffer.ReadableBytes() - mStartIdx));
+                memcpy(buf, Begin(), n); 
+                mStartIdx += n;
+                return true;
+            }
+
+            inline bool DropFront(int n)
+            {
+                assert(n <= (mBuffer.ReadableBytes() - mStartIdx));
+                mStartIdx += n;
+                return true;
+            }
+
+            inline bool DropAll()
+            {
+                mStartIdx += Size();
+                return true;
+            }
+
+            inline void Release()
+            {
+                mBuffer.ReleaseObserver(mIdx);
+            }
 
         private:
             InputBuffer & mBuffer;

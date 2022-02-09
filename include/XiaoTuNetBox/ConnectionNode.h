@@ -2,11 +2,11 @@
 #define XTNB_CONNECTIONNODE_H
 
 #include <XiaoTuNetBox/Connection.h>
+#include <XiaoTuNetBox/Session.h>
 
 namespace xiaotu {
 namespace net {
  
-
     class ConnectionNode {
         public:
             ConnectionNode();
@@ -23,9 +23,10 @@ namespace net {
                 return *this;
             }
 
-
         public:
             ConnectionPtr conn;
+            //! @todo Session列表?
+            SessionWeakPtr session;
             ConnectionNode *prev;
             ConnectionNode *next;
     };
