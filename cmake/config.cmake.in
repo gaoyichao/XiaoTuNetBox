@@ -1,0 +1,8 @@
+#
+# XiaoTuNetBox 配置
+#
+
+set(XiaoTuNetBox_INCLUDE_DIR "@CMAKE_INSTALL_PREFIX@/include")
+set(XiaoTuNetBox_LIBS
+    "@CMAKE_INSTALL_PREFIX@/lib/libXiaoTuNetBox.so")
+
