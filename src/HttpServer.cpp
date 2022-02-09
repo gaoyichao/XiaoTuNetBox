@@ -19,6 +19,18 @@ namespace net {
         mServer.SetNewConnCallBk(std::bind(&HttpServer::OnNewConnection, this, _1));
         mServer.SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1, _2));
         mServer.SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1, _2));
+
+        mDestroing = false;
+        mTaskThread = std::thread(std::bind(&HttpServer::FinishTasks, this));
+    }
+
+    HttpServer::~HttpServer()
+    {
+        std::unique_lock<std::mutex> lock(mFifoMutex);
+        mDestroing = true;
+        mFifoCV.notify_all();
+
+        mTaskThread.join();
     }
 
 
@@ -49,8 +61,6 @@ namespace net {
 
     void HttpServer::HandleReponse(ConnectionPtr const & con, HttpSessionPtr const & session)
     {
-        std::cout << __FUNCTION__ << std::endl;
-
         HttpResponsePtr res = session->GetResponse();
 
         std::vector<uint8_t> buf;
@@ -86,13 +96,19 @@ namespace net {
 
     void HttpServer::FinishTasks()
     {
-        if (mTaskFifo.empty())
-            return;
+        while (true) {
+            std::unique_lock<std::mutex> lock(mFifoMutex);
+            while (mTaskFifo.empty() && !mDestroing) {
+                mFifoCV.wait(lock);
+            }
 
-        HttpTaskPtr task = mTaskFifo.front();
-        mTaskFifo.pop_front();
+            if (mDestroing)
+                break;
 
-        task->Finish();
+            HttpTaskPtr task = mTaskFifo.front();
+            mTaskFifo.pop_front();
+            task->Finish();
+        }
     }
 
     void HttpServer::OnMessage(ConnectionPtr const & con, SessionPtr const & session)
@@ -108,8 +124,10 @@ namespace net {
         if (HttpSession::eResponsing == ptr->mState) {
             HttpTaskPtr task(new HttpTask);
             task->SetTaskFunc(std::bind(&HttpServer::HandleRequest, this, con, ptr));
+
+            std::unique_lock<std::mutex> lock(mFifoMutex);
             mTaskFifo.push_back(task);
-            //HandleRequest(con, ptr);
+            mFifoCV.notify_all();
         } else if (HttpSession::eError == ptr->mState) {
             con->SendString("HTTP/1.1 400 Bad Request\r\n\r\n");
             con->Close();

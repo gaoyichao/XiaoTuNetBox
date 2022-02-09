@@ -29,7 +29,7 @@ file(GLOB PROJECT_INC_FILES
 add_library(${PROJECT_NAME} SHARED
     ${PROJECT_SRC_FILES}
 )
-target_link_libraries(${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME} pthread)
 
 ############################################################################
 #

@@ -14,6 +14,10 @@
 
 #include <vector>
 #include <deque>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
 
 namespace xiaotu {
 namespace net {
@@ -21,6 +25,7 @@ namespace net {
     class HttpServer {
         public:
             HttpServer(PollLoopPtr const & loop, int port, int max_conn);
+            ~HttpServer();
 
         private:
             SessionPtr OnNewConnection(ConnectionPtr const & conn);
@@ -45,7 +50,10 @@ namespace net {
         public:
             void FinishTasks();
         private:
-            //! @todo 加锁
+            std::mutex mFifoMutex;
+            std::condition_variable mFifoCV;
+            std::thread mTaskThread;
+            bool mDestroing;
             std::deque<HttpTaskPtr> mTaskFifo;
     };
 

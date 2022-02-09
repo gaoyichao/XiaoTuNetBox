@@ -12,11 +12,10 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <thread>
 
 #include <endian.h>
 #include <string.h>
-
-#include <thread>
 
 using namespace std::placeholders;
 using namespace xiaotu::net;
@@ -28,22 +27,11 @@ void OnOkHttpRequest(HttpRequestPtr const & req,
     res->AppendContent("<h1>Hello</h1>");
 }
 
-
-
 int main() {
     PollLoopPtr loop = CreatePollLoop();
-
     HttpServer http(loop, 65530, 3);
     http.SetRequestCallBk(std::bind(&OnOkHttpRequest, _1, _2));
-
-    std::thread t([&]{
-        loop->PreLoop();
-
-        while (true) {
-            loop->LoopOnce(10);
-            http.FinishTasks();
-        }
-    });
+    std::thread t([&]{ loop->Loop(10); });
 
     t.join();
     return 0;
