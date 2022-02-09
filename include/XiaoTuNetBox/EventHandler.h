@@ -29,7 +29,7 @@ namespace net {
         UnApplyHandlerOnLoop(obj->GetHandler(), loop);
     }
 
-    class PollEventHandler : public std::enable_shared_from_this<PollEventHandler> {
+    class PollEventHandler {
         typedef std::shared_ptr<PollLoop> PollLoopPtr;
 
         public:

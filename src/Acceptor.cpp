@@ -1,6 +1,5 @@
 #include <XiaoTuNetBox/Acceptor.h>
 
-#include <functional>
 #include <unistd.h>
 
 namespace xiaotu {

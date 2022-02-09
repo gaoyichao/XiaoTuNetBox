@@ -3,7 +3,7 @@ project(XiaoTuNetBox)
 set(PACKAGE_VERSION "0.0.7")
 
 add_compile_options(-std=c++17)
-set(CMAKE_BUILD_TYPE DEBUG)
+set(CMAKE_BUILD_TYPE RELEASE)
 
 message("${PROJECT_NAME}")
 message("${PROJECT_SOURCE_DIR}")
@@ -20,13 +20,11 @@ include_directories(
 #
 ############################################################################
 
-file(GLOB PROJECT_SRC_FILES ${PROJECT_SOURCE_DIR}/src/*cpp)
-message("${PROJECT_SRC_FILES}")
-
+file(GLOB PROJECT_SRC_FILES
+          ${PROJECT_SOURCE_DIR}/src/*cpp)
 file(GLOB PROJECT_INC_FILES
           ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/*.h
           ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/*.hpp)
-message("${PROJECT_INC_FILES}")
 
 add_library(${PROJECT_NAME} SHARED
     ${PROJECT_SRC_FILES}

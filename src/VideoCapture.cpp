@@ -1,17 +1,12 @@
-
 #include <XiaoTuNetBox/VideoCapture.h>
 
-#include <iostream>
 #include <string>
-
-#include <stdio.h>
 #include <cstring>
-#include <cassert>
 #include <map>
 
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
 
