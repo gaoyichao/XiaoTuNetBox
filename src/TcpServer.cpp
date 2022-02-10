@@ -67,7 +67,7 @@ namespace net {
     }
 
     void TcpServer::OnCloseConnection(ConnectionNode * con) {
-        std::cout << __FUNCTION__ << std::endl;
+        std::cout << __FUNCTION__ << ":" << con->conn->GetHandler()->GetFd() << std::endl;
         if (mCloseConnCallBk)
             mCloseConnCallBk(con->conn, con->session.lock());
 

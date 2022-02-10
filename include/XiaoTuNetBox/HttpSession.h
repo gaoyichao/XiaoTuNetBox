@@ -38,6 +38,7 @@ namespace net {
         friend class HttpServer;
         public:
             HttpSession(ConnectionPtr const & conn);
+            ~HttpSession();
             HttpSession(HttpSession const &) = delete;
             HttpSession & operator = (HttpSession const &) = delete;
 
@@ -77,9 +78,9 @@ namespace net {
             virtual char const * ToCString() { return typeid(*this).name(); }
 
         private:
-            void OnExpectRequestLine(ConnectionPtr const & conn);
-            void OnReadingHeaders(ConnectionPtr const & conn);
-            void OnReadingBody(ConnectionPtr const & conn);
+            bool OnExpectRequestLine(ConnectionPtr const & conn);
+            bool OnReadingHeaders(ConnectionPtr const & conn);
+            bool OnReadingBody(ConnectionPtr const & conn);
 
         private:
             //! @todo 增加输出缓存
@@ -99,6 +100,7 @@ namespace net {
     };
 
     typedef std::shared_ptr<HttpSession> HttpSessionPtr;
+    typedef std::weak_ptr<HttpSession> HttpSessionWeakPtr;
 
 
 }

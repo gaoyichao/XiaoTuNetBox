@@ -31,7 +31,11 @@ int main() {
     PollLoopPtr loop = CreatePollLoop();
     HttpServer http(loop, 65530, 3);
     http.SetRequestCallBk(std::bind(&OnOkHttpRequest, _1, _2));
-    std::thread t([&]{ loop->Loop(10); });
+    std::thread t([&]{ loop->Loop(1000); });
+
+    std::shared_ptr<int> douniwan(new int(10));
+    std::weak_ptr<int> bienao = douniwan;
+    std::cout << "douniwna:" << douniwan.use_count() << std::endl;
 
     t.join();
     return 0;

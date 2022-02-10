@@ -49,19 +49,25 @@ namespace net {
             mSessions[idx] = nullptr;
         }
         HttpSessionPtr ptr(new HttpSession(conn));
-        mSessions[idx] = ptr;
-
         ptr->mIdx = idx;
         ptr->mWakeUpper = std::make_shared<WakeUpper>();
+        ptr->mWakeUpper->SetWakeUpCallBk(std::bind(&HttpServer::HandleReponse, this, conn, HttpSessionWeakPtr(ptr)));
         ApplyOnLoop(ptr->mWakeUpper, mServer.GetPollLoop());
-        ptr->mWakeUpper->SetWakeUpCallBk(std::bind(&HttpServer::HandleReponse, this, conn, ptr));
 
-        return ptr;
+        mSessions[idx] = std::move(ptr);
+        return mSessions[idx];
     }
 
-    void HttpServer::HandleReponse(ConnectionPtr const & con, HttpSessionPtr const & session)
+    void HttpServer::HandleReponse(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr)
     {
+        HttpSessionPtr session = weakptr.lock();
+        if (nullptr == session)
+            return;
+
         HttpResponsePtr res = session->GetResponse();
+
+        if (con->IsClosed())
+            return;
 
         std::vector<uint8_t> buf;
         res->ToUint8Vector(buf);
@@ -72,8 +78,12 @@ namespace net {
         session->Reset();
     }
 
-    void HttpServer::HandleRequest(ConnectionPtr const & con, HttpSessionPtr const & session)
+    void HttpServer::HandleRequest(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr)
     {
+        HttpSessionPtr session = weakptr.lock();
+        if (nullptr == session)
+            return;
+
         HttpRequestPtr req = session->GetRequest();
         //req->PrintHeaders();
         std::string con_key("Connection");
@@ -96,18 +106,22 @@ namespace net {
 
     void HttpServer::FinishTasks()
     {
+        HttpTaskPtr task = nullptr;
+
         while (true) {
-            std::unique_lock<std::mutex> lock(mFifoMutex);
-            while (mTaskFifo.empty() && !mDestroing) {
-                mFifoCV.wait(lock);
+            {
+                std::unique_lock<std::mutex> lock(mFifoMutex);
+                while (mTaskFifo.empty() && !mDestroing)
+                    mFifoCV.wait(lock);
+                if (mDestroing)
+                    break;
+                task = mTaskFifo.front();
+                mTaskFifo.pop_front();
             }
 
-            if (mDestroing)
-                break;
-
-            HttpTaskPtr task = mTaskFifo.front();
-            mTaskFifo.pop_front();
-            task->Finish();
+            std::cout << __FUNCTION__ << std::endl;
+            if (nullptr != task)
+                task->Finish();
         }
     }
 
@@ -123,7 +137,7 @@ namespace net {
 
         if (HttpSession::eResponsing == ptr->mState) {
             HttpTaskPtr task(new HttpTask);
-            task->SetTaskFunc(std::bind(&HttpServer::HandleRequest, this, con, ptr));
+            task->SetTaskFunc(std::bind(&HttpServer::HandleRequest, this, con, HttpSessionWeakPtr(ptr)));
 
             std::unique_lock<std::mutex> lock(mFifoMutex);
             mTaskFifo.push_back(task);
@@ -142,6 +156,7 @@ namespace net {
 
         std::cout << "连接[" << conn->GetInfo() << "]关闭,释放 buffer" << std::endl;
         ptr->mInBuf->Release();
+        UnApplyOnLoop(ptr->mWakeUpper, mServer.GetPollLoop());
         
         size_t & idx = ptr->mIdx;
         mSessions[idx].reset();

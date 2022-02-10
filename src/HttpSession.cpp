@@ -24,9 +24,15 @@ namespace net {
         mInBuf = conn->GetInputBuffer().CreateObserver();
     }
 
+    HttpSession::~HttpSession()
+    {
+        std::cout << __FILE__ << ":" << __LINE__ << ":释放会话" << std::endl;
+    }
+
     //! @brief 解析 Http 请求的起始行
     //! @param begin 行的起始地址
     //! @param end 行的结束地址
+    //! @return true 成功获取起始行, false 未成
     bool HttpSession::ParseRequestLine(uint8_t const * begin, uint8_t const * end)
     {
         uint8_t const * space = FindString(begin, end, (uint8_t const *)" ", 1);
@@ -51,11 +57,14 @@ namespace net {
         return true;
     }
 
-    void HttpSession::OnExpectRequestLine(ConnectionPtr const & conn)
+    //! @brief 获取请求首行
+    //! @param conn TCP通信连接
+    //! @return true 完整解析并切换状态, false 未切换状态
+    bool HttpSession::OnExpectRequestLine(ConnectionPtr const & conn)
     {
         size_t n = mInBuf->Size();
         if (n < 8)
-            return;
+            return false;
 
         uint8_t const * begin = mInBuf->Begin();
         uint8_t const * crlf = mInBuf->PeekFor((uint8_t const *)"\r\n", 2);
@@ -66,7 +75,7 @@ namespace net {
                 mState = eError;
                 mInBuf->DropAll();
             }
-            return;
+            return true;
         }
 
         if (ParseRequestLine(begin, crlf))
@@ -74,26 +83,31 @@ namespace net {
         else
             mState = eError;
         mInBuf->DropFront(crlf - begin + 2);
+        return true;
     }
 
-    void HttpSession::OnReadingHeaders(ConnectionPtr const & conn)
+    //! @brief 解析请求消息头
+    //! @param conn TCP通信连接
+    //! @return true 完整解析并切换状态, false 未切换状态
+    bool HttpSession::OnReadingHeaders(ConnectionPtr const & conn)
     {
         uint8_t const * begin = mInBuf->Begin();
         uint8_t const * crlf = mInBuf->PeekFor((uint8_t const *)"\r\n", 2);
 
         if (NULL == crlf)
-            return;
+            return false;
 
         if (crlf == begin) {
             mState = eReadingBody;
             mInBuf->DropFront(2);
-            return;
+            return true;
         }
 
         uint8_t const * colon = FindString(begin, crlf, (uint8_t const *)":", 1);
         if (NULL == colon) {
             mState = eError;
-            return;
+            mInBuf->DropAll();
+            return true;
         }
  
         uint8_t const * key_begin = EatByte(begin, colon, ' ');
@@ -113,29 +127,39 @@ namespace net {
         mRequest->SetHeader(key, value);
 
         mInBuf->DropFront(crlf - begin + 2);
+        return true;
     }
 
-    void HttpSession::OnReadingBody(ConnectionPtr const & conn)
+    //! @brief 解析请求消息主体
+    //! @param conn TCP通信连接
+    //! @return true 完整解析并切换状态, false 未切换状态
+    bool HttpSession::OnReadingBody(ConnectionPtr const & conn)
     {
         size_t n0 = mRequest->mContent.size();
         size_t need = mRequest->ContentLength() - n0;
         if (0 == need) {
             mState = eResponsing;
-            return;
+            return true;
         }
 
         size_t n = (need > mInBuf->Size()) ? mInBuf->Size() : need;
         mRequest->mContent.resize(mRequest->mContent.size() + n);
         mInBuf->PopFront(mRequest->mContent.data() + n0, n);
+        return false;
     }
 
     HttpRequestPtr HttpSession::HandleRequest(ConnectionPtr const & conn)
     {
         while (!mInBuf->Empty()) {
-            if (eExpectRequestLine == mState)
-                OnExpectRequestLine(conn);
-            else if (eReadingHeaders == mState)
-                OnReadingHeaders(conn);
+            if (eExpectRequestLine == mState) {
+                if (!OnExpectRequestLine(conn))
+                    break;
+            }
+
+            if (eReadingHeaders == mState) {
+                if (!OnReadingHeaders(conn))
+                    break;
+            }
 
             if (eReadingBody == mState)
                 OnReadingBody(conn);

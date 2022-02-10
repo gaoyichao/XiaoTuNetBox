@@ -29,6 +29,7 @@ namespace net {
         mEventHandler->SetReadCallBk(std::bind(&Connection::OnReadEvent, this));
         mEventHandler->SetWriteCallBk(std::bind(&Connection::OnWriteEvent, this));
         mEventHandler->SetClosingCallBk(std::bind(&Connection::OnClosingEvent, this));
+        mIsClosed = false;
     }
 
     void Connection::Close() {
@@ -54,10 +55,7 @@ namespace net {
         size_t n = mReadBuf.Read(md);
 
         if (n <= 0) {
-            std::cout << "close fd = " << md << std::endl;
-            close(md);
-            if (mCloseCallBk)
-                mCloseCallBk();
+            Close();
         } else {
             if (mMsgCallBk)
                 mMsgCallBk();
@@ -69,6 +67,7 @@ namespace net {
         close(md);
         if (mCloseCallBk)
             mCloseCallBk();
+        mIsClosed = true;
     }
 
     void Connection::SendBytes(uint8_t const *buf, int num) {

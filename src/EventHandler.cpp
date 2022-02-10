@@ -17,6 +17,7 @@ namespace net {
         mPollFd.revents = 0;
 
         mIsClosing = false;
+        mIsClosed = false;
     }
 
 
@@ -35,6 +36,7 @@ namespace net {
     }
 
     void PollEventHandler::SetClosing(bool en) {
+        std::cout << "逗你玩:" << __FUNCTION__ << ":" << mPollFd.fd << std::endl;
         mIsClosing = en;
     }
 
@@ -68,9 +70,10 @@ namespace net {
                 mWriteCallBk();
         }
 
-        if (mIsClosing) {
+        if (mIsClosing && !mIsClosed) {
             if (mClosingCallBk)
                 mClosingCallBk();
+            mIsClosed = true;
         }
     }
 

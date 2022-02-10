@@ -27,6 +27,7 @@ namespace net {
             PollEventHandlerPtr & GetHandler() { return mEventHandler; }
             std::string const & GetInfo() const { return mInfoStr; }
 
+            bool IsClosed() const { return mIsClosed; }
             void Close();
             void SendBytes(uint8_t const * buf, int num);
             void SendRawMsg(RawMsgPtr const & msg);
@@ -44,6 +45,7 @@ namespace net {
             PollEventHandlerPtr mEventHandler;
             InputBuffer mReadBuf;
             DataQueue<uint8_t> mWriteBuf;
+            bool mIsClosed;
 
         public:
             typedef std::function<void()> EventCallBk;

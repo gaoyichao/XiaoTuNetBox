@@ -61,6 +61,7 @@ namespace net {
             PollLoopPtr mLoop;
             struct pollfd mPollFd;
             bool mIsClosing;
+            bool mIsClosed;
 
         public:
             void HandleEvents(struct pollfd const & pollFd);
