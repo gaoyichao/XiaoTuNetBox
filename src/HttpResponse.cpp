@@ -36,11 +36,20 @@ namespace net {
             head.append(local_buf);
             head.append("Connection: Keep-Alive\r\n");
         }
+        for (auto it = mHeaders.begin(); it != mHeaders.end(); ++it)
+            head.append(it->first + ": " + it->second);
         head.append("\r\n");
 
         buf.insert(buf.end(), head.begin(), head.end());
         buf.insert(buf.end(), mContent.begin(), mContent.end());
     }
 
+    void HttpResponse::AppendContent(std::string const & fname, uint64_t off, uint64_t len)
+    {
+        size_t n_ori = mContent.size();
+        
+        mContent.resize(n_ori + len);
+        ReadBinary(fname, mContent.data() + n_ori, 0, len);
+    }
 }
 }

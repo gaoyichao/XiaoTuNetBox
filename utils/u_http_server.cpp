@@ -16,15 +16,68 @@
 
 #include <endian.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 using namespace std::placeholders;
 using namespace xiaotu::net;
 
+std::string gRootPath("/home/gyc/tmp");
+
+void OnHeadRequest(HttpRequestPtr const & req,
+                   HttpResponsePtr const & res)
+{
+    res->SetStatusCode(HttpResponse::e200_OK);
+}
+
+void OnGetRequest(HttpRequestPtr const & req,
+                  HttpResponsePtr const & res)
+{
+    std::string urlpath = req->GetURLPath();
+    if ("/" == urlpath)
+        urlpath = "/index.html";
+
+    std::string path = gRootPath + urlpath;
+    std::cout << path << std::endl;
+
+    struct stat s;
+    if (-1 == stat(path.c_str(), &s)) {
+        res->SetStatusCode(HttpResponse::e404_NotFound);
+        res->AppendContent("Error:404");
+        return;
+    }
+
+    if (S_ISDIR(s.st_mode)) {
+        res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
+        return;
+    }
+
+    if (!S_ISREG(s.st_mode))
+        return;
+    res->SetStatusCode(HttpResponse::e200_OK);
+    res->AppendContent(path, 0, s.st_size);
+}
+
+
 void OnOkHttpRequest(HttpRequestPtr const & req,
                      HttpResponsePtr const & res)
 {
-    res->SetStatusCode(HttpResponse::e200_OK);
-    res->AppendContent("<h1>Hello</h1>");
+    switch (req->GetMethod()) {
+        case HttpRequest::eHEAD: {
+            OnHeadRequest(req, res);
+            break;
+        }
+        case HttpRequest::eGET: {
+            OnGetRequest(req, res);
+            break;
+        }
+        default: {
+            res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
+            break;
+        }
+
+    }
 }
 
 int main() {

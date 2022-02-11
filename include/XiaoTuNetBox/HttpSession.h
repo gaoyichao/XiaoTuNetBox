@@ -83,13 +83,6 @@ namespace net {
             bool OnReadingBody(ConnectionPtr const & conn);
 
         private:
-            //! @todo 增加输出缓存
-            
-            //! 输入缓存 InputBuffer 的观测器
-            InBufObserverPtr mInBuf;
-            //! #mInBuf 在 HttpServer 的会话列表中的索引
-            size_t mIdx;
-
             EState mState;
             HttpRequestPtr mRequest;
             HttpResponsePtr mResponse;

@@ -49,12 +49,27 @@ namespace net {
             }
             std::string const & GetURL() const { return mURL; }
 
+            std::string const & SetURLPath(std::string const & path)
+            {
+                mURLPath = path;
+                return mURLPath;
+            }
+            std::string const & GetURLPath() const { return mURLPath; }
+
+            std::string const & SetURLQuery(std::string const & q)
+            {
+                mURLQuery = q;
+                return mURLQuery;
+            }
+            std::string const & GetURLQuery() const { return mURLQuery; }
+
             std::string const & SetVersion(std::string const & ver)
             {
                 mVersion = ver;
                 return mVersion;
             }
             std::string const & GetVersion() const { return mVersion; }
+
 
             void SetHeader(std::string const & key, std::string const & value)
             {
@@ -101,6 +116,8 @@ namespace net {
         public:
             EMethod mMethod;
             std::string mURL;
+            std::string mURLPath;
+            std::string mURLQuery;
             std::string mVersion;
             std::map<std::string, std::string> mHeaders;
             std::vector<uint8_t> mContent;

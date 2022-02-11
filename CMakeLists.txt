@@ -37,12 +37,15 @@ target_link_libraries(${PROJECT_NAME} pthread)
 #
 ############################################################################
 
+# 一个 TCP 客户端
 add_executable(u_stdin_ipv4_talk utils/u_stdin_ipv4_talk.cpp)
 target_link_libraries(u_stdin_ipv4_talk ${PROJECT_NAME})
 
+# echo 服务器
 add_executable(u_echo_server utils/u_echo_server.cpp)
 target_link_libraries(u_echo_server ${PROJECT_NAME})
 
+# HTTP 服务器
 add_executable(u_http_server utils/u_http_server.cpp)
 target_link_libraries(u_http_server pthread ${PROJECT_NAME})
 

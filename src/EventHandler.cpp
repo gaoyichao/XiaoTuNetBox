@@ -36,7 +36,6 @@ namespace net {
     }
 
     void PollEventHandler::SetClosing(bool en) {
-        std::cout << "逗你玩:" << __FUNCTION__ << ":" << mPollFd.fd << std::endl;
         mIsClosing = en;
     }
 

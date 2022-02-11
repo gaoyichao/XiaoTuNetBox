@@ -12,50 +12,25 @@ namespace net {
     using namespace std::placeholders;
 
     HttpServer::HttpServer(PollLoopPtr const & loop, int port, int max_conn)
-        : mServer(loop, port, max_conn)
+        : TcpAppServer(loop, port, max_conn)
     {
-        std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~" << std::endl;
         mServer.SetTimeOut(10, 0, 5);
         mServer.SetNewConnCallBk(std::bind(&HttpServer::OnNewConnection, this, _1));
         mServer.SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1, _2));
         mServer.SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1, _2));
-
-        mDestroing = false;
-        mTaskThread = std::thread(std::bind(&HttpServer::FinishTasks, this));
     }
-
-    HttpServer::~HttpServer()
-    {
-        std::unique_lock<std::mutex> lock(mFifoMutex);
-        mDestroing = true;
-        mFifoCV.notify_all();
-
-        mTaskThread.join();
-    }
-
 
     SessionPtr HttpServer::OnNewConnection(ConnectionPtr const & conn) {
         std::cout << __FILE__ << ":" << __LINE__ << std::endl;
         std::cout << "新建连接:" << conn->GetInfo() << std::endl;
         conn->GetHandler()->SetNonBlock(true);
 
-        int idx = 0;
-        if (mHoles.empty()) {
-            idx = mSessions.size();
-            mSessions.push_back(nullptr);
-        } else {
-            idx = mHoles.back();
-            mHoles.pop_back();
-            mSessions[idx] = nullptr;
-        }
         HttpSessionPtr ptr(new HttpSession(conn));
-        ptr->mIdx = idx;
         ptr->mWakeUpper = std::make_shared<WakeUpper>();
         ptr->mWakeUpper->SetWakeUpCallBk(std::bind(&HttpServer::HandleReponse, this, conn, HttpSessionWeakPtr(ptr)));
         ApplyOnLoop(ptr->mWakeUpper, mServer.GetPollLoop());
 
-        mSessions[idx] = std::move(ptr);
-        return mSessions[idx];
+        return AddSession(ptr);
     }
 
     void HttpServer::HandleReponse(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr)
@@ -104,27 +79,6 @@ namespace net {
         session->mWakeUpper->WakeUp(4096);
     }
 
-    void HttpServer::FinishTasks()
-    {
-        HttpTaskPtr task = nullptr;
-
-        while (true) {
-            {
-                std::unique_lock<std::mutex> lock(mFifoMutex);
-                while (mTaskFifo.empty() && !mDestroing)
-                    mFifoCV.wait(lock);
-                if (mDestroing)
-                    break;
-                task = mTaskFifo.front();
-                mTaskFifo.pop_front();
-            }
-
-            std::cout << __FUNCTION__ << std::endl;
-            if (nullptr != task)
-                task->Finish();
-        }
-    }
-
     void HttpServer::OnMessage(ConnectionPtr const & con, SessionPtr const & session)
     {
         std::cout << "接收到了消息" << std::endl;
@@ -136,12 +90,8 @@ namespace net {
         HttpRequestPtr request = ptr->HandleRequest(con);
 
         if (HttpSession::eResponsing == ptr->mState) {
-            HttpTaskPtr task(new HttpTask);
-            task->SetTaskFunc(std::bind(&HttpServer::HandleRequest, this, con, HttpSessionWeakPtr(ptr)));
-
-            std::unique_lock<std::mutex> lock(mFifoMutex);
-            mTaskFifo.push_back(task);
-            mFifoCV.notify_all();
+            TaskPtr task(new Task(std::bind(&HttpServer::HandleRequest, this, con, HttpSessionWeakPtr(ptr))));
+            AddTask(task);
         } else if (HttpSession::eError == ptr->mState) {
             con->SendString("HTTP/1.1 400 Bad Request\r\n\r\n");
             con->Close();
@@ -154,20 +104,10 @@ namespace net {
         HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(session);
         std::cout << ptr->ToCString() << std::endl;
 
-        std::cout << "连接[" << conn->GetInfo() << "]关闭,释放 buffer" << std::endl;
-        ptr->mInBuf->Release();
         UnApplyOnLoop(ptr->mWakeUpper, mServer.GetPollLoop());
         
-        size_t & idx = ptr->mIdx;
-        mSessions[idx].reset();
-        mHoles.push_back(idx);
-
-        std::cout << "numholes:" << conn->GetInputBuffer().NumHoles() << std::endl;
-        std::cout << "numobses:" << conn->GetInputBuffer().NumObservers() << std::endl;
-        std::cout << "obsize:" << conn->GetInputBuffer().ObserverSize() << std::endl;
+        ReleaseSession(session);
     }
-
-
 
 }
 }

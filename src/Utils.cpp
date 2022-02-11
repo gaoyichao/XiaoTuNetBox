@@ -5,9 +5,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <assert.h>
+#include <dirent.h>
 
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#include <iostream>
 
 #include <XiaoTuNetBox/Utils.h>
 
@@ -37,6 +41,35 @@ namespace net {
         }
     }
 
+    bool IsFile(std::string const & fname)
+    {
+        struct stat s;
+        if (-1 == stat(fname.c_str(), &s))
+            return false;
+        return S_ISREG(s.st_mode) ? true : false;
+    }
+
+    bool IsDir(std::string const & fname)
+    {
+        struct stat s;
+        if (-1 == stat(fname.c_str(), &s))
+            return false;
+        return S_ISDIR(s.st_mode) ? true : false;
+    }
+
+    size_t ReadBinary(std::string const & fname, uint8_t * buf, uint64_t off, uint64_t len)
+    {
+        FILE * fp = fopen(fname.c_str(), "r");
+        assert(NULL != fp);
+
+        int re = fseek(fp, off, SEEK_SET);
+        assert(0 == re);
+
+        size_t aclen = fread((void*) buf, 1, len, fp);
+        fclose(fp);
+
+        return aclen;
+    }
 
     uint8_t const * FindString(uint8_t const * begin, uint8_t const * end,
                                uint8_t const * pattern, size_t np)

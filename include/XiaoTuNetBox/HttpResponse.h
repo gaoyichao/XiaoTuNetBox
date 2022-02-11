@@ -69,6 +69,13 @@ namespace net {
                 mContent.insert(mContent.end(), content.begin(), content.end());
             }
 
+            void AppendContent(std::string const & fname, uint64_t off, uint64_t len);
+            
+            void SetHeader(std::string const & key, std::string const & value)
+            {
+                mHeaders[key] = value;
+            }
+
             std::map<std::string, std::string> const & GetHeader() const { return mHeaders; }
         private:
             std::map<std::string, std::string> mHeaders;

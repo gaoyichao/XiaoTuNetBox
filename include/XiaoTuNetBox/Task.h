@@ -1,10 +1,10 @@
 /************************************************************************************
  * 
- * HttpTask - 处理 http 请求的任务
+ * Task 
  * 
  ***********************************************************************************/
-#ifndef XTNB_HTTP_TASK_H
-#define XTNB_HTTP_TASK_H
+#ifndef XTNB_TASK_H
+#define XTNB_TASK_H
 
 #include <functional>
 #include <memory>
@@ -12,8 +12,17 @@
 namespace xiaotu {
 namespace net {
  
-    class HttpTask {
+    class Task {
         public:
+            typedef std::function< void ()> TaskFunc;
+
+        public:
+            Task() {}
+            Task(TaskFunc func)
+            {
+                mFunction = std::move(func);
+            }
+
             void operator () () {
                 if (mFunction)
                     mFunction();
@@ -24,13 +33,11 @@ namespace net {
                     mFunction();
             }
 
-        public:
-            typedef std::function< void ()> TaskFunc;
             void SetTaskFunc(TaskFunc func) { mFunction = std::move(func); }
         private:
             TaskFunc mFunction;
     };
-    typedef std::shared_ptr<HttpTask> HttpTaskPtr;
+    typedef std::shared_ptr<Task> TaskPtr;
 
 
 }

@@ -19,9 +19,9 @@ namespace net {
     };
 
     HttpSession::HttpSession(ConnectionPtr const & conn)
+        : Session(conn)
     {
         Reset();
-        mInBuf = conn->GetInputBuffer().CreateObserver();
     }
 
     HttpSession::~HttpSession()
@@ -47,6 +47,13 @@ namespace net {
         if (NULL == space)
             return false;
         mRequest->SetURL(std::string(begin, space));
+        uint8_t const * que = FindString(begin, space, (uint8_t const *)"?", 1);
+        if (NULL != que) {
+            mRequest->SetURLPath(std::string(begin, que));
+            mRequest->SetURLQuery(std::string(que, space));
+        } else {
+            mRequest->SetURLPath(std::string(begin, space));
+        }
         
         begin = EatByte(space, end, ' ');
         space = FindString(begin, end, (uint8_t const*)"HTTP/1.", 7);
