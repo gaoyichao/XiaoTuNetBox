@@ -25,6 +25,7 @@ namespace net {
             TcpAppServer(TcpAppServer const &) = delete;
             TcpAppServer & operator = (TcpAppServer const &) = delete;
 
+            std::string mWorkSpace;
         protected:
             virtual SessionPtr OnNewConnection(ConnectionPtr const & conn) = 0;
             virtual void OnCloseConnection(ConnectionPtr const & conn, SessionPtr const & session) = 0;

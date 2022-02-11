@@ -29,7 +29,7 @@ namespace net {
     }
 
 
-    size_t InputBuffer::Read(int fd)
+    ssize_t InputBuffer::Read(int fd)
     {
         // 清理队首数据
         size_t min_idx = mReadBuf.Size();
@@ -58,7 +58,7 @@ namespace net {
         vec[0].iov_len = nwrite;
         vec[1].iov_base = mExtraBuf;
         vec[1].iov_len = mExtraBufSize;
-        size_t n = readv(fd, vec, iovcnt);
+        ssize_t n = readv(fd, vec, iovcnt);
         if (n > 0) {
             if (n > nwrite) {
                 int n_ext = n - nwrite;

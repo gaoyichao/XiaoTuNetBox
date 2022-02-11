@@ -57,21 +57,29 @@ namespace net {
     //! @return 倒数第一个不是 c 的元素，若全是 c 则返回 begin 
     uint8_t const * InvEatByte(uint8_t const * begin, uint8_t const * end, uint8_t c);
 
+    //! @brief 判定指定路径是否可读
+    //! @param path 路径
+    //! @return 可读否
+    bool IsReadable(std::string const & path);
 
     //! @brief 判定是文件否
-    bool IsFile(std::string const & fname);
+    //! @param path 路径
+    //! @return 是文件否
+    bool IsFile(std::string const & path);
 
-    //! @brief 判定是文件目录否
-    bool IsDir(std::string const & fname);
+    //! @brief 判定是目录否
+    //! @param path 路径
+    //! @return 是目录否
+    bool IsDir(std::string const & path);
 
     //! @brief 以二进制的形式读取文件
     //!
-    //! @param fname 目标文件
+    //! @param path 目标文件
     //! @param buf 缓存
     //! @param off 偏移量
     //! @param len 长度
     //! @return 实际读取的字节数
-    size_t ReadBinary(std::string const & fname, uint8_t * buf, uint64_t off, uint64_t len);
+    size_t ReadBinary(std::string const & path, uint8_t * buf, uint64_t off, uint64_t len);
 }
 }
 

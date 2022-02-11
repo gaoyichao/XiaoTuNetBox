@@ -87,7 +87,7 @@ namespace net {
             uint8_t * mExtraBuf;
 
         public:
-            size_t Read(int fd);
+            ssize_t Read(int fd);
 
         public:
             friend class InBufObserver;

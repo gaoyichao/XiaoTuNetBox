@@ -33,6 +33,8 @@ namespace net {
             void HandleRequest(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr);
             void HandleReponse(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr);
 
+            void OnGetRequest(HttpRequestPtr const & req, HttpResponsePtr const & res);
+
             RequestCallBk mRequestCB;
     };
 

@@ -52,7 +52,7 @@ namespace net {
 
     void Connection::OnReadEvent() {
         int md = mEventHandler->GetFd();
-        size_t n = mReadBuf.Read(md);
+        ssize_t n = mReadBuf.Read(md);
 
         if (n <= 0) {
             Close();

@@ -5,6 +5,11 @@
 #include <functional>
 #include <iostream>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+
 
 namespace xiaotu {
 namespace net {
@@ -53,6 +58,29 @@ namespace net {
         session->Reset();
     }
 
+    void HttpServer::OnGetRequest(HttpRequestPtr const & req, HttpResponsePtr const & res)
+    {
+        std::string urlpath = req->GetURLPath();
+        if ("/" == urlpath)
+            urlpath = "/index.html";
+
+        std::string path = mWorkSpace + urlpath;
+        std::cout << path << std::endl;
+
+        struct stat s;
+        if (!IsReadable(path) || (-1 == stat(path.c_str(), &s))) {
+            res->SetStatusCode(HttpResponse::e404_NotFound);
+            res->AppendContent("Error:404");
+            return;
+        }
+
+        if (!S_ISREG(s.st_mode))
+            return;
+
+        res->SetStatusCode(HttpResponse::e200_OK);
+        res->AppendContent(path, 0, s.st_size);
+    }
+
     void HttpServer::HandleRequest(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr)
     {
         HttpSessionPtr session = weakptr.lock();
@@ -73,8 +101,8 @@ namespace net {
         res->SetClosing(close);
         res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
 
-        if (mRequestCB)
-            mRequestCB(req, res);
+        if (HttpRequest::eGET == req->GetMethod())
+            OnGetRequest(req, res);
 
         session->mWakeUpper->WakeUp(4096);
     }

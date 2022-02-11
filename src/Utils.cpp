@@ -41,25 +41,30 @@ namespace net {
         }
     }
 
-    bool IsFile(std::string const & fname)
+    bool IsReadable(std::string const & path)
+    {
+        return (access(path.c_str(), R_OK) != -1);
+    }
+
+    bool IsFile(std::string const & path)
     {
         struct stat s;
-        if (-1 == stat(fname.c_str(), &s))
+        if (-1 == stat(path.c_str(), &s))
             return false;
         return S_ISREG(s.st_mode) ? true : false;
     }
 
-    bool IsDir(std::string const & fname)
+    bool IsDir(std::string const & path)
     {
         struct stat s;
-        if (-1 == stat(fname.c_str(), &s))
+        if (-1 == stat(path.c_str(), &s))
             return false;
         return S_ISDIR(s.st_mode) ? true : false;
     }
 
-    size_t ReadBinary(std::string const & fname, uint8_t * buf, uint64_t off, uint64_t len)
+    size_t ReadBinary(std::string const & path, uint8_t * buf, uint64_t off, uint64_t len)
     {
-        FILE * fp = fopen(fname.c_str(), "r");
+        FILE * fp = fopen(path.c_str(), "r");
         assert(NULL != fp);
 
         int re = fseek(fp, off, SEEK_SET);
