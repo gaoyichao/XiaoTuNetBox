@@ -8,8 +8,6 @@
 
 #include <XiaoTuNetBox/TcpAppServer.h>
 #include <XiaoTuNetBox/HttpSession.h>
-#include <XiaoTuNetBox/HttpRequest.h>
-#include <XiaoTuNetBox/HttpResponse.h>
 
 #include <vector>
 
@@ -25,17 +23,12 @@ namespace net {
             virtual void OnCloseConnection(ConnectionPtr const & conn, SessionPtr const & session);
             virtual void OnMessage(ConnectionPtr const & con, SessionPtr const & session);
 
-        public:
-            typedef std::function< void (HttpRequestPtr const &, HttpResponsePtr const &)> RequestCallBk;
-            void SetRequestCallBk(RequestCallBk cb) { mRequestCB = std::move(cb); }
-
         private:
             void HandleRequest(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr);
             void HandleReponse(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr);
 
             void OnGetRequest(HttpRequestPtr const & req, HttpResponsePtr const & res);
 
-            RequestCallBk mRequestCB;
     };
 
 }

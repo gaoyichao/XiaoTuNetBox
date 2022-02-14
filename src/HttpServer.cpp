@@ -31,9 +31,10 @@ namespace net {
         conn->GetHandler()->SetNonBlock(true);
 
         HttpSessionPtr ptr(new HttpSession(conn));
-        ptr->mWakeUpper = std::make_shared<WakeUpper>();
-        ptr->mWakeUpper->SetWakeUpCallBk(std::bind(&HttpServer::HandleReponse, this, conn, HttpSessionWeakPtr(ptr)));
-        ApplyOnLoop(ptr->mWakeUpper, mServer.GetPollLoop());
+        ptr->BuildWakeUpper(mServer.GetPollLoop(),
+                            std::bind(&HttpServer::HandleReponse, this, conn, HttpSessionWeakPtr(ptr)));
+
+        conn->mUserObject = ptr;
 
         return AddSession(ptr);
     }
@@ -88,30 +89,23 @@ namespace net {
             return;
 
         HttpRequestPtr req = session->GetRequest();
-        //req->PrintHeaders();
-        std::string con_key("Connection");
-        std::string con_header;
-        bool has_con = req->GetHeader(con_key, con_header);
-
-        if (has_con)
-            ToLower(con_header);
-
         HttpResponsePtr res = session->GetResponse();
-        bool close = !has_con || (con_header != "keep-alive");
-        res->SetClosing(close);
+
+        res->SetClosing(!req->KeepAlive());
         res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
 
         if (HttpRequest::eGET == req->GetMethod())
             OnGetRequest(req, res);
 
-        session->mWakeUpper->WakeUp(4096);
+        session->WakeUp();
     }
 
-    void HttpServer::OnMessage(ConnectionPtr const & con, SessionPtr const & session)
+    void HttpServer::OnMessage(ConnectionPtr const & con, SessionPtr const & buzhongyao)
     {
         std::cout << "接收到了消息" << std::endl;
-        HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(session);
+        HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(con->mUserObject.lock());
         std::cout << ptr->ToCString() << std::endl;
+        //std::cout << con->mUserObject->ToCString() << std::endl;
         std::cout << ptr->GetStateStr() << std::endl;
 
         assert(ptr->InRequestPhase());
@@ -132,8 +126,6 @@ namespace net {
         HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(session);
         std::cout << ptr->ToCString() << std::endl;
 
-        UnApplyOnLoop(ptr->mWakeUpper, mServer.GetPollLoop());
-        
         ReleaseSession(session);
     }
 

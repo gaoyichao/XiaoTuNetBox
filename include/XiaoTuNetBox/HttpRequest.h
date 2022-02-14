@@ -105,6 +105,9 @@ namespace net {
                 return false;
             }
 
+            bool KeepAlive() const;
+            bool NeedUpgrade() const;
+
             void PrintHeaders() const 
             {
                 std::cout << "--------------------不要闹" << std::endl;

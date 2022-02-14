@@ -40,12 +40,16 @@ namespace net {
 
         public:
             InputBuffer & GetInputBuffer() { return mReadBuf; }
+            ObjectWeakPtr mUserObject;
+
         private:
             std::string mInfoStr;
             PollEventHandlerPtr mEventHandler;
             InputBuffer mReadBuf;
             DataQueue<uint8_t> mWriteBuf;
             bool mIsClosed;
+
+
 
         public:
             typedef std::function<void()> EventCallBk;

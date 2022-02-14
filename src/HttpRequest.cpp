@@ -32,6 +32,33 @@ namespace net {
         return eINVALID != mMethod;
     }
 
+    bool HttpRequest::KeepAlive() const
+    {
+        std::string con_key("Connection");
+        std::string con_header;
+        if (!GetHeader(con_key, con_header))
+            return false;
+        ToLower(con_header);
+        return (con_header == "keep-alive");
+    }
+
+    bool HttpRequest::NeedUpgrade() const
+    {
+        std::string con_key("Connection");
+        std::string con_header;
+        if (!GetHeader(con_key, con_header))
+            return false;
+
+        if (con_header != "Upgrade")
+            return false;
+
+        con_key = "Upgrade";
+        if (!GetHeader(con_key, con_header))
+            return false;
+
+        return true;
+    }
+
 }
 }
 

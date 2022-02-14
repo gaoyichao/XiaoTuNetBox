@@ -81,7 +81,9 @@ namespace net {
         assert(nullptr != ptr);
         assert(mSessions[ptr->mIdx] == ptr);
 
+        ptr->ReleaseWakeUpper(mServer.GetPollLoop());
         ptr->mInBuf->Release();
+
         size_t & idx = ptr->mIdx;
         mSessions[idx].reset();
         mHoles.push_back(idx);

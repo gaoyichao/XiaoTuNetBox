@@ -6,7 +6,6 @@
 #ifndef XTNB_HTTP_SESSION_H
 #define XTNB_HTTP_SESSION_H
 
-#include <XiaoTuNetBox/WakeUpper.h>
 #include <XiaoTuNetBox/ConnectionNode.h>
 #include <XiaoTuNetBox/HttpRequest.h>
 #include <XiaoTuNetBox/HttpResponse.h>
@@ -69,13 +68,15 @@ namespace net {
                 mState = eExpectRequestLine;
             }
 
+            EState GetState() const { return mState; }
+
             bool ParseRequestLine(uint8_t const * begin, uint8_t const * end);
             HttpRequestPtr HandleRequest(ConnectionPtr const & conn);
 
             HttpRequestPtr GetRequest() { return mRequest; }
             HttpResponsePtr GetResponse() { return mResponse; }
         
-            virtual char const * ToCString() { return typeid(*this).name(); }
+            virtual char const * ToCString() { return typeid(HttpSession).name(); }
 
         private:
             bool OnExpectRequestLine(ConnectionPtr const & conn);
@@ -86,10 +87,6 @@ namespace net {
             EState mState;
             HttpRequestPtr mRequest;
             HttpResponsePtr mResponse;
-
-        private:
-            //! PollLoop 唤醒器
-            WakeUpperPtr mWakeUpper;
     };
 
     typedef std::shared_ptr<HttpSession> HttpSessionPtr;
