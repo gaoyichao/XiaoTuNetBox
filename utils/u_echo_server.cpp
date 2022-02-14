@@ -66,10 +66,10 @@ void OnCloseConnection(ConnectionPtr const & conn) {
     std::cout << "关闭连接:" << conn->GetInfo() << std::endl;
 }
 
-void OnMessage(ConnectionPtr const & con, SessionPtr const & session)
+void OnMessage(ConnectionPtr const & con)
 {
     std::cout << "接收到了消息" << std::endl;
-    EchoSessionPtr ptr = std::static_pointer_cast<EchoSession>(session);
+    EchoSessionPtr ptr = std::static_pointer_cast<EchoSession>(con->mUserObject.lock());
     std::cout << ptr->ToCString() << std::endl;
 
     ptr->Echo();
@@ -83,7 +83,7 @@ int main() {
     tcp.SetTimeOut(10, 0, 5);
     tcp.SetNewConnCallBk(std::bind(OnNewConnection, _1));
     tcp.SetCloseConnCallBk(std::bind(OnCloseConnection, _1));
-    tcp.SetMessageCallBk(std::bind(OnMessage, _1, _2));
+    tcp.SetMessageCallBk(std::bind(OnMessage, _1));
 
     loop->Loop(10);
 

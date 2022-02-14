@@ -40,12 +40,10 @@ namespace net {
 
         public:
             typedef std::function<void(ConnectionPtr const & con)> ConnCallBk;
-            typedef std::function<SessionPtr(ConnectionPtr const & con)> NewConnCalBk;
-            typedef std::function<void(ConnectionPtr const & con, SessionPtr const & session)> SessionCallBk;
 
-            void SetNewConnCallBk(NewConnCalBk cb) { mNewConnCallBk = std::move(cb); }
-            void SetCloseConnCallBk(SessionCallBk cb) { mCloseConnCallBk = std::move(cb); }
-            void SetMessageCallBk(SessionCallBk cb) { mMessageCallBk = std::move(cb); }
+            void SetNewConnCallBk(ConnCallBk cb) { mNewConnCallBk = std::move(cb); }
+            void SetCloseConnCallBk(ConnCallBk cb) { mCloseConnCallBk = std::move(cb); }
+            void SetMessageCallBk(ConnCallBk cb) { mMessageCallBk = std::move(cb); }
 
             /*
              * SetTimeOut - 超时关闭连接
@@ -60,9 +58,9 @@ namespace net {
             void SetTimeOut(time_t sec, long nsec, int n); 
 
         protected:
-            NewConnCalBk mNewConnCallBk;
-            SessionCallBk mCloseConnCallBk;
-            SessionCallBk mMessageCallBk;
+            ConnCallBk mNewConnCallBk;
+            ConnCallBk mCloseConnCallBk;
+            ConnCallBk mMessageCallBk;
     };
 }
 }

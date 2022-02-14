@@ -21,11 +21,11 @@ namespace net {
     {
         mServer.SetTimeOut(10, 0, 5);
         mServer.SetNewConnCallBk(std::bind(&HttpServer::OnNewConnection, this, _1));
-        mServer.SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1, _2));
-        mServer.SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1, _2));
+        mServer.SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1));
+        mServer.SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1));
     }
 
-    SessionPtr HttpServer::OnNewConnection(ConnectionPtr const & conn) {
+    void HttpServer::OnNewConnection(ConnectionPtr const & conn) {
         std::cout << __FILE__ << ":" << __LINE__ << std::endl;
         std::cout << "新建连接:" << conn->GetInfo() << std::endl;
         conn->GetHandler()->SetNonBlock(true);
@@ -35,8 +35,7 @@ namespace net {
                             std::bind(&HttpServer::HandleReponse, this, conn, HttpSessionWeakPtr(ptr)));
 
         conn->mUserObject = ptr;
-
-        return AddSession(ptr);
+        AddSession(ptr);
     }
 
     void HttpServer::HandleReponse(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr)
@@ -100,7 +99,7 @@ namespace net {
         session->WakeUp();
     }
 
-    void HttpServer::OnMessage(ConnectionPtr const & con, SessionPtr const & buzhongyao)
+    void HttpServer::OnMessage(ConnectionPtr const & con)
     {
         std::cout << "接收到了消息" << std::endl;
         HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(con->mUserObject.lock());
@@ -120,13 +119,13 @@ namespace net {
         }
     }
 
-    void HttpServer::OnCloseConnection(ConnectionPtr const & conn, SessionPtr const & session) {
+    void HttpServer::OnCloseConnection(ConnectionPtr const & conn) {
         std::cout << "关闭连接:" << conn->GetInfo() << std::endl;
 
-        HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(session);
+        HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(conn->mUserObject.lock());
         std::cout << ptr->ToCString() << std::endl;
 
-        ReleaseSession(session);
+        ReleaseSession(ptr);
     }
 
 }

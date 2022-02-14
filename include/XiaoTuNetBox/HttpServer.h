@@ -19,9 +19,9 @@ namespace net {
             HttpServer(PollLoopPtr const & loop, int port, int max_conn);
 
         private:
-            virtual SessionPtr OnNewConnection(ConnectionPtr const & conn);
-            virtual void OnCloseConnection(ConnectionPtr const & conn, SessionPtr const & session);
-            virtual void OnMessage(ConnectionPtr const & con, SessionPtr const & session);
+            virtual void OnNewConnection(ConnectionPtr const & conn);
+            virtual void OnCloseConnection(ConnectionPtr const & conn);
+            virtual void OnMessage(ConnectionPtr const & con);
 
         private:
             void HandleRequest(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr);

@@ -25,8 +25,6 @@ namespace net {
 
         public:
             ConnectionPtr conn;
-            //! @todo Session列表?
-            SessionWeakPtr session;
             ConnectionNode *prev;
             ConnectionNode *next;
     };

@@ -27,9 +27,9 @@ namespace net {
 
             std::string mWorkSpace;
         protected:
-            virtual SessionPtr OnNewConnection(ConnectionPtr const & conn) = 0;
-            virtual void OnCloseConnection(ConnectionPtr const & conn, SessionPtr const & session) = 0;
-            virtual void OnMessage(ConnectionPtr const & con, SessionPtr const & session) = 0;
+            virtual void OnNewConnection(ConnectionPtr const & conn) = 0;
+            virtual void OnCloseConnection(ConnectionPtr const & conn) = 0;
+            virtual void OnMessage(ConnectionPtr const & con) = 0;
 
         protected:
             int GetFreeSessionIdx();

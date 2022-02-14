@@ -57,7 +57,7 @@ namespace net {
             AddTail(node, head);
 
             if (mNewConnCallBk)
-                node->session = mNewConnCallBk(conn);
+                mNewConnCallBk(conn);
 
             conn->SetCloseCallBk(std::bind(&TcpServer::OnCloseConnection, this, node));
             conn->SetMsgCallBk(std::bind(&TcpServer::OnMessage, this, node));
@@ -69,7 +69,7 @@ namespace net {
     void TcpServer::OnCloseConnection(ConnectionNode * con) {
         std::cout << __FUNCTION__ << ":" << con->conn->GetHandler()->GetFd() << std::endl;
         if (mCloseConnCallBk)
-            mCloseConnCallBk(con->conn, con->session.lock());
+            mCloseConnCallBk(con->conn);
 
         UnApplyOnLoop(con->conn, mLoop);
         Delete(con);
@@ -80,7 +80,7 @@ namespace net {
     void TcpServer::OnMessage(ConnectionNode * con)
     {
         if (mMessageCallBk)
-            mMessageCallBk(con->conn, con->session.lock());
+            mMessageCallBk(con->conn);
 
         ConnectionNode * head = mTimeWheel.back();
         Delete(con);

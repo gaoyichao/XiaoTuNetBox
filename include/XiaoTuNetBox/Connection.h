@@ -40,6 +40,7 @@ namespace net {
 
         public:
             InputBuffer & GetInputBuffer() { return mReadBuf; }
+            //! 用户定义的对象指针，其具体的数据类型和内存有用户自己管理
             ObjectWeakPtr mUserObject;
 
         private:
