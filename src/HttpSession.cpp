@@ -1,3 +1,8 @@
+/************************************************************************************
+ * 
+ * HttpSession - 一次Http会话
+ * 
+ ***********************************************************************************/
 #include <XiaoTuNetBox/HttpSession.h>
 #include <XiaoTuNetBox/Utils.h>
 
@@ -144,14 +149,15 @@ namespace net {
     {
         size_t n0 = mRequest->mContent.size();
         size_t need = mRequest->ContentLength() - n0;
-        if (0 == need) {
-            mState = eResponsing;
-            return true;
-        }
 
         size_t n = (need > mInBuf->Size()) ? mInBuf->Size() : need;
         mRequest->mContent.resize(mRequest->mContent.size() + n);
         mInBuf->PopFront(mRequest->mContent.data() + n0, n);
+
+        if (n == need) {
+            mState = eResponsing;
+            return true;
+        }
         return false;
     }
 
@@ -170,6 +176,9 @@ namespace net {
 
             if (eReadingBody == mState)
                 OnReadingBody(conn);
+
+            if (eResponsing == mState || eError == mState)
+                break;
         }
 
         if (eResponsing == mState || eError == mState)

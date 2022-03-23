@@ -37,8 +37,10 @@ namespace net {
             head.append("Connection: Keep-Alive\r\n");
         }
         for (auto it = mHeaders.begin(); it != mHeaders.end(); ++it)
-            head.append(it->first + ": " + it->second);
+            head.append(it->first + ": " + it->second + "\r\n");
         head.append("\r\n");
+
+        //std::cout << head << std::endl;
 
         buf.insert(buf.end(), head.begin(), head.end());
         buf.insert(buf.end(), mContent.begin(), mContent.end());

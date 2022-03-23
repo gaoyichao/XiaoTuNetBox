@@ -76,6 +76,17 @@ namespace net {
         return aclen;
     }
 
+    int GetSuffix(uint8_t const * begin, size_t len, uint8_t tag)
+    {
+        int re = len - 1;
+        for (; re > 0; --re) {
+            if (tag == begin[re])
+                return re;
+        }
+
+        return (tag == *begin) ? 0 : -1;
+    }
+
     uint8_t const * FindString(uint8_t const * begin, uint8_t const * end,
                                uint8_t const * pattern, size_t np)
     {

@@ -31,6 +31,14 @@ namespace net {
         return 'a' <= c && c <= 'z';
     }
 
+    //! @brief 获取 [begin, begin + len) 的后缀，以 tag 为后缀的分隔标记
+    //!
+    //! @param begin 待考察的数组起始地址
+    //! @param len 数组长度
+    //! @param tag 后缀分隔标记
+    //! @return 后缀的起始索引, 未找到则返回 -1 
+    int GetSuffix(uint8_t const * begin, size_t len, uint8_t tag);
+                              
     //! @brief 在 [begin, end) 找到第一个满足 pattern 的地址
     //!
     //! @param begin 待考察的数组起始地址
