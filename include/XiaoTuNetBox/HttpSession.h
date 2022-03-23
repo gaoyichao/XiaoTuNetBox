@@ -41,13 +41,14 @@ namespace net {
             HttpSession(HttpSession const &) = delete;
             HttpSession & operator = (HttpSession const &) = delete;
 
+            //! @brief 判定当前是否在解析请求报文
             inline bool InRequestPhase() const
             {
                 return (mState == eExpectRequestLine ||
                         mState == eReadingHeaders ||
                         mState == eReadingBody);
             }
-            
+            //! @brief 判定当前是否需要发送响应报文
             inline bool InResponsePhase() const
             {
                 return eResponsing == mState;

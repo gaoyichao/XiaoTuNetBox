@@ -69,6 +69,10 @@ namespace net {
                 mContent.insert(mContent.end(), content.begin(), content.end());
             }
 
+            //! @brief 读取指定的文件内容添加到正文中
+            //! @param fname 文件名
+            //! @param off 文件数据的偏移量
+            //! @param len 读取的文件长度
             void AppendContent(std::string const & fname, uint64_t off, uint64_t len);
             
             void SetHeader(std::string const & key, std::string const & value)
