@@ -18,6 +18,7 @@ namespace net {
         public:
             HttpServer(PollLoopPtr const & loop, int port, int max_conn);
 
+            std::string mWorkSpace;
         private:
             virtual void OnNewConnection(ConnectionPtr const & conn);
             virtual void OnCloseConnection(ConnectionPtr const & conn);

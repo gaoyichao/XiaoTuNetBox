@@ -11,12 +11,19 @@ namespace xiaotu {
 namespace net {
 
     TcpAppServer::TcpAppServer(PollLoopPtr const & loop, int port, int max_conn)
-        : mServer(loop, port, max_conn)
+    {
+        mServer = std::make_shared<TcpServer>(loop, port, max_conn);
+        mDestroing = false;
+        mTaskThread = std::thread(std::bind(&TcpAppServer::FinishTasks, this));
+    }
+
+    TcpAppServer::TcpAppServer(TcpServerPtr const & server)
+        : mServer(server)
     {
         mDestroing = false;
         mTaskThread = std::thread(std::bind(&TcpAppServer::FinishTasks, this));
     }
- 
+
     TcpAppServer::~TcpAppServer()
     {
         std::unique_lock<std::mutex> lock(mFifoMutex);
@@ -81,7 +88,7 @@ namespace net {
         assert(nullptr != ptr);
         assert(mSessions[ptr->mIdx] == ptr);
 
-        ptr->ReleaseWakeUpper(mServer.GetPollLoop());
+        ptr->ReleaseWakeUpper(mServer->GetPollLoop());
         ptr->mInBuf->Release();
 
         size_t & idx = ptr->mIdx;

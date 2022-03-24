@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <glog/logging.h>
 
 
 namespace xiaotu {
@@ -19,19 +20,19 @@ namespace net {
     HttpServer::HttpServer(PollLoopPtr const & loop, int port, int max_conn)
         : TcpAppServer(loop, port, max_conn)
     {
-        mServer.SetTimeOut(10, 0, 5);
-        mServer.SetNewConnCallBk(std::bind(&HttpServer::OnNewConnection, this, _1));
-        mServer.SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1));
-        mServer.SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1));
+        mServer->SetTimeOut(10, 0, 5);
+        mServer->SetNewConnCallBk(std::bind(&HttpServer::OnNewConnection, this, _1));
+        mServer->SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1));
+        mServer->SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1));
     }
 
     void HttpServer::OnNewConnection(ConnectionPtr const & conn) {
-        std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-        std::cout << "新建连接:" << conn->GetInfo() << std::endl;
+        LOG(INFO) << "新建连接:" << conn->GetInfo();
+
         conn->GetHandler()->SetNonBlock(true);
 
         HttpSessionPtr ptr(new HttpSession(conn));
-        ptr->BuildWakeUpper(mServer.GetPollLoop(),
+        ptr->BuildWakeUpper(mServer->GetPollLoop(),
                             std::bind(&HttpServer::HandleReponse, this, conn, HttpSessionWeakPtr(ptr)));
 
         conn->mUserObject = ptr;
@@ -65,7 +66,7 @@ namespace net {
             urlpath = "/index.html";
 
         std::string path = mWorkSpace + urlpath;
-        std::cout << path << std::endl;
+        LOG(INFO) << path;
 
         struct stat s;
         if (!IsReadable(path) || (-1 == stat(path.c_str(), &s))) {
@@ -112,11 +113,10 @@ namespace net {
 
     void HttpServer::OnMessage(ConnectionPtr const & con)
     {
-        std::cout << "接收到了消息" << std::endl;
+        LOG(INFO) << "接收到了消息";
         HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(con->mUserObject.lock());
-        std::cout << ptr->ToCString() << std::endl;
-        //std::cout << con->mUserObject->ToCString() << std::endl;
-        std::cout << ptr->GetStateStr() << std::endl;
+        LOG(INFO) << ptr->ToCString();
+        LOG(INFO) << ptr->GetStateStr();
 
         assert(ptr->InRequestPhase());
         HttpRequestPtr request = ptr->HandleRequest(con);
@@ -131,10 +131,10 @@ namespace net {
     }
 
     void HttpServer::OnCloseConnection(ConnectionPtr const & conn) {
-        std::cout << "关闭连接:" << conn->GetInfo() << std::endl;
+        LOG(INFO) << "关闭连接:" << conn->GetInfo();
 
         HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(conn->mUserObject.lock());
-        std::cout << ptr->ToCString() << std::endl;
+        LOG(INFO) << ptr->ToCString();
 
         ReleaseSession(ptr);
     }

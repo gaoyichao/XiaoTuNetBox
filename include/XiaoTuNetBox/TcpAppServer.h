@@ -21,11 +21,11 @@ namespace net {
     class TcpAppServer {
         public:
             TcpAppServer(PollLoopPtr const & loop, int port, int max_conn);
+            TcpAppServer(TcpServerPtr const & server);
             ~TcpAppServer();
             TcpAppServer(TcpAppServer const &) = delete;
             TcpAppServer & operator = (TcpAppServer const &) = delete;
 
-            std::string mWorkSpace;
         protected:
             virtual void OnNewConnection(ConnectionPtr const & conn) = 0;
             virtual void OnCloseConnection(ConnectionPtr const & conn) = 0;
@@ -36,7 +36,7 @@ namespace net {
             SessionPtr AddSession(SessionPtr const & ptr);
             void ReleaseSession(SessionPtr const & ptr);
 
-            TcpServer mServer;
+            TcpServerPtr mServer;
             std::vector<SessionPtr> mSessions;
             std::vector<size_t> mHoles;
 

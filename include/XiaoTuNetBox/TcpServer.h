@@ -62,6 +62,11 @@ namespace net {
             ConnCallBk mCloseConnCallBk;
             ConnCallBk mMessageCallBk;
     };
+
+    typedef std::shared_ptr<TcpServer> TcpServerPtr;
+    typedef std::weak_ptr<TcpServer> TcpServerWeakPtr;
+
+
 }
 }
 
