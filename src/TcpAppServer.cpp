@@ -13,53 +13,12 @@ namespace net {
     TcpAppServer::TcpAppServer(PollLoopPtr const & loop, int port, int max_conn)
     {
         mServer = std::make_shared<TcpServer>(loop, port, max_conn);
-        mDestroing = false;
-        mTaskThread = std::thread(std::bind(&TcpAppServer::FinishTasks, this));
     }
 
     TcpAppServer::TcpAppServer(TcpServerPtr const & server)
         : mServer(server)
-    {
-        mDestroing = false;
-        mTaskThread = std::thread(std::bind(&TcpAppServer::FinishTasks, this));
-    }
+    { }
 
-    TcpAppServer::~TcpAppServer()
-    {
-        std::unique_lock<std::mutex> lock(mFifoMutex);
-        mDestroing = true;
-        mFifoCV.notify_all();
-
-        mTaskThread.join();
-    }
-
-    void TcpAppServer::AddTask(TaskPtr const & task)
-    {
-        std::unique_lock<std::mutex> lock(mFifoMutex);
-        mTaskFifo.push_back(task);
-        mFifoCV.notify_all();
-    }
-
-    void TcpAppServer::FinishTasks()
-    {
-        TaskPtr task = nullptr;
-
-        while (true) {
-            {
-                std::unique_lock<std::mutex> lock(mFifoMutex);
-                while (mTaskFifo.empty() && !mDestroing)
-                    mFifoCV.wait(lock);
-                if (mDestroing)
-                    break;
-                task = mTaskFifo.front();
-                mTaskFifo.pop_front();
-            }
-
-            std::cout << __FUNCTION__ << std::endl;
-            if (nullptr != task)
-                task->Finish();
-        }
-    }
 
     int TcpAppServer::GetFreeSessionIdx()
     {

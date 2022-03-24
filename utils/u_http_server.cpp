@@ -6,6 +6,7 @@
  * 
  *****************************************************************************/
 #include <XiaoTuNetBox/HttpServer.h>
+#include <XiaoTuNetBox/ThreadWorker.h>
 #include <XiaoTuNetBox/Utils.h>
 
 #include <glog/logging.h>
@@ -20,9 +21,11 @@ int main(int argc, char *argv[]) {
     FLAGS_log_dir = "/home/gyc/logs";
 
     PollLoopPtr loop = CreatePollLoop();
-
+    ThreadWorkerPtr worker(new ThreadWorker);
     HttpServer http(loop, 65530, 3);
+
     http.mWorkSpace = "/home/gyc/tmp";
+    http.SetWorker(worker);
 
     loop->Loop(10);
 
