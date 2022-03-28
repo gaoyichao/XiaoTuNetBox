@@ -43,6 +43,9 @@ namespace net {
                 assert(mWorker);
                 mWorker->AddTask(task);
             }
+
+            SessionPtr ReplaceSession(SessionPtr const & ori, SessionPtr const & ptr);
+            std::string mWorkSpace;
         protected:
             virtual void OnNewConnection(ConnectionPtr const & conn) = 0;
             virtual void OnCloseConnection(ConnectionPtr const & conn) = 0;

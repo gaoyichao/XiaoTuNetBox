@@ -20,13 +20,26 @@ namespace net {
     HttpServer::HttpServer(PollLoopPtr const & loop, int port, int max_conn)
         : TcpAppServer(loop, port, max_conn)
     {
+        Init();
+    }
+
+    
+    HttpServer::HttpServer(TcpServerPtr const & server)
+        : TcpAppServer(server)
+    {
+        Init();
+    }
+
+    void HttpServer::Init()
+    {
         mServer->SetTimeOut(10, 0, 5);
         mServer->SetNewConnCallBk(std::bind(&HttpServer::OnNewConnection, this, _1));
         mServer->SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1));
         mServer->SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1));
     }
 
-    void HttpServer::OnNewConnection(ConnectionPtr const & conn) {
+    void HttpServer::OnNewConnection(ConnectionPtr const & conn)
+    {
         LOG(INFO) << "新建连接:" << conn->GetInfo();
 
         conn->GetHandler()->SetNonBlock(true);
@@ -104,6 +117,15 @@ namespace net {
 
         res->SetClosing(!req->KeepAlive());
         res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
+
+
+        if (req->NeedUpgrade()) {
+            if (mUpgradeSessionCallBk)
+                mUpgradeSessionCallBk(con, session);
+            else
+                session->WakeUp();
+            return;
+        }
 
         if (HttpRequest::eGET == req->GetMethod())
             OnGetRequest(req, res);

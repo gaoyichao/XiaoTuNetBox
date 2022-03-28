@@ -49,6 +49,10 @@ target_link_libraries(u_echo_server ${PROJECT_NAME})
 add_executable(u_http_server utils/u_http_server.cpp)
 target_link_libraries(u_http_server pthread ${PROJECT_NAME})
 
+# WebSocket 服务器
+add_executable(u_ws_server utils/u_ws_server.cpp)
+target_link_libraries(u_ws_server pthread ${PROJECT_NAME})
+
 ############################################################################
 #
 # tests 

@@ -15,10 +15,12 @@ namespace xiaotu {
 namespace net {
  
     class HttpServer : public TcpAppServer {
+            typedef std::function<void(ConnectionPtr const &, HttpSessionPtr const &)> ConSessionFunc;
         public:
             HttpServer(PollLoopPtr const & loop, int port, int max_conn);
+            HttpServer(TcpServerPtr const & server);
 
-            std::string mWorkSpace;
+			void Init();
         private:
             virtual void OnNewConnection(ConnectionPtr const & conn);
             virtual void OnCloseConnection(ConnectionPtr const & conn);
@@ -27,9 +29,12 @@ namespace net {
         private:
             void HandleRequest(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr);
             void HandleReponse(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr);
-
             void OnGetRequest(HttpRequestPtr const & req, HttpResponsePtr const & res);
 
+        public:
+            void SetUpgradeSessionCallBk(ConSessionFunc func) { mUpgradeSessionCallBk = std::move(func); }
+        private:
+            ConSessionFunc mUpgradeSessionCallBk;
     };
 
 }

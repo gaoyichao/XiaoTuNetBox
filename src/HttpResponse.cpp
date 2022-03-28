@@ -8,6 +8,7 @@ namespace xiaotu {
 namespace net {
     std::map<HttpResponse::EStatusCode, std::string> HttpResponse::mEStatusCodeToStringMap = {
         { eUnknown,               "Unknown" },
+        { e101_SwitchProtocol,    "Switching Protocols"},
         { e200_OK,                "OK" },
         { e400_BadRequest,        "Bad Request" },
         { e404_NotFound,          "Not Found" },

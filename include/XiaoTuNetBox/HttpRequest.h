@@ -95,6 +95,11 @@ namespace net {
 
             std::map<std::string, std::string> const & GetHeader() const { return mHeaders; }
 
+            bool HasHeader(std::string const & key) const
+            {
+                return (mHeaders.end() != mHeaders.find(key));
+            }
+
             bool GetHeader(std::string const & key, std::string & value) const
             {
                 auto it = mHeaders.find(key);

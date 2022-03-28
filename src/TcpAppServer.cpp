@@ -55,5 +55,24 @@ namespace net {
         mHoles.push_back(idx);
     }
 
+    //! @brief 替换会话对象
+    //!
+    //! @param ori 原始会话对象
+    //! @param ptr 替身
+    //! @return 替身, nullptr 若出错
+    SessionPtr TcpAppServer::ReplaceSession(SessionPtr const & ori, SessionPtr const & ptr)
+    {
+        assert(nullptr != ori && nullptr != ptr);
+        assert(mSessions[ori->mIdx] == ori);
+
+        int idx = ori->mIdx;
+        ptr->mWakeUpper = std::move(ori->mWakeUpper);
+        ptr->mInBuf = std::move(ori->mInBuf);
+
+        ptr->mIdx = idx;
+        mSessions[idx] = ptr;
+        return ptr;
+    }
+
 }
 }
