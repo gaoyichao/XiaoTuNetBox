@@ -59,16 +59,20 @@ namespace net {
         }
     }
 
-    int Socket::Accept(IPv4Ptr pear) {
+    int Socket::Accept(IPv4 & pear) {
         struct sockaddr_in addr;
         socklen_t len = sizeof(addr);
         int fd = accept(mFd, (struct sockaddr *)&addr, &len);
-        pear->SetSockAddr(addr);
+        pear.SetSockAddr(addr);
 
         if (fd < 0)
             perror("accept failed");
 
         return fd;
+    }
+
+    int Socket::Accept(IPv4Ptr pear) {
+        return Accept(*pear);
     }
 }
 }

@@ -37,6 +37,14 @@ target_link_libraries(${PROJECT_NAME} pthread)
 #
 ############################################################################
 
+# echo 服务器 - 原始 poll 接口实现
+add_executable(u_raw_poll_echo utils/u_raw_poll_echo.cpp)
+target_link_libraries(u_raw_poll_echo ${PROJECT_NAME})
+
+# echo 服务器 - 原始 epoll 接口实现
+add_executable(u_raw_epoll_echo utils/u_raw_epoll_echo.cpp)
+target_link_libraries(u_raw_epoll_echo ${PROJECT_NAME})
+
 # 一个 TCP 客户端
 add_executable(u_stdin_ipv4_talk utils/u_stdin_ipv4_talk.cpp)
 target_link_libraries(u_stdin_ipv4_talk ${PROJECT_NAME})
