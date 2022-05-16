@@ -14,7 +14,7 @@ namespace net {
     EPollEventHandler::EPollEventHandler(int fd)
         : EventHandler(fd)
     {
-        mEPollEvent.data.ptr = this;
+        mEPollEvent.events = 0;
 
         mIsClosing = false;
         mIsClosed = false;

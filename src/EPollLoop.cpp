@@ -28,13 +28,13 @@ namespace net {
 
     void EPollLoop::LoopOnce(int timeout)
     {
-        int nready = epoll_wait(mEpollFd, mEvents.data(), mMaxEvs, -1);
+        int nready = epoll_wait(mEpollFd, mEvents.data(), mMaxEvs, timeout);
         printf("nready = %d\n", nready);
 
         //! @todo: -1 == nready
         
         for (int i = 0; i < nready; ++i) {
-            EPollEventHandler * ephandler = (EPollEventHandler *)mEvents[i].data.ptr;
+            EPollEventHandlerPtr ephandler = std::static_pointer_cast<EPollEventHandler>(mHandlerList[mEvents[i].data.fd]);
             ephandler->HandleEvents(mEvents[i]);
         }
     }
@@ -42,8 +42,12 @@ namespace net {
     void EPollLoop::Register(int idx)
     {
         EPollEventHandlerPtr handler = std::static_pointer_cast<EPollEventHandler>(mHandlerList[idx]);
+        handler->mEPollEvent.data.fd = idx;
 
         int re = epoll_ctl(mEpollFd, EPOLL_CTL_ADD, handler->GetFd(), &(handler->mEPollEvent));
+        if (re < 0) {
+            perror("epoll_ctl");
+        }
         assert(0 == re);
     }
 
