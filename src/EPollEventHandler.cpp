@@ -20,11 +20,21 @@ namespace net {
         mIsClosed = false;
     }
 
+    void EPollEventHandler::UpdateEpoll()
+    {
+        if (nullptr != mLoop) {
+            EPollLoopPtr epoll = std::static_pointer_cast<EPollLoop>(mLoop);
+            int re = epoll_ctl(epoll->mEpollFd, EPOLL_CTL_MOD, mFd, &(mEPollEvent));
+            assert(0 == re);
+        }
+    }
+
     void EPollEventHandler::EnableRead(bool en) {
         if (en)
             mEPollEvent.events |= EPOLLIN;
         else
             mEPollEvent.events &= ~EPOLLIN;
+        UpdateEpoll();
     }
 
     void EPollEventHandler::EnableWrite(bool en) {
@@ -32,6 +42,7 @@ namespace net {
             mEPollEvent.events |= EPOLLOUT;
         else
             mEPollEvent.events &= ~EPOLLOUT;
+        UpdateEpoll();
     }
 
     void EPollEventHandler::UseEdgeTrigger(bool en)
@@ -43,6 +54,7 @@ namespace net {
         } else {
             mEPollEvent.events &= ~EPOLLET;
         }
+        UpdateEpoll();
     }
 
     void EPollEventHandler::SetClosing(bool en) {

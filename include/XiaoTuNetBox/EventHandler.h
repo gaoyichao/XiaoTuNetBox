@@ -27,6 +27,7 @@ namespace net {
         friend void UnApplyHandlerOnLoop(EventHandlerPtr const & h, EventLoopPtr const & loop);
         public:
             int GetLoopIdx() const { return mLoopIdx; }
+            EventLoopPtr GetLoop() { return mLoop; }
             std::thread::id GetLoopTid() const;
             void WakeUpLoop();
         protected:
@@ -34,6 +35,7 @@ namespace net {
             int mLoopIdx;
 
         public:
+            virtual void SetClosing(bool en) = 0;
             virtual void EnableRead(bool en) = 0;
             virtual void EnableWrite(bool en) = 0;
 

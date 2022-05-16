@@ -59,6 +59,7 @@ SessionPtr OnNewConnection(ConnectionPtr const & conn) {
 
     EchoSessionPtr ptr(new EchoSession(conn));
     sessions.push_back(ptr);
+    conn->mUserObject = ptr;
     return ptr;
 }
 

@@ -56,12 +56,12 @@ int main(int argc, char * argv[]) {
     xiaotu::net::IPv4Ptr peer_ip = xiaotu::net::IPv4Ptr(new xiaotu::net::IPv4(ip, port));
     socket.ConnectOrDie(*peer_ip);
     int client_fd = socket.GetFd();
-    xiaotu::net::ConnectionPtr conn = xiaotu::net:: ConnectionPtr(new xiaotu::net::Connection(client_fd, peer_ip));
+    xiaotu::net::ConnectionPtr conn = xiaotu::net:: ConnectionPtr(new xiaotu::net::Connection(client_fd, peer_ip, *gLoop));
     tcp_obs = conn->GetInputBuffer().CreateObserver();
     conn->SetMsgCallBk(std::bind(&OnTcpMsg, tcp_obs));
     xiaotu::net::ApplyOnLoop(conn, gLoop);
 
-    xiaotu::net::ConnectionPtr stdin_conn = xiaotu::net:: ConnectionPtr(new xiaotu::net::Connection(0, "标准输入:stdin:0"));
+    xiaotu::net::ConnectionPtr stdin_conn = xiaotu::net:: ConnectionPtr(new xiaotu::net::Connection(0, "标准输入:stdin:0", *gLoop));
     stdin_obs = stdin_conn->GetInputBuffer().CreateObserver();
     stdin_conn->SetMsgCallBk(std::bind(&OnStdinMsg, client_fd, stdin_obs));
     std::cout << stdin_conn->GetInfo() << std::endl;

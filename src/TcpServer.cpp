@@ -48,7 +48,7 @@ namespace net {
             std::cout << "连接太多了" << std::endl;
             close(fd);
         } else {
-            ConnectionPtr conn(new Connection(fd, peer_addr));
+            ConnectionPtr conn(new Connection(fd, peer_addr, *mLoop));
             ApplyOnLoop(conn, mLoop);
 
             ConnectionNode * node = new ConnectionNode();

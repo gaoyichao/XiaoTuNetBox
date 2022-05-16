@@ -52,6 +52,7 @@ namespace net {
         EPollEventHandlerPtr handler = std::static_pointer_cast<EPollEventHandler>(h);
 
         int re = epoll_ctl(mEpollFd, EPOLL_CTL_DEL, handler->GetFd(), &(handler->mEPollEvent));
+        assert(0 == re);
     }
 
 

@@ -10,20 +10,20 @@
 namespace xiaotu {
 namespace net {
 
-    Connection::Connection(int fd, std::string const & info)
+    Connection::Connection(int fd, std::string const & info, EventLoop const & loop)
         : mInfoStr(info)
     {
-        SetFd(fd);
+        SetFd(fd, loop);
     }
 
-    Connection::Connection(int fd, IPv4Ptr const & peer)
+    Connection::Connection(int fd, IPv4Ptr const & peer, EventLoop const & loop)
         : mInfoStr(peer->GetIpPort())
     {
-        SetFd(fd);
+        SetFd(fd, loop);
     }
 
-    void Connection::SetFd(int fd) {
-        mEventHandler = PollEventHandlerPtr(new PollEventHandler(fd));
+    void Connection::SetFd(int fd, EventLoop const & loop) {
+        mEventHandler = loop.CreateEventHandler(fd);
         mEventHandler->EnableRead(true);
         mEventHandler->EnableWrite(false);
         mEventHandler->SetReadCallBk(std::bind(&Connection::OnReadEvent, this));

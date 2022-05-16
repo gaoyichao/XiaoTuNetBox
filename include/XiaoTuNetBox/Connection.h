@@ -4,8 +4,10 @@
 #include <XiaoTuNetBox/DataQueue.hpp>
 #include <XiaoTuNetBox/InBufObserver.h>
 #include <XiaoTuNetBox/Address.h>
-#include <XiaoTuNetBox/PollEventHandler.h>
 #include <XiaoTuNetBox/Types.h>
+#include <XiaoTuNetBox/EventLoop.h>
+#include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/PollEventHandler.h>
 
 namespace xiaotu {
 namespace net {
@@ -16,15 +18,15 @@ namespace net {
 
     class Connection {
         public:
-            Connection(int fd, std::string const & info);
-            Connection(int fd, IPv4Ptr const & peer);
+            Connection(int fd, std::string const & info, EventLoop const & loop);
+            Connection(int fd, IPv4Ptr const & peer, EventLoop const & loop);
             Connection(Connection const &) = delete;
             Connection & operator = (Connection const &) = delete;
         private:
-            void SetFd(int fd);
+            void SetFd(int fd, EventLoop const & loop);
 
         public:
-            PollEventHandlerPtr & GetHandler() { return mEventHandler; }
+            EventHandlerPtr & GetHandler() { return mEventHandler; }
             std::string const & GetInfo() const { return mInfoStr; }
 
             bool IsClosed() const { return mIsClosed; }
@@ -45,12 +47,10 @@ namespace net {
 
         private:
             std::string mInfoStr;
-            PollEventHandlerPtr mEventHandler;
+            EventHandlerPtr mEventHandler;
             InputBuffer mReadBuf;
             DataQueue<uint8_t> mWriteBuf;
             bool mIsClosed;
-
-
 
         public:
             typedef std::function<void()> EventCallBk;

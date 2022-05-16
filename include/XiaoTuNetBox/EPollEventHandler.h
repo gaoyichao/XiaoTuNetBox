@@ -23,9 +23,9 @@ namespace net {
             EPollEventHandler(EPollEventHandler const &) = delete;
             EPollEventHandler & operator = (EPollEventHandler const &) = delete;
 
-            void SetClosing(bool en);
             void UseEdgeTrigger(bool en);
 
+            virtual void SetClosing(bool en) override;
             virtual void EnableRead(bool en) override;
             virtual void EnableWrite(bool en) override;
 
@@ -36,6 +36,8 @@ namespace net {
 
             void HandleEvents(struct epoll_event const & event);
             EPollLoopPtr GetEPollLoop();
+        private:
+            void UpdateEpoll();
         private:
             struct epoll_event mEPollEvent;
             bool mIsClosing;

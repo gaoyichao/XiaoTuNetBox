@@ -20,8 +20,7 @@ namespace net {
             PollEventHandler(PollEventHandler const &) = delete;
             PollEventHandler & operator = (PollEventHandler const &) = delete;
 
-            void SetClosing(bool en);
-
+            virtual void SetClosing(bool en) override;
             virtual void EnableRead(bool en) override;
             virtual void EnableWrite(bool en) override;
 

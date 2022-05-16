@@ -16,6 +16,7 @@ namespace net {
     typedef std::shared_ptr<const EPollLoop> EPollLoopConstPtr;
 
     class EPollLoop : public EventLoop {
+        friend class EPollEventHandler;
         public:
             EPollLoop(int max_evs = 10);
             EPollLoop(EPollLoop const &) = delete;
