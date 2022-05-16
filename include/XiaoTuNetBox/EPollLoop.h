@@ -17,7 +17,7 @@ namespace net {
 
     class EPollLoop : public EventLoop {
         public:
-            EPollLoop();
+            EPollLoop(int max_evs = 10);
             EPollLoop(EPollLoop const &) = delete;
             EPollLoop & operator = (EPollLoop const &) = delete;
             ~EPollLoop();
@@ -33,7 +33,8 @@ namespace net {
             int GetEpollFd() const { return mEpollFd; }
         private:
             int mEpollFd;
-            //std::vector<struct pollfd> mPollFdList;
+            int mMaxEvs;
+            std::vector<struct epoll_event> mEvents;
     };
 }
 }

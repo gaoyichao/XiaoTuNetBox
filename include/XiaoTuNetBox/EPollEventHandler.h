@@ -23,7 +23,7 @@ namespace net {
             EPollEventHandler(EPollEventHandler const &) = delete;
             EPollEventHandler & operator = (EPollEventHandler const &) = delete;
 
-            //void SetClosing(bool en);
+            void SetClosing(bool en);
             void UseEdgeTrigger(bool en);
 
             virtual void EnableRead(bool en) override;
@@ -34,16 +34,12 @@ namespace net {
             //bool IsWriting() const { return (mPollFd.events & POLLOUT); }
             //struct pollfd const & GetPollFd() const { return mPollFd; }
 
-            //inline PollLoopPtr & GetPollLoop() { return mLoop; }
-            
+            void HandleEvents(struct epoll_event const & event);
+            EPollLoopPtr GetEPollLoop();
         private:
             struct epoll_event mEPollEvent;
-
-            //bool mIsClosing;
-            //bool mIsClosed;
-
-        public:
-            void HandleEvents(struct pollfd const & pollFd);
+            bool mIsClosing;
+            bool mIsClosed;
     };
 
 

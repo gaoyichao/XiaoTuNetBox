@@ -14,6 +14,10 @@ namespace net {
     EPollEventHandler::EPollEventHandler(int fd)
         : EventHandler(fd)
     {
+        mEPollEvent.data.ptr = this;
+
+        mIsClosing = false;
+        mIsClosed = false;
     }
 
     void EPollEventHandler::EnableRead(bool en) {
@@ -41,6 +45,36 @@ namespace net {
         }
     }
 
+    void EPollEventHandler::SetClosing(bool en) {
+        mIsClosing = en;
+    }
+
+    EPollLoopPtr EPollEventHandler::GetEPollLoop()
+    {
+        return std::static_pointer_cast<EPollLoop>(mLoop);
+    }
+
+    void EPollEventHandler::HandleEvents(struct epoll_event const & event)
+    {
+        uint32_t ev = event.events;
+
+        if (ev & EPOLLIN) {
+            if (mReadCallBk)
+                mReadCallBk();
+        }
+
+        if ((mEPollEvent.events & EPOLLOUT) || (ev & EPOLLOUT)) {
+            if (mWriteCallBk)
+                mWriteCallBk();
+        }
+
+        if (mIsClosing && !mIsClosed) {
+            if (mClosingCallBk)
+                mClosingCallBk();
+            mIsClosed = true;
+        }
+
+    }
 
 }
 }

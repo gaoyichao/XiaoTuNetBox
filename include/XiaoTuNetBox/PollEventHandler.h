@@ -30,14 +30,12 @@ namespace net {
             bool IsWriting() const { return (mPollFd.events & POLLOUT); }
             struct pollfd const & GetPollFd() const { return mPollFd; }
 
+            void HandleEvents(struct pollfd const & pollFd);
             PollLoopPtr GetPollLoop();
         private:
             struct pollfd mPollFd;
             bool mIsClosing;
             bool mIsClosed;
-
-        public:
-            void HandleEvents(struct pollfd const & pollFd);
     };
 
 
