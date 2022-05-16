@@ -1,8 +1,8 @@
 #ifndef XTNB_TIMER_H
 #define XTNB_TIMER_H
 
-#include <XiaoTuNetBox/PollLoop.h>
 #include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/EventLoop.h>
 
 #include <memory>
 #include <sys/timerfd.h>
@@ -20,9 +20,9 @@ namespace net {
             Timer(Timer const &) = delete;
             Timer & operator = (Timer const &) = delete;
             ~Timer();
-            Timer();
+            Timer(EventLoop const & loop);
 
-            PollEventHandlerPtr & GetHandler() { return mEventHandler; }
+            EventHandlerPtr & GetHandler() { return mEventHandler; }
 
             typedef std::function<void()> EventCallBk;
             void DisArm();
@@ -33,7 +33,7 @@ namespace net {
 
             void OnReadEvent();
         private:
-            PollEventHandlerPtr mEventHandler;
+            EventHandlerPtr mEventHandler;
             struct timespec mOriTime;
             int mFd;
     };

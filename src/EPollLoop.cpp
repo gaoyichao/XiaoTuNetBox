@@ -50,8 +50,12 @@ namespace net {
     void EPollLoop::UnRegister(EventHandlerPtr const & h)
     {
         EPollEventHandlerPtr handler = std::static_pointer_cast<EPollEventHandler>(h);
+        std::cout << __FUNCTION__ << ":" << handler->GetFd() << std::endl;
 
         int re = epoll_ctl(mEpollFd, EPOLL_CTL_DEL, handler->GetFd(), &(handler->mEPollEvent));
+        if (re < 0) {
+            perror("epoll_ctl");
+        }
         assert(0 == re);
     }
 

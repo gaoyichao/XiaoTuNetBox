@@ -16,7 +16,7 @@ namespace net {
  
     class HttpServer : public TcpAppServer {
         public:
-            HttpServer(PollLoopPtr const & loop, int port, int max_conn);
+            HttpServer(EventLoopPtr const & loop, int port, int max_conn);
 
         private:
             virtual void OnNewConnection(ConnectionPtr const & conn);

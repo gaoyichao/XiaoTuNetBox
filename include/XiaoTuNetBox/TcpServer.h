@@ -3,8 +3,8 @@
 
 #include <XiaoTuNetBox/Acceptor.h>
 #include <XiaoTuNetBox/ConnectionNode.h>
-#include <XiaoTuNetBox/PollLoop.h>
 #include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/EventLoop.h>
 #include <XiaoTuNetBox/Timer.h>
 #include <XiaoTuNetBox/InputBuffer.h>
 
@@ -18,17 +18,17 @@ namespace xiaotu {
 namespace net {
     class TcpServer {
         public:
-            TcpServer(PollLoopPtr const & loop, int port, int max_conn);
+            TcpServer(EventLoopPtr const & loop, int port, int max_conn);
             Acceptor & GetAcceptor() { return *mAcceptor; }
 
-            PollLoopPtr & GetPollLoop() { return mLoop; }
+            EventLoopPtr & GetLoop() { return mLoop; }
         protected:
             void OnNewConnection(int fd, IPv4Ptr const &peer_addr);
             void OnCloseConnection(ConnectionNode * con);
             void OnMessage(ConnectionNode * con);
             void OnTimeOut();
 
-            PollLoopPtr mLoop;
+            EventLoopPtr mLoop;
             int mMaxConn;
             std::shared_ptr<Acceptor> mAcceptor;
             TimerPtr mTimer;

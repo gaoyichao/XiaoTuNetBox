@@ -3,22 +3,20 @@
 #include <functional>
 #include <unistd.h>
 
+#include <cassert>
 #include <iostream>
 
 namespace xiaotu {
 namespace net {
 
-    Timer::Timer() {
+    Timer::Timer(EventLoop const & loop) {
         mFd = timerfd_create(CLOCK_BOOTTIME, TFD_NONBLOCK | TFD_CLOEXEC);
-        if (mFd < 0) {
-            perror("创建Socket失败");
-            exit(1);
-        }
-        mEventHandler = PollEventHandlerPtr(new PollEventHandler(mFd));
+        assert(mFd > 0);
+
+        mEventHandler = loop.CreateEventHandler(mFd);
         mEventHandler->EnableRead(true);
         mEventHandler->EnableWrite(false);
         mEventHandler->SetReadCallBk(std::bind(&Timer::OnReadEvent, this));
-        std::cout << "mFd = " << mFd << std::endl;
     }
 
     Timer::~Timer() {

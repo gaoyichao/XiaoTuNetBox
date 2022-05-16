@@ -16,7 +16,7 @@ namespace net {
 
     using namespace std::placeholders;
 
-    HttpServer::HttpServer(PollLoopPtr const & loop, int port, int max_conn)
+    HttpServer::HttpServer(EventLoopPtr const & loop, int port, int max_conn)
         : TcpAppServer(loop, port, max_conn)
     {
         mServer.SetTimeOut(10, 0, 5);
@@ -31,7 +31,7 @@ namespace net {
         conn->GetHandler()->SetNonBlock(true);
 
         HttpSessionPtr ptr(new HttpSession(conn));
-        ptr->BuildWakeUpper(mServer.GetPollLoop(),
+        ptr->BuildWakeUpper(mServer.GetLoop(),
                             std::bind(&HttpServer::HandleReponse, this, conn, HttpSessionWeakPtr(ptr)));
 
         conn->mUserObject = ptr;

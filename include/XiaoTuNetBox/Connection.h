@@ -7,7 +7,6 @@
 #include <XiaoTuNetBox/Types.h>
 #include <XiaoTuNetBox/EventLoop.h>
 #include <XiaoTuNetBox/EventHandler.h>
-#include <XiaoTuNetBox/PollEventHandler.h>
 
 namespace xiaotu {
 namespace net {

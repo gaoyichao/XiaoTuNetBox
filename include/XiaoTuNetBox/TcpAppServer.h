@@ -20,7 +20,7 @@ namespace net {
 
     class TcpAppServer {
         public:
-            TcpAppServer(PollLoopPtr const & loop, int port, int max_conn);
+            TcpAppServer(EventLoopPtr const & loop, int port, int max_conn);
             ~TcpAppServer();
             TcpAppServer(TcpAppServer const &) = delete;
             TcpAppServer & operator = (TcpAppServer const &) = delete;

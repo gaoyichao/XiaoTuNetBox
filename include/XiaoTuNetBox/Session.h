@@ -10,7 +10,8 @@
 #include <XiaoTuNetBox/InBufObserver.h>
 #include <XiaoTuNetBox/Connection.h>
 #include <XiaoTuNetBox/WakeUpper.h>
-#include <XiaoTuNetBox/PollLoop.h>
+#include <XiaoTuNetBox/EventLoop.h>
+
 #include <memory>
 
 namespace xiaotu {
@@ -25,17 +26,16 @@ namespace net {
 
             virtual char const * ToCString() = 0;
 
-            void BuildWakeUpper(PollLoopPtr const & loop, WakeUpper::EventCallBk cb)
+            void BuildWakeUpper(EventLoopPtr const & loop, WakeUpper::EventCallBk cb)
             {
                 mWakeUpper = std::make_shared<WakeUpper>(*loop);
                 mWakeUpper->SetWakeUpCallBk(std::move(cb));
                 ApplyOnLoop(mWakeUpper, loop);
             }
 
-            void ReleaseWakeUpper(PollLoopPtr const & loop)
+            void ReleaseWakeUpper(EventLoopPtr const & loop)
             {
-                EventHandlerPtr h = mWakeUpper->GetHandler();
-                UnApplyHandlerOnLoop(std::static_pointer_cast<PollEventHandler>(h), loop);
+                UnApplyOnLoop(mWakeUpper, loop);
                 mWakeUpper.reset();
             }
 
@@ -57,7 +57,7 @@ namespace net {
             //! 在 TcpAppServer 的会话列表中的索引
             size_t mIdx;
 
-            //! PollLoop 唤醒器
+            //! EventLoop 唤醒器
             WakeUpperPtr mWakeUpper;
 
             //! @todo 增加输出缓存

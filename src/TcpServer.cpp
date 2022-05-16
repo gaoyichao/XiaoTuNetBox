@@ -6,7 +6,7 @@ namespace net {
 
     using namespace std::placeholders;
 
-    TcpServer::TcpServer(PollLoopPtr const & loop, int port, int max_conn)
+    TcpServer::TcpServer(EventLoopPtr const & loop, int port, int max_conn)
         : mLoop(loop),
           mMaxConn(max_conn),
           mConnNum(0)
@@ -23,7 +23,7 @@ namespace net {
 
         for (int i = 1; i < n; i++)
             mTimeWheel.push_back(new ConnectionNode);
-        mTimer = TimerPtr(new Timer());
+        mTimer = std::make_shared<Timer>(*mLoop);
 
         struct timespec t;
         t.tv_sec = sec;

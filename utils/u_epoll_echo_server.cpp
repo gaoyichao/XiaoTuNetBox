@@ -7,7 +7,7 @@
  * 对应运行t_echo_client_0
  * 
  *****************************************************************************/
-#include <XiaoTuNetBox/PollLoop.h>
+#include <XiaoTuNetBox/EPollLoop.h>
 #include <XiaoTuNetBox/TcpServer.h>
 #include <XiaoTuNetBox/InBufObserver.h>
 
@@ -78,7 +78,7 @@ void OnMessage(ConnectionPtr const & con)
 
 
 int main() {
-    PollLoopPtr loop = Create<PollLoop>();
+    EPollLoopPtr loop = Create<EPollLoop>();
     TcpServer tcp(loop, 65530, 3);
 
     tcp.SetTimeOut(10, 0, 5);

@@ -5,7 +5,7 @@
  * 单线程
  * 
  *****************************************************************************/
-#include <XiaoTuNetBox/PollLoop.h>
+#include <XiaoTuNetBox/EPollLoop.h>
 #include <XiaoTuNetBox/HttpServer.h>
 #include <XiaoTuNetBox/Utils.h>
 
@@ -26,7 +26,7 @@ using namespace xiaotu::net;
 
 
 int main() {
-    PollLoopPtr loop = Create<PollLoop>();
+    EPollLoopPtr loop = Create<EPollLoop>();
 
     HttpServer http(loop, 65530, 3);
     http.mWorkSpace = ".";

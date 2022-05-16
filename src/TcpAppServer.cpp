@@ -10,7 +10,7 @@
 namespace xiaotu {
 namespace net {
 
-    TcpAppServer::TcpAppServer(PollLoopPtr const & loop, int port, int max_conn)
+    TcpAppServer::TcpAppServer(EventLoopPtr const & loop, int port, int max_conn)
         : mServer(loop, port, max_conn)
     {
         mDestroing = false;
@@ -82,7 +82,7 @@ namespace net {
         assert(nullptr != ptr);
         assert(mSessions[ptr->mIdx] == ptr);
 
-        ptr->ReleaseWakeUpper(mServer.GetPollLoop());
+        ptr->ReleaseWakeUpper(mServer.GetLoop());
         ptr->mInBuf->Release();
 
         size_t & idx = ptr->mIdx;

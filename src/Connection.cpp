@@ -64,9 +64,9 @@ namespace net {
 
     void Connection::OnClosingEvent() {
         int md = mEventHandler->GetFd();
-        close(md);
         if (mCloseCallBk)
             mCloseCallBk();
+        close(md);
         mIsClosed = true;
     }
 

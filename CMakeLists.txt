@@ -53,9 +53,17 @@ target_link_libraries(u_stdin_ipv4_talk ${PROJECT_NAME})
 add_executable(u_echo_server utils/u_echo_server.cpp)
 target_link_libraries(u_echo_server ${PROJECT_NAME})
 
+# epoll echo 服务器
+add_executable(u_epoll_echo_server utils/u_epoll_echo_server.cpp)
+target_link_libraries(u_epoll_echo_server ${PROJECT_NAME})
+
 # HTTP 服务器
 add_executable(u_http_server utils/u_http_server.cpp)
 target_link_libraries(u_http_server pthread ${PROJECT_NAME})
+
+# epoll echo 服务器
+add_executable(u_epoll_http_server utils/u_epoll_http_server.cpp)
+target_link_libraries(u_epoll_http_server ${PROJECT_NAME})
 
 ############################################################################
 #
