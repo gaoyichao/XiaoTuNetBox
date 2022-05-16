@@ -4,73 +4,45 @@
 #include <functional>
 #include <poll.h>
 #include <memory>
+#include <thread>
 
 namespace xiaotu {
 namespace net {
 
-    class PollLoop;
-    typedef std::shared_ptr<PollLoop> PollLoopPtr;
-    typedef std::shared_ptr<const PollLoop> PollLoopConstPtr;
+    class EventHandler;
+    typedef std::shared_ptr<EventHandler> EventHandlerPtr;
+    typedef std::shared_ptr<EventHandler const> EventHandlerConstPtr;
 
-    class PollEventHandler;
-    typedef std::shared_ptr<PollEventHandler> PollEventHandlerPtr;
-    typedef std::shared_ptr<const PollEventHandler> PollEventHandlerConstPtr;
-
-    void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
-    void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
-
-    template <typename ObjPtr>
-    void ApplyOnLoop(ObjPtr const & obj, PollLoopPtr const & loop) {
-        ApplyHandlerOnLoop(obj->GetHandler(), loop);
-    }
-
-    template <typename ObjPtr>
-    void UnApplyOnLoop(ObjPtr const & obj, PollLoopPtr const & loop) {
-        UnApplyHandlerOnLoop(obj->GetHandler(), loop);
-    }
-
-    class PollEventHandler {
-        typedef std::shared_ptr<PollLoop> PollLoopPtr;
-
+    class EventLoop;
+    class EventHandler {
+        typedef std::shared_ptr<EventLoop> EventLoopPtr;
         public:
-            PollEventHandler(int fd);
-            PollEventHandler(PollEventHandler const &) = delete;
-            PollEventHandler & operator = (PollEventHandler const &) = delete;
-
-            void SetClosing(bool en);
+            EventHandler(int fd) : mFd(fd), mLoopIdx(-1) {}
+            int GetFd() const { return mFd; }
             bool SetNonBlock(bool en);
+        protected:
+            int mFd;
 
-            void EnableRead(bool en);
-            void EnableWrite(bool en);
-            void DisableAll() { mPollFd.events = 0; }
-            bool IsReading() const { return (mPollFd.events & POLLIN); }
-            bool IsWriting() const { return (mPollFd.events & POLLOUT); }
-            struct pollfd const & GetPollFd() const { return mPollFd; }
-            int GetFd() const { return mPollFd.fd; }
-
-            inline PollLoopPtr & GetPollLoop() { return mLoop; }
+        friend void ApplyHandlerOnLoop(EventHandlerPtr const & h, EventLoopPtr const & loop);
+        friend void UnApplyHandlerOnLoop(EventHandlerPtr const & h, EventLoopPtr const & loop);
+        public:
             int GetLoopIdx() const { return mLoopIdx; }
-            pid_t GetLoopTid() const;
+            std::thread::id GetLoopTid() const;
             void WakeUpLoop();
-
-        friend void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
-        friend void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
-
-        private:
+        protected:
+            EventLoopPtr mLoop;
             int mLoopIdx;
-            PollLoopPtr mLoop;
-            struct pollfd mPollFd;
-            bool mIsClosing;
-            bool mIsClosed;
 
         public:
-            void HandleEvents(struct pollfd const & pollFd);
+            virtual void EnableRead(bool en) = 0;
+            virtual void EnableWrite(bool en) = 0;
 
+        public:
             typedef std::function<void()> EventCallBk;
             void SetReadCallBk(EventCallBk cb) { mReadCallBk = std::move(cb); }
             void SetWriteCallBk(EventCallBk cb) { mWriteCallBk = std::move(cb); }
             void SetClosingCallBk(EventCallBk cb) { mClosingCallBk = std::move(cb); }
-        private:
+        protected:
             EventCallBk mReadCallBk;
             EventCallBk mWriteCallBk;
             EventCallBk mClosingCallBk;

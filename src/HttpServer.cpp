@@ -81,13 +81,15 @@ namespace net {
 
         //! @todo 检查文件类型, issue #3
         int idx = GetSuffix((uint8_t*)urlpath.data(), urlpath.size(), '.');
-        std::string suffix = urlpath.substr(idx);
-        if (".js" == suffix)
-            res->SetHeader("Content-Type", "text/javascript");
-        else if (".html" == suffix)
-            res->SetHeader("Content-Type", "text/html");
-        else if (".svg" == suffix)
-            res->SetHeader("Content-Type", "image/svg+xml");
+        if (idx > 0) {
+            std::string suffix = urlpath.substr(idx);
+            if (".js" == suffix)
+                res->SetHeader("Content-Type", "text/javascript");
+            else if (".html" == suffix)
+                res->SetHeader("Content-Type", "text/html");
+            else if (".svg" == suffix)
+                res->SetHeader("Content-Type", "image/svg+xml");
+        }
 
         res->AppendContent(path, 0, s.st_size);
     }

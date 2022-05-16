@@ -1,8 +1,8 @@
 #ifndef XTNB_POLLLOOP_H
 #define XTNB_POLLLOOP_H
 
-#include <XiaoTuNetBox/EventHandler.h>
-#include <XiaoTuNetBox/WakeUpper.h>
+#include <XiaoTuNetBox/EventLoop.h>
+#include <XiaoTuNetBox/PollEventHandler.h>
 
 #include <vector>
 #include <memory>
@@ -14,48 +14,22 @@ namespace net {
     typedef std::shared_ptr<PollLoop> PollLoopPtr;
     typedef std::shared_ptr<const PollLoop> PollLoopConstPtr;
 
-    void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
-    void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
-    PollLoopPtr CreatePollLoop();
-
-    class PollLoop {
-        friend PollLoopPtr CreatePollLoop();
+    class PollLoop : public EventLoop {
         public:
+            PollLoop() : EventLoop() {};
             PollLoop(PollLoop const &) = delete;
             PollLoop & operator = (PollLoop const &) = delete;
 
-            void WakeUp(uint64_t u);
-
-            pid_t GetTid() const { return mTid; }
-
-            void Loop(int timeout);
-            /*
-             * 慎用
-             */
-            void PreLoop();
-            void LoopOnce(int timeout);
+            virtual EventHandlerPtr CreateEventHandler(int fd) override;
+            virtual void LoopOnce(int timeout) override;
 
         private:
-            PollLoop();
-            int Register(PollEventHandlerPtr const & handler);
-            void UnRegister(PollEventHandlerPtr const & handler);
-
-            void OnWakeUp();
-
-        friend void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
-        friend void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop);
+            virtual void Register(int idx) override;
+            virtual void UnRegister(EventHandlerPtr const & h) override;
 
         private:
-            std::vector<int> mIdleIdx;
             std::vector<struct pollfd> mPollFdList;
-            std::vector<PollEventHandlerPtr> mHandlerList;
-            WakeUpperPtr mWakeUpper;
-
-            pid_t mTid;
-            bool mLooping;
     };
-
-
 }
 }
 

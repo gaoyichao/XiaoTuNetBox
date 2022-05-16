@@ -50,7 +50,7 @@ int main(int argc, char * argv[]) {
     std::string ip(argv[1]);
     int port = atoi(argv[2]);
 
-    xiaotu::net::PollLoopPtr gLoop = xiaotu::net::CreatePollLoop();
+    xiaotu::net::PollLoopPtr gLoop = xiaotu::net::Create<xiaotu::net::PollLoop>();
 
     xiaotu::net::Socket socket;
     xiaotu::net::IPv4Ptr peer_ip = xiaotu::net::IPv4Ptr(new xiaotu::net::IPv4(ip, port));

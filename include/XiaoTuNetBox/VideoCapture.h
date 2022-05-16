@@ -9,7 +9,7 @@
 #include <cassert>
 #include <mutex>
 
-#include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/PollEventHandler.h>
 
 namespace xiaotu {
 namespace net {

@@ -77,7 +77,7 @@ void OnMessage(ConnectionPtr const & con)
 
 
 int main() {
-    PollLoopPtr loop = CreatePollLoop();
+    PollLoopPtr loop = Create<PollLoop>();
     TcpServer tcp(loop, 65530, 3);
 
     tcp.SetTimeOut(10, 0, 5);

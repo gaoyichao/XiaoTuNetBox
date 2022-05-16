@@ -1,56 +1,14 @@
 #include <XiaoTuNetBox/PollLoop.h>
-#include <XiaoTuNetBox/ThreadTools.h>
 
-#include <sys/eventfd.h>
 #include <iostream>
 #include <cassert>
 
 namespace xiaotu {
 namespace net {
-
-    PollLoopPtr CreatePollLoop() {
-        PollLoopPtr loop = PollLoopPtr(new PollLoop);
-        
-        ApplyOnLoop(loop->mWakeUpper, loop);
-        return loop;
-    }
-
-    PollLoop::PollLoop()
-        : mTid(0), mLooping(false)
+    EventHandlerPtr PollLoop::CreateEventHandler(int fd)
     {
-        mWakeUpper = std::make_shared<WakeUpper>();
-        mWakeUpper->SetWakeUpCallBk(std::bind(&PollLoop::OnWakeUp, this));
-    }
-
-    void PollLoop::WakeUp(uint64_t u) {
-        assert(0 != mTid);
-        assert(mTid != ThreadTools::GetCurrentTid());
-
-        mWakeUpper->WakeUp(u);
-    }
-
-    void PollLoop::OnWakeUp() {
-        std::cout << "poll loop wakeup" << std::endl;
-    }
-
-
-    void PollLoop::PreLoop() {
-        assert(0 == mTid);
-        mTid = ThreadTools::GetCurrentTid();
-        mLooping = true;
-    }
-
-
-    void PollLoop::Loop(int timeout) {
-        assert(0 == mTid);
-        mTid = ThreadTools::GetCurrentTid();
-        mLooping = true;
-
-        while (mLooping) {
-            LoopOnce(timeout);
-        }
-
-        mTid = 0;
+        PollEventHandlerPtr re = std::make_shared<PollEventHandler>(fd);
+        return std::static_pointer_cast<EventHandler>(re);
     }
 
     void PollLoop::LoopOnce(int timeout) {
@@ -61,56 +19,32 @@ namespace net {
                 mHandlerList[i] = NULL;
                 continue;
             }
-            mHandlerList[i]->HandleEvents(mPollFdList[i]);
+            PollEventHandlerPtr handler = std::static_pointer_cast<PollEventHandler>(mHandlerList[i]);
+            handler->HandleEvents(mPollFdList[i]);
         }
     }
 
-    int PollLoop::Register(PollEventHandlerPtr const & handler) {
-        if (mIdleIdx.empty()) {
+    void PollLoop::Register(int idx) {
+        PollEventHandlerPtr handler = std::static_pointer_cast<PollEventHandler>(mHandlerList[idx]);
+        if (idx == mPollFdList.size()) {
             mPollFdList.push_back(handler->GetPollFd());
-            mHandlerList.push_back(handler);
-            return (mHandlerList.size() - 1);
         } else {
-            int idx = mIdleIdx.back();
-            std::cout << "register idx:" << idx << std::endl;
-            mIdleIdx.pop_back();
-
             mPollFdList[idx] = handler->GetPollFd();
-            mHandlerList[idx] = handler;
-            return idx;
         }
     }
 
-    void PollLoop::UnRegister(PollEventHandlerPtr const & handler) {
+    void PollLoop::UnRegister(EventHandlerPtr const & h) {
+        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
+        PollEventHandlerPtr handler = std::static_pointer_cast<PollEventHandler>(h);
         int idx = handler->GetLoopIdx();
 
-        assert(idx >= 0);
-        assert(idx < mPollFdList.size() && mPollFdList.size() == mHandlerList.size());
+        assert(idx >= 0 &&  idx < mPollFdList.size());
         assert(mPollFdList[idx].fd == handler->GetFd());
-        assert(mHandlerList[idx] == handler);
 
         mPollFdList[idx].fd = -1;
         mPollFdList[idx].events = 0;
         mPollFdList[idx].revents = 0;
-
-        mHandlerList[idx].reset();
-        mIdleIdx.push_back(idx);
     }
-
-    void ApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop) {
-        h->mLoop = loop;
-        h->mLoopIdx = loop->Register(h);
-        std::cout << "apply loop idx = " << h->mLoopIdx << std::endl;
-    }
-
-
-    void UnApplyHandlerOnLoop(PollEventHandlerPtr const & h, PollLoopPtr const & loop) {
-        std::cout << "unapply loop idx = " << h->mLoopIdx << std::endl;
-        loop->UnRegister(h);
-        h->mLoopIdx = -1;
-        h->mLoop.reset();
-    }
-
 
 
 }

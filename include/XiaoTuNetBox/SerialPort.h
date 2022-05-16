@@ -14,7 +14,7 @@
 #include <functional>
 #include <cmath>
 
-#include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/PollEventHandler.h>
 
 namespace xiaotu {
 namespace net {

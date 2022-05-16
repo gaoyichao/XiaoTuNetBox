@@ -1,5 +1,7 @@
 #include <XiaoTuNetBox/WakeUpper.h>
+#include <XiaoTuNetBox/EventLoop.h>
 
+#include <sys/eventfd.h>
 #include <functional>
 #include <unistd.h>
 
@@ -8,10 +10,10 @@
 namespace xiaotu {
 namespace net {
 
-    WakeUpper::WakeUpper()
+    WakeUpper::WakeUpper(EventLoop & loop)
     {
         mFd = eventfd(0, EFD_CLOEXEC);
-        mEventHandler = PollEventHandlerPtr(new PollEventHandler(mFd));
+        mEventHandler = loop.CreateEventHandler(mFd);
         mEventHandler->EnableRead(true);
         mEventHandler->SetReadCallBk(std::bind(&WakeUpper::OnReadEvent, this));
     }

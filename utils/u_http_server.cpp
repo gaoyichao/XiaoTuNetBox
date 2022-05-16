@@ -25,10 +25,10 @@ using namespace xiaotu::net;
 
 
 int main() {
-    PollLoopPtr loop = CreatePollLoop();
+    PollLoopPtr loop = Create<PollLoop>();
 
     HttpServer http(loop, 65530, 3);
-    http.mWorkSpace = "/home/gyc/tmp";
+    http.mWorkSpace = ".";
 
     loop->Loop(10);
 

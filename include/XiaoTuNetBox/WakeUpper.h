@@ -4,23 +4,29 @@
 #include <XiaoTuNetBox/EventHandler.h>
 
 #include <memory>
-#include <sys/eventfd.h>
 
 namespace xiaotu {
 namespace net {
 
+    class EventLoop;
     class WakeUpper;
     typedef std::shared_ptr<WakeUpper> WakeUpperPtr;
     typedef std::shared_ptr<const WakeUpper> WakeUpperConstPtr;
 
+    template <typename LoopType>
+    WakeUpperPtr NewWakeUpper()
+    {
+        return nullptr;
+    }
+
     class WakeUpper {
         public:
-            WakeUpper();
+            WakeUpper(EventLoop & loop);
             WakeUpper(WakeUpper const &) = delete;
             WakeUpper & operator = (WakeUpper const &) = delete;
             ~WakeUpper();
 
-            PollEventHandlerPtr & GetHandler() { return mEventHandler; }
+            EventHandlerPtr & GetHandler() { return mEventHandler; }
             void WakeUp(uint64_t u);
 
             typedef std::function<void()> EventCallBk;
@@ -29,7 +35,7 @@ namespace net {
 
             void OnReadEvent();
         private:
-            PollEventHandlerPtr mEventHandler;
+            EventHandlerPtr mEventHandler;
             int mFd;
     };
 

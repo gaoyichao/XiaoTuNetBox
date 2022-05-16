@@ -49,8 +49,9 @@ namespace net {
             }
 
             std::cout << __FUNCTION__ << std::endl;
-            if (nullptr != task)
+            if (nullptr != task) {
                 task->Finish();
+            }
         }
     }
 

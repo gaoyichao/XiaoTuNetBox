@@ -73,7 +73,7 @@ namespace net {
     void Connection::SendBytes(uint8_t const *buf, int num) {
         int nsend = 0;
 
-        if (mEventHandler->GetLoopTid() == ThreadTools::GetCurrentTid() && mWriteBuf.Empty()) {
+        if (mEventHandler->GetLoopTid() == std::this_thread::get_id() && mWriteBuf.Empty()) {
             nsend = SendRawData(buf, num);
             num -= nsend;
             buf += nsend;
@@ -83,7 +83,7 @@ namespace net {
             mWriteBuf.PushBack(buf, num);
             std::cout << "writebuf.size = " << mWriteBuf.Size() << std::endl;
             mEventHandler->EnableWrite(true);
-            if (mEventHandler->GetLoopTid() != ThreadTools::GetCurrentTid())
+            if (mEventHandler->GetLoopTid() != std::this_thread::get_id())
                 mEventHandler->WakeUpLoop();
         }
     }

@@ -2,7 +2,7 @@
 #define XTNB_ACCEPTOR_H
 
 #include <XiaoTuNetBox/Socket.h>
-#include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/PollEventHandler.h>
 
 namespace xiaotu {
 namespace net {

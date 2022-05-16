@@ -4,7 +4,7 @@
 #include <XiaoTuNetBox/DataQueue.hpp>
 #include <XiaoTuNetBox/InBufObserver.h>
 #include <XiaoTuNetBox/Address.h>
-#include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/PollEventHandler.h>
 #include <XiaoTuNetBox/Types.h>
 
 namespace xiaotu {
