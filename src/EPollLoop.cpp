@@ -20,7 +20,7 @@ namespace net {
         close(mEpollFd);
     }
 
-    EventHandlerPtr EPollLoop::CreateEventHandler(int fd)
+    EventHandlerPtr EPollLoop::CreateEventHandler(int fd) const
     {
         EPollEventHandlerPtr re = std::make_shared<EPollEventHandler>(fd);
         return std::static_pointer_cast<EventHandler>(re);
@@ -43,6 +43,8 @@ namespace net {
     void EPollLoop::Register(int idx) {
         EPollEventHandlerPtr handler = std::static_pointer_cast<EPollEventHandler>(mHandlerList[idx]);
 
+        int re = epoll_ctl(mEpollFd, EPOLL_CTL_ADD, handler->GetFd(), &(handler->mEPollEvent));
+        assert(0 == re);
     }
 
     void EPollLoop::UnRegister(EventHandlerPtr const & h) {

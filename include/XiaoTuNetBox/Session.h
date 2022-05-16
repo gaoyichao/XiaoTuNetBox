@@ -29,9 +29,7 @@ namespace net {
             {
                 mWakeUpper = std::make_shared<WakeUpper>(*loop);
                 mWakeUpper->SetWakeUpCallBk(std::move(cb));
-
-                EventHandlerPtr h = mWakeUpper->GetHandler();
-                ApplyHandlerOnLoop(std::static_pointer_cast<PollEventHandler>(h), loop);
+                ApplyOnLoop(mWakeUpper, loop);
             }
 
             void ReleaseWakeUpper(PollLoopPtr const & loop)

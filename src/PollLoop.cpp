@@ -5,7 +5,7 @@
 
 namespace xiaotu {
 namespace net {
-    EventHandlerPtr PollLoop::CreateEventHandler(int fd)
+    EventHandlerPtr PollLoop::CreateEventHandler(int fd) const
     {
         PollEventHandlerPtr re = std::make_shared<PollEventHandler>(fd);
         return std::static_pointer_cast<EventHandler>(re);

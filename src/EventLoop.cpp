@@ -6,7 +6,8 @@
 namespace xiaotu {
 namespace net {
 
-    void ApplyHandlerOnLoop(EventHandlerPtr const & h, EventLoopPtr const & loop) {
+    void ApplyHandlerOnLoop(EventHandlerPtr const & h, EventLoopPtr const & loop)
+    {
         int idx = loop->Add(h);
         loop->Register(idx);
 
@@ -15,7 +16,8 @@ namespace net {
         std::cout << "apply loop idx = " << h->mLoopIdx << std::endl;
     }
 
-    void UnApplyHandlerOnLoop(EventHandlerPtr const & h, EventLoopPtr const & loop) {
+    void UnApplyHandlerOnLoop(EventHandlerPtr const & h, EventLoopPtr const & loop)
+    {
         std::cout << "unapply loop idx = " << h->mLoopIdx << std::endl;
         loop->UnRegister(h);
         loop->Remove(h);

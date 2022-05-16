@@ -22,7 +22,7 @@ namespace net {
             EPollLoop & operator = (EPollLoop const &) = delete;
             ~EPollLoop();
 
-            virtual EventHandlerPtr CreateEventHandler(int fd) override;
+            virtual EventHandlerPtr CreateEventHandler(int fd) const override;
             virtual void LoopOnce(int timeout) override;
 
         private:
@@ -33,8 +33,6 @@ namespace net {
             int GetEpollFd() const { return mEpollFd; }
         private:
             int mEpollFd;
-            //std::vector<int> mIdleIdx;
-            //std::vector<PollEventHandlerPtr> mHandlerList;
             //std::vector<struct pollfd> mPollFdList;
     };
 }

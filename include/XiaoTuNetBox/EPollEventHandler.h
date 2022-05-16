@@ -17,6 +17,7 @@ namespace net {
     class EPollEventHandler : public EventHandler {
         typedef std::shared_ptr<EPollLoop> EPollLoopPtr;
 
+        friend class EPollLoop;
         public:
             EPollEventHandler(int fd);
             EPollEventHandler(EPollEventHandler const &) = delete;
@@ -36,7 +37,6 @@ namespace net {
             //inline PollLoopPtr & GetPollLoop() { return mLoop; }
             
         private:
-
             struct epoll_event mEPollEvent;
 
             //bool mIsClosing;

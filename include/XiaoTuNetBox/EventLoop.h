@@ -22,7 +22,7 @@ namespace net {
             void PreLoop();
             void StopLoop() { mLooping = false; }
 
-            virtual EventHandlerPtr CreateEventHandler(int fd) = 0;
+            virtual EventHandlerPtr CreateEventHandler(int fd) const = 0;
             virtual void LoopOnce(int timeout) = 0;
         protected:
             WakeUpperPtr mWakeUpper;

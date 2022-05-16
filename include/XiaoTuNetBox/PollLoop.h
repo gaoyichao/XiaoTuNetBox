@@ -20,7 +20,7 @@ namespace net {
             PollLoop(PollLoop const &) = delete;
             PollLoop & operator = (PollLoop const &) = delete;
 
-            virtual EventHandlerPtr CreateEventHandler(int fd) override;
+            virtual EventHandlerPtr CreateEventHandler(int fd) const override;
             virtual void LoopOnce(int timeout) override;
 
         private:

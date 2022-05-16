@@ -10,7 +10,7 @@
 namespace xiaotu {
 namespace net {
 
-    WakeUpper::WakeUpper(EventLoop & loop)
+    WakeUpper::WakeUpper(EventLoop const & loop)
     {
         mFd = eventfd(0, EFD_CLOEXEC);
         mEventHandler = loop.CreateEventHandler(mFd);

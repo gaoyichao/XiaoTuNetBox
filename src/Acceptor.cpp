@@ -5,8 +5,8 @@
 namespace xiaotu {
 namespace net {
 
-    AcceptorPtr CreateAcceptor(int port, int qsize) {
-        AcceptorPtr re = AcceptorPtr(new Acceptor(port, qsize));
+    AcceptorPtr CreateAcceptor(int port, int qsize, EventLoop const & loop) {
+        AcceptorPtr re = AcceptorPtr(new Acceptor(port, qsize, loop));
         return re;
     }
 
@@ -19,7 +19,7 @@ namespace net {
      * @port: 监听端口
      * @qsize: 等待连接的队列长度
      */
-    Acceptor::Acceptor(int port, int qsize)
+    Acceptor::Acceptor(int port, int qsize, EventLoop const & loop)
         : mAccpSock(AF_INET, SOCK_STREAM, 0)
     {
         IPv4 addr(port);
@@ -28,7 +28,7 @@ namespace net {
         mAccpSock.BindOrDie(addr);
         mAccpSock.ListenOrDie(qsize);
 
-        mEventHandler = PollEventHandlerPtr(new PollEventHandler(mAccpSock.GetFd()));
+        mEventHandler = loop.CreateEventHandler(mAccpSock.GetFd());
         mEventHandler->EnableRead(true);
         mEventHandler->EnableWrite(false);
         mEventHandler->SetReadCallBk(std::bind(&Acceptor::OnReadEvent, this));

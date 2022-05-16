@@ -11,7 +11,7 @@ namespace net {
           mMaxConn(max_conn),
           mConnNum(0)
     {
-        mAcceptor = CreateAcceptor(port, max_conn);
+        mAcceptor = CreateAcceptor(port, max_conn, *mLoop);
         mAcceptor->SetNewConnCallBk(std::bind(&TcpServer::OnNewConnection, this, _1, _2));
         ApplyOnLoop(mAcceptor, mLoop);
 
