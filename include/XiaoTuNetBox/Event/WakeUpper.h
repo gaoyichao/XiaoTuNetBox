@@ -3,8 +3,6 @@
 
 #include <XiaoTuNetBox/Event/EventHandler.h>
 
-#include <memory>
-
 namespace xiaotu {
 namespace net {
 

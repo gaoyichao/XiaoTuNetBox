@@ -7,7 +7,7 @@
  * 对应运行t_echo_client_0
  * 
  *****************************************************************************/
-#include <XiaoTuNetBox/Event/EPollLoop.h>
+#include <XiaoTuNetBox/Event.h>
 #include <XiaoTuNetBox/TcpServer.h>
 #include <XiaoTuNetBox/InBufObserver.h>
 

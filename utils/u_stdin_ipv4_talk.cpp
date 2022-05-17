@@ -10,7 +10,7 @@
 #include <XiaoTuNetBox/Connection.h>
 #include <XiaoTuNetBox/Socket.h>
 #include <XiaoTuNetBox/Address.h>
-#include <XiaoTuNetBox/Event/PollLoop.h>
+#include <XiaoTuNetBox/Event.h>
 #include <XiaoTuNetBox/InBufObserver.h>
 
 xiaotu::net::InBufObserverPtr stdin_obs;

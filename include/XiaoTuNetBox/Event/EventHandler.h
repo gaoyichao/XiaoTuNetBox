@@ -1,5 +1,5 @@
-#ifndef XTNB_EVENTHANDLER_H
-#define XTNB_EVENTHANDLER_H
+#ifndef XTNB_EVENT_HANDLER_H
+#define XTNB_EVENT_HANDLER_H
 
 #include <functional>
 #include <poll.h>
