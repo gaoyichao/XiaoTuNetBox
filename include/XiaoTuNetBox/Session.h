@@ -10,7 +10,7 @@
 #include <XiaoTuNetBox/InBufObserver.h>
 #include <XiaoTuNetBox/Connection.h>
 #include <XiaoTuNetBox/WakeUpper.h>
-#include <XiaoTuNetBox/EventLoop.h>
+#include <XiaoTuNetBox/Event/EventLoop.h>
 
 #include <memory>
 

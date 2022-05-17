@@ -1,7 +1,7 @@
 #ifndef XTNB_WAKEUPPER_H
 #define XTNB_WAKEUPPER_H
 
-#include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/Event/EventHandler.h>
 
 #include <memory>
 

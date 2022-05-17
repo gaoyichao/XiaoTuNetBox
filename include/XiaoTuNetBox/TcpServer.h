@@ -3,8 +3,8 @@
 
 #include <XiaoTuNetBox/Acceptor.h>
 #include <XiaoTuNetBox/ConnectionNode.h>
-#include <XiaoTuNetBox/EventHandler.h>
-#include <XiaoTuNetBox/EventLoop.h>
+#include <XiaoTuNetBox/Event/EventHandler.h>
+#include <XiaoTuNetBox/Event/EventLoop.h>
 #include <XiaoTuNetBox/Timer.h>
 #include <XiaoTuNetBox/InputBuffer.h>
 

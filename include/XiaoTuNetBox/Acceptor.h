@@ -2,8 +2,8 @@
 #define XTNB_ACCEPTOR_H
 
 #include <XiaoTuNetBox/Socket.h>
-#include <XiaoTuNetBox/EventLoop.h>
-#include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/Event/EventLoop.h>
+#include <XiaoTuNetBox/Event/EventHandler.h>
 
 namespace xiaotu {
 namespace net {

@@ -5,8 +5,8 @@
 #include <XiaoTuNetBox/InBufObserver.h>
 #include <XiaoTuNetBox/Address.h>
 #include <XiaoTuNetBox/Types.h>
-#include <XiaoTuNetBox/EventLoop.h>
-#include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/Event/EventLoop.h>
+#include <XiaoTuNetBox/Event/EventHandler.h>
 
 namespace xiaotu {
 namespace net {

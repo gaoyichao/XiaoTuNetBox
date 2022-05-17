@@ -21,10 +21,9 @@ include_directories(
 ############################################################################
 
 file(GLOB PROJECT_SRC_FILES
-          ${PROJECT_SOURCE_DIR}/src/*cpp)
-file(GLOB PROJECT_INC_FILES
-          ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/*.h
-          ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/*.hpp)
+          ${PROJECT_SOURCE_DIR}/src/*cpp
+          ${PROJECT_SOURCE_DIR}/src/Event/*cpp
+)
 
 add_library(${PROJECT_NAME} SHARED
     ${PROJECT_SRC_FILES}
@@ -113,6 +112,10 @@ INSTALL(TARGETS ${PROJECT_NAME}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
 
+file(GLOB PROJECT_INC_FILES
+          ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/*.h
+          ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/*.hpp
+)
 INSTALL(FILES ${PROJECT_INC_FILES}
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}
 )

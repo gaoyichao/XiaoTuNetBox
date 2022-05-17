@@ -1,7 +1,7 @@
 #ifndef XTNB_POLL_EVENT_HANDLER_H
 #define XTNB_POLL_EVENT_HANDLER_H
 
-#include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/Event/EventHandler.h>
 
 namespace xiaotu {
 namespace net {

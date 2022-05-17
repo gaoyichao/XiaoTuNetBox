@@ -1,7 +1,7 @@
 #ifndef XTNB_LOOP_H
 #define XTNB_LOOP_H
 
-#include <XiaoTuNetBox/EventHandler.h>
+#include <XiaoTuNetBox/Event/EventHandler.h>
 #include <XiaoTuNetBox/WakeUpper.h>
 
 #include <atomic>

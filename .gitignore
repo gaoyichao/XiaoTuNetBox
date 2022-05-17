@@ -6,3 +6,4 @@ build/
 *.a
 
 .ycm_extra_conf.py
+tmp.sh

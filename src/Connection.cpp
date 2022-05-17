@@ -1,5 +1,4 @@
 #include <XiaoTuNetBox/Connection.h>
-#include <XiaoTuNetBox/ThreadTools.h>
 
 #include <functional>
 #include <unistd.h>

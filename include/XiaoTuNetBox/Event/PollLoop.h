@@ -1,8 +1,8 @@
 #ifndef XTNB_POLLLOOP_H
 #define XTNB_POLLLOOP_H
 
-#include <XiaoTuNetBox/EventLoop.h>
-#include <XiaoTuNetBox/PollEventHandler.h>
+#include <XiaoTuNetBox/Event/EventLoop.h>
+#include <XiaoTuNetBox/Event/PollEventHandler.h>
 
 #include <vector>
 #include <memory>

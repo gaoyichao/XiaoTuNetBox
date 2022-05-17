@@ -1,8 +1,8 @@
 #ifndef XTNB_TIMER_H
 #define XTNB_TIMER_H
 
-#include <XiaoTuNetBox/EventHandler.h>
-#include <XiaoTuNetBox/EventLoop.h>
+#include <XiaoTuNetBox/Event/EventHandler.h>
+#include <XiaoTuNetBox/Event/EventLoop.h>
 
 #include <memory>
 #include <sys/timerfd.h>
