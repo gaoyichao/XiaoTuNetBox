@@ -7,7 +7,7 @@
 #define XTNB_HTTP_SERVER_H
 
 #include <XiaoTuNetBox/TcpAppServer.h>
-#include <XiaoTuNetBox/HttpSession.h>
+#include <XiaoTuNetBox/Http/HttpSession.h>
 
 #include <vector>
 

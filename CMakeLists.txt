@@ -23,6 +23,7 @@ include_directories(
 file(GLOB PROJECT_SRC_FILES
           ${PROJECT_SOURCE_DIR}/src/*cpp
           ${PROJECT_SOURCE_DIR}/src/Event/*cpp
+          ${PROJECT_SOURCE_DIR}/src/Http/*cpp
 )
 
 add_library(${PROJECT_NAME} SHARED
@@ -119,6 +120,22 @@ file(GLOB PROJECT_INC_FILES
 INSTALL(FILES ${PROJECT_INC_FILES}
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}
 )
+
+
+function(install_include_subset SUBDIR)
+    message(STATUS "install_include_subset:"  ${SUBDIR})
+    file(GLOB SUBDIR_INC_FILES
+        ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/${SUBDIR}/*.h
+        ${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}/${SUBDIR}/*.hpp
+    )
+
+    INSTALL(FILES ${SUBDIR_INC_FILES}
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${PROJECT_NAME}/${SUBDIR}
+    )
+endfunction()
+
+install_include_subset(Event)
+install_include_subset(Http)
 
 add_custom_target("uninstall" COMMENT "Uninstall installed files")
 add_custom_command(

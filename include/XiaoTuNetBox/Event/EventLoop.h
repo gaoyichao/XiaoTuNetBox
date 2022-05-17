@@ -2,11 +2,10 @@
 #define XTNB_LOOP_H
 
 #include <XiaoTuNetBox/Event/EventHandler.h>
-#include <XiaoTuNetBox/WakeUpper.h>
+#include <XiaoTuNetBox/Event/WakeUpper.h>
 
 #include <atomic>
-#include <memory>
-#include <thread>
+#include <vector>
 
 namespace xiaotu {
 namespace net {

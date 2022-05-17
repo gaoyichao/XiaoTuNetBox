@@ -1,4 +1,4 @@
-#include <XiaoTuNetBox/HttpResponse.h>
+#include <XiaoTuNetBox/Http/HttpResponse.h>
 #include <XiaoTuNetBox/Utils.h>
 
 #include <iostream>

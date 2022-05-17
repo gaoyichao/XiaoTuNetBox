@@ -4,10 +4,6 @@
 #include <XiaoTuNetBox/Event/EventLoop.h>
 #include <XiaoTuNetBox/Event/EPollEventHandler.h>
 
-#include <vector>
-#include <memory>
-#include <sys/epoll.h>
-
 namespace xiaotu {
 namespace net {
 

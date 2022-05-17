@@ -3,7 +3,7 @@
  * HttpSession - 一次Http会话
  * 
  ***********************************************************************************/
-#include <XiaoTuNetBox/HttpSession.h>
+#include <XiaoTuNetBox/Http/HttpSession.h>
 #include <XiaoTuNetBox/Utils.h>
 
 

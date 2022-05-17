@@ -4,9 +4,6 @@
 #include <XiaoTuNetBox/Event/EventLoop.h>
 #include <XiaoTuNetBox/Event/PollEventHandler.h>
 
-#include <vector>
-#include <memory>
-
 namespace xiaotu {
 namespace net {
 

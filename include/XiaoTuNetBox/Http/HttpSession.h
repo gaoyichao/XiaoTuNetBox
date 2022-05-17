@@ -7,8 +7,8 @@
 #define XTNB_HTTP_SESSION_H
 
 #include <XiaoTuNetBox/ConnectionNode.h>
-#include <XiaoTuNetBox/HttpRequest.h>
-#include <XiaoTuNetBox/HttpResponse.h>
+#include <XiaoTuNetBox/Http/HttpRequest.h>
+#include <XiaoTuNetBox/Http/HttpResponse.h>
 #include <XiaoTuNetBox/Session.h>
 
 #include <memory>
