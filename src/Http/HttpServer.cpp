@@ -19,35 +19,47 @@ namespace net {
     HttpServer::HttpServer(EventLoopPtr const & loop, int port, int max_conn)
         : TcpAppServer(loop, port, max_conn)
     {
-        mServer.SetTimeOut(10, 0, 5);
+        mServer.SetTimeOut(2, 0, 3);
         mServer.SetNewConnCallBk(std::bind(&HttpServer::OnNewConnection, this, _1));
         mServer.SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1));
-        mServer.SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1));
+        mServer.SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1, _2, _3));
     }
 
+    // loop 线程
     void HttpServer::OnNewConnection(ConnectionPtr const & conn) {
         std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-        std::cout << "新建连接:" << conn->GetInfo() << std::endl;
+        std::cout << "新建连接 :" << conn->GetInfo() << std::endl;
+        std::cout << "use count:" << conn.use_count() << std::endl;
+        std::cout << "idx:     :" << conn->GetHandler()->GetLoopIdx() << std::endl;
+        std::cout << "fd:      :" << conn->GetHandler()->GetFd() << std::endl;
         conn->GetHandler()->SetNonBlock(true);
 
         HttpSessionPtr ptr(new HttpSession(conn));
         ptr->BuildWakeUpper(mServer.GetLoop(),
-                            std::bind(&HttpServer::HandleReponse, this, conn, HttpSessionWeakPtr(ptr)));
+                            std::bind(&HttpServer::HandleReponse,
+                                       this, ConnectionWeakPtr(conn), HttpSessionWeakPtr(ptr)));
 
         conn->mUserObject = ptr;
         AddSession(ptr);
     }
 
-    void HttpServer::HandleReponse(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr)
+    // loop 线程
+    void HttpServer::HandleReponse(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & sessptr)
     {
-        HttpSessionPtr session = weakptr.lock();
+        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__  << std::endl;
+        ConnectionPtr con = conptr.lock();
+        if (nullptr == con)
+            return;
+        HttpSessionPtr session = sessptr.lock();
         if (nullptr == session)
             return;
 
         HttpResponsePtr res = session->GetResponse();
 
-        if (con->IsClosed())
+        if (con->IsClosed()) {
+            session->Reset();
             return;
+        }
 
         std::vector<uint8_t> buf;
         res->ToUint8Vector(buf);
@@ -58,6 +70,7 @@ namespace net {
         session->Reset();
     }
 
+    // task 线程
     void HttpServer::OnGetRequest(HttpRequestPtr const & req, HttpResponsePtr const & res)
     {
         std::string urlpath = req->GetURLPath();
@@ -94,9 +107,13 @@ namespace net {
         res->AppendContent(path, 0, s.st_size);
     }
 
-    void HttpServer::HandleRequest(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr)
+    // task 线程
+    void HttpServer::HandleRequest(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & sessptr)
     {
-        HttpSessionPtr session = weakptr.lock();
+        ConnectionPtr con = conptr.lock();
+        if (nullptr == con)
+            return;
+        HttpSessionPtr session = sessptr.lock();
         if (nullptr == session)
             return;
 
@@ -110,21 +127,28 @@ namespace net {
             OnGetRequest(req, res);
 
         session->WakeUp();
+        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__  << ":con count:" << con.use_count() << std::endl;
     }
 
-    void HttpServer::OnMessage(ConnectionPtr const & con)
+    // loop 线程
+    void HttpServer::OnMessage(ConnectionPtr const & con,
+                               uint8_t const * buf, ssize_t n)
     {
-        std::cout << "接收到了消息" << std::endl;
+        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
+        std::cout << "接收到了 " << n << "个字节:" << con->GetInfo() << std::endl;
+        std::cout << "use count:" << con.use_count() << std::endl;
+        std::cout << "idx:     :" << con->GetHandler()->GetLoopIdx() << std::endl;
+        std::cout << "fd:      :" << con->GetHandler()->GetFd() << std::endl;
+
         HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(con->mUserObject.lock());
-        std::cout << ptr->ToCString() << std::endl;
-        //std::cout << con->mUserObject->ToCString() << std::endl;
         std::cout << ptr->GetStateStr() << std::endl;
 
         assert(ptr->InRequestPhase());
-        HttpRequestPtr request = ptr->HandleRequest(con);
+        HttpRequestPtr request = ptr->HandleRequest(buf, n);
 
         if (HttpSession::eResponsing == ptr->mState) {
-            TaskPtr task(new Task(std::bind(&HttpServer::HandleRequest, this, con, HttpSessionWeakPtr(ptr))));
+            TaskPtr task(new Task(std::bind(&HttpServer::HandleRequest,
+                                             this, ConnectionWeakPtr(con), HttpSessionWeakPtr(ptr))));
             AddTask(task);
         } else if (HttpSession::eError == ptr->mState) {
             con->SendString("HTTP/1.1 400 Bad Request\r\n\r\n");
@@ -132,13 +156,19 @@ namespace net {
         }
     }
 
+    // loop 线程
     void HttpServer::OnCloseConnection(ConnectionPtr const & conn) {
-        std::cout << "关闭连接:" << conn->GetInfo() << std::endl;
+        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
+        std::cout << "关闭连接 :" << conn->GetInfo() << std::endl;
+        std::cout << "fd       :" << conn->GetHandler()->GetFd() << std::endl;
+        std::cout << "Loop Idx :" << conn->GetHandler()->GetLoopIdx() << std::endl;
+        std::cout << "use count:" << conn.use_count() << std::endl;
 
         HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(conn->mUserObject.lock());
-        std::cout << ptr->ToCString() << std::endl;
-
         ReleaseSession(ptr);
+
+        std::cout << "conn use count:" << conn.use_count() << std::endl;
+        std::cout << "sess use count:" << ptr.use_count() << std::endl;
     }
 
 }

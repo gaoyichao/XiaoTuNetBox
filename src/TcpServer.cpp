@@ -43,7 +43,8 @@ namespace net {
         mTimeWheel.push_back(head);
     }
 
-    void TcpServer::OnNewConnection(int fd, IPv4Ptr const &peer_addr) {
+    void TcpServer::OnNewConnection(int fd, IPv4Ptr const &peer_addr)
+    {
         if (mConnNum >= mMaxConn) {
             std::cout << "连接太多了" << std::endl;
             close(fd);
@@ -60,27 +61,34 @@ namespace net {
                 mNewConnCallBk(conn);
 
             conn->SetCloseCallBk(std::bind(&TcpServer::OnCloseConnection, this, node));
-            conn->SetMsgCallBk(std::bind(&TcpServer::OnMessage, this, node));
+            conn->SetMsgCallBk(std::bind(&TcpServer::OnMessage, this, node, _1, _2));
 
             mConnNum++;
         }
     }
 
-    void TcpServer::OnCloseConnection(ConnectionNode * con) {
-        std::cout << __FUNCTION__ << ":" << con->conn->GetHandler()->GetFd() << std::endl;
+    void TcpServer::OnCloseConnection(ConnectionNode * con)
+    {
+        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << ": fd:"
+                  << con->conn->GetHandler()->GetFd() << std::endl;
         if (mCloseConnCallBk)
             mCloseConnCallBk(con->conn);
 
+        std::cout << __FILE__ << ":--------------------------:" << __LINE__ << std::endl;
+        std::cout << "use_count :" << con->conn.use_count() << std::endl;
         UnApplyOnLoop(con->conn, mLoop);
         Delete(con);
+        con->conn.reset();
+        std::cout << "use_count :" << con->conn.use_count() << std::endl;
+        std::cout << __FILE__ << ":--------------------------:" << __LINE__ << std::endl;
         delete con;
         mConnNum--;
     }
 
-    void TcpServer::OnMessage(ConnectionNode * con)
+    void TcpServer::OnMessage(ConnectionNode * con, uint8_t const * buf, ssize_t n)
     {
         if (mMessageCallBk)
-            mMessageCallBk(con->conn);
+            mMessageCallBk(con->conn, buf,  n);
 
         ConnectionNode * head = mTimeWheel.back();
         Delete(con);

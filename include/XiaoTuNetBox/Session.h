@@ -48,7 +48,6 @@ namespace net {
             Session() = default;
             Session(ConnectionPtr const & conn)
             {
-                mInBuf = conn->GetInputBuffer().CreateObserver();
             }
 
             ~Session() = default;
@@ -59,10 +58,6 @@ namespace net {
 
             //! EventLoop 唤醒器
             WakeUpperPtr mWakeUpper;
-
-            //! @todo 增加输出缓存
-            //! 输入缓存 InputBuffer 的观测器
-            InBufObserverPtr mInBuf;
     };
 
     typedef std::shared_ptr<Session> SessionPtr;

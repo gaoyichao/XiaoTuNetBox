@@ -59,6 +59,9 @@ namespace net {
 
     void EPollEventHandler::SetClosing(bool en) {
         mIsClosing = en;
+        if (mClosingCallBk)
+            mClosingCallBk();
+        mIsClosed = true;
     }
 
     EPollLoopPtr EPollEventHandler::GetEPollLoop()

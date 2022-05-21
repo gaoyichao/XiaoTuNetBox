@@ -72,7 +72,7 @@ namespace net {
             EState GetState() const { return mState; }
 
             bool ParseRequestLine(uint8_t const * begin, uint8_t const * end);
-            HttpRequestPtr HandleRequest(ConnectionPtr const & conn);
+            HttpRequestPtr HandleRequest(uint8_t const * buf, ssize_t n);
 
             HttpRequestPtr GetRequest() { return mRequest; }
             HttpResponsePtr GetResponse() { return mResponse; }
@@ -80,10 +80,12 @@ namespace net {
             virtual char const * ToCString() { return typeid(HttpSession).name(); }
 
         private:
-            bool OnExpectRequestLine(ConnectionPtr const & conn);
-            bool OnReadingHeaders(ConnectionPtr const & conn);
-            bool OnReadingBody(ConnectionPtr const & conn);
+            uint8_t const * GetLine(uint8_t const * & begin, uint8_t const * & end);
+            uint8_t const * OnExpectRequestLine(uint8_t const * begin, uint8_t const * end);
+            uint8_t const * OnReadingHeaders(uint8_t const * begin, uint8_t const * end);
+            uint8_t const * OnReadingBody(uint8_t const * begin, uint8_t const * end);
 
+            std::string mReadingLine;
         private:
             EState mState;
             HttpRequestPtr mRequest;

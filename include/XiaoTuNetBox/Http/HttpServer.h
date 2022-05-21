@@ -21,14 +21,14 @@ namespace net {
         private:
             virtual void OnNewConnection(ConnectionPtr const & conn);
             virtual void OnCloseConnection(ConnectionPtr const & conn);
-            virtual void OnMessage(ConnectionPtr const & con);
+            virtual void OnMessage(ConnectionPtr const & con,
+                                   uint8_t const * buf, ssize_t n);
 
         private:
-            void HandleRequest(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr);
-            void HandleReponse(ConnectionPtr const & con, HttpSessionWeakPtr const & weakptr);
+            void HandleRequest(ConnectionWeakPtr const & con, HttpSessionWeakPtr const & weakptr);
+            void HandleReponse(ConnectionWeakPtr const & con, HttpSessionWeakPtr const & weakptr);
 
             void OnGetRequest(HttpRequestPtr const & req, HttpResponsePtr const & res);
-
     };
 
 }

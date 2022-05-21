@@ -31,7 +31,7 @@ namespace net {
 
     HttpSession::~HttpSession()
     {
-        std::cout << __FILE__ << ":" << __LINE__ << ":释放会话" << std::endl;
+        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << ":释放会话" << std::endl;
     }
 
     //! @brief 解析 Http 请求的起始行
@@ -69,57 +69,80 @@ namespace net {
         return true;
     }
 
-    //! @brief 获取请求首行
-    //! @param conn TCP通信连接
-    //! @return true 完整解析并切换状态, false 未切换状态
-    bool HttpSession::OnExpectRequestLine(ConnectionPtr const & conn)
+    //! @brief 从缓存中获取一行字符串
+    //! @param begin [inout] 输入缓存的起始地址，输出字符串的起始地址
+    //! @param end [inout] 输入缓存的结束地址，输出字符串的结束地址 
+    //! @return 消费一行字符串之后的缓存起始地址，
+    //!         若消费完所有 n 个字节，仍然没有获得完整的一行，则返回 nullptr 
+    //!         若 mReadingLine 过长，认为接收数据帧出错，切换状态 eError
+    uint8_t const * HttpSession::GetLine(uint8_t const * & begin, uint8_t const * & end)
     {
-        size_t n = mInBuf->Size();
-        if (n < 8)
-            return false;
+        uint8_t const * crlf = FindString(begin, end, (uint8_t const *)"\r\n", 2);
 
-        uint8_t const * begin = mInBuf->Begin();
-        uint8_t const * crlf = mInBuf->PeekFor((uint8_t const *)"\r\n", 2);
+        if (nullptr == crlf) {
+            mReadingLine.insert(mReadingLine.end(), begin, end);
 
-        if (NULL == crlf) {
-            uint8_t const * space = mInBuf->PeekFor((uint8_t const *)" ", 1);
-            if (NULL == space || !mRequest->SetMethod(std::string(begin, space))) {
+            if (mReadingLine.size() > 1024) {
+                mReadingLine.clear();
                 mState = eError;
-                mInBuf->DropAll();
             }
-            return true;
+
+            return nullptr;
         }
 
-        if (ParseRequestLine(begin, crlf))
+        uint8_t const * re = crlf + 2;
+        if (!mReadingLine.empty()) {
+            mReadingLine.insert(mReadingLine.end(), begin, crlf);
+
+            begin = (uint8_t const *)mReadingLine.data();
+            end = begin + mReadingLine.size();
+        } else {
+            end = crlf;
+        }
+        return re;
+    }
+    //! @brief 获取请求首行
+    //! @param begin 接收缓存起始地址
+    //! @param end 接收缓存结束地址
+    //! @return 若切换状态，则返回消费首行之后的起始地址，
+    //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr 
+    uint8_t const * HttpSession::OnExpectRequestLine(uint8_t const * begin, uint8_t const * end)
+    {
+        uint8_t const * re = GetLine(begin, end);
+        if (nullptr == re)
+            return nullptr;
+
+        if (ParseRequestLine(begin, end))
             mState = eReadingHeaders;
         else
             mState = eError;
-        mInBuf->DropFront(crlf - begin + 2);
-        return true;
+
+        mReadingLine.clear();
+        return re;
     }
 
     //! @brief 解析请求消息头
-    //! @param conn TCP通信连接
-    //! @return true 完整解析并切换状态, false 未切换状态
-    bool HttpSession::OnReadingHeaders(ConnectionPtr const & conn)
+    //! @param begin 接收缓存起始地址
+    //! @param endn 接收缓存结束地址
+    //! @return 若切换状态，则返回消费首部之后的起始地址，
+    //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr 
+    uint8_t const * HttpSession::OnReadingHeaders(uint8_t const * begin, uint8_t const * end)
     {
-        uint8_t const * begin = mInBuf->Begin();
-        uint8_t const * crlf = mInBuf->PeekFor((uint8_t const *)"\r\n", 2);
+        uint8_t const * re = GetLine(begin, end);
+        if (nullptr == re)
+            return nullptr;
 
-        if (NULL == crlf)
-            return false;
-
-        if (crlf == begin) {
+        if (begin == end) {
             mState = eReadingBody;
-            mInBuf->DropFront(2);
-            return true;
+            mReadingLine.clear();
+            return re;
         }
 
-        uint8_t const * colon = FindString(begin, crlf, (uint8_t const *)":", 1);
+        uint8_t const * colon = FindString(begin, end, (uint8_t const *)":", 1);
         if (NULL == colon) {
             mState = eError;
-            mInBuf->DropAll();
-            return true;
+            mReadingLine.clear();
+            return re;
         }
  
         uint8_t const * key_begin = EatByte(begin, colon, ' ');
@@ -128,7 +151,7 @@ namespace net {
  
         uint8_t const * val_begin = colon + 1;
         while (*val_begin == ' ') val_begin++;
-        uint8_t const * val_end = crlf;
+        uint8_t const * val_end = end;
         while (' ' == val_end[-1]) val_end--;
 
         uint32_t key_len = key_end - key_begin;
@@ -138,44 +161,54 @@ namespace net {
         std::string value((char const *)val_begin, val_len);
         mRequest->SetHeader(key, value);
 
-        mInBuf->DropFront(crlf - begin + 2);
-        return true;
+        mReadingLine.clear();
+        return re;
     }
 
     //! @brief 解析请求消息主体
-    //! @param conn TCP通信连接
-    //! @return true 完整解析并切换状态, false 未切换状态
-    bool HttpSession::OnReadingBody(ConnectionPtr const & conn)
+    //! @param begin 接收缓存起始地址
+    //! @param endn 接收缓存结束地址
+    //! @return 若切换状态，则返回消费数据之后的起始地址，
+    //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr 
+    uint8_t const * HttpSession::OnReadingBody(uint8_t const * begin, uint8_t const * end)
     {
         size_t n0 = mRequest->mContent.size();
         size_t need = mRequest->ContentLength() - n0;
 
-        size_t n = (need > mInBuf->Size()) ? mInBuf->Size() : need;
-        mRequest->mContent.resize(mRequest->mContent.size() + n);
-        mInBuf->PopFront(mRequest->mContent.data() + n0, n);
+        size_t n = end - begin;
+        n = (need > n) ? n : need;
+        mRequest->mContent.insert(mRequest->mContent.end(), begin, begin + n);
 
         if (n == need) {
             mState = eResponsing;
-            return true;
+            return begin + n;
         }
-        return false;
+
+        return nullptr;
     }
 
-    HttpRequestPtr HttpSession::HandleRequest(ConnectionPtr const & conn)
+    HttpRequestPtr HttpSession::HandleRequest(uint8_t const * buf, ssize_t n)
     {
-        while (!mInBuf->Empty()) {
+        uint8_t const * begin = buf;
+        uint8_t const * end = buf + n;
+        while (begin < end) {
             if (eExpectRequestLine == mState) {
-                if (!OnExpectRequestLine(conn))
+                begin = OnExpectRequestLine(begin, end);
+                if (nullptr == begin)
                     break;
             }
 
             if (eReadingHeaders == mState) {
-                if (!OnReadingHeaders(conn))
+                begin = OnReadingHeaders(begin, end);
+                if (nullptr == begin)
                     break;
             }
 
-            if (eReadingBody == mState)
-                OnReadingBody(conn);
+            if (eReadingBody == mState) {
+                begin = OnReadingBody(begin, end);
+                if (nullptr == begin)
+                    break;
+            }
 
             if (eResponsing == mState || eError == mState)
                 break;
@@ -183,6 +216,7 @@ namespace net {
 
         if (eResponsing == mState || eError == mState)
             return mRequest;
+
         return nullptr;
     }
     

@@ -9,18 +9,30 @@
 namespace xiaotu {
 namespace net {
 
+    const size_t Connection::mReadBufSize = 4096;
+
     Connection::Connection(int fd, std::string const & info, EventLoop const & loop)
-        : mInfoStr(info)
+        : mInfoStr(info), mReadBuf(mReadBufSize)
     {
         SetFd(fd, loop);
     }
 
     Connection::Connection(int fd, IPv4Ptr const & peer, EventLoop const & loop)
-        : mInfoStr(peer->GetIpPort())
+        : mInfoStr(peer->GetIpPort()), mReadBuf(4096)
     {
         SetFd(fd, loop);
     }
 
+    Connection::~Connection()
+    {
+        std::cout << "--------------------------------------------------" << std::endl;
+        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
+
+        std::cout << mReadBuf.size() << std::endl;
+
+        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
+        std::cout << "--------------------------------------------------" << std::endl;
+    }
     void Connection::SetFd(int fd, EventLoop const & loop) {
         mEventHandler = loop.CreateEventHandler(fd);
         mEventHandler->EnableRead(true);
@@ -51,13 +63,13 @@ namespace net {
 
     void Connection::OnReadEvent() {
         int md = mEventHandler->GetFd();
-        ssize_t n = mReadBuf.Read(md);
+        ssize_t n = read(md, mReadBuf.data(), mReadBufSize);
 
         if (n <= 0) {
             Close();
         } else {
             if (mMsgCallBk)
-                mMsgCallBk();
+                mMsgCallBk(mReadBuf.data(), n);
         }
     }
 

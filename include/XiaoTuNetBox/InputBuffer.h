@@ -108,6 +108,7 @@ namespace net {
             std::vector<InBufObserverPtr> mObservers;
             std::vector<size_t> mObsHoles;
     };
+    typedef std::shared_ptr<InputBuffer> InputBufferPtr;
 }
 }
 

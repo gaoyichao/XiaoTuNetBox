@@ -29,7 +29,8 @@ namespace net {
         protected:
             virtual void OnNewConnection(ConnectionPtr const & conn) = 0;
             virtual void OnCloseConnection(ConnectionPtr const & conn) = 0;
-            virtual void OnMessage(ConnectionPtr const & con) = 0;
+            virtual void OnMessage(ConnectionPtr const & con,
+                                   uint8_t const * buf, ssize_t n) = 0;
 
         protected:
             int GetFreeSessionIdx();

@@ -28,7 +28,7 @@ using namespace xiaotu::net;
 int main() {
     PollLoopPtr loop = Create<PollLoop>();
 
-    HttpServer http(loop, 65530, 3);
+    HttpServer http(loop, 65530, 30);
     http.mWorkSpace = ".";
 
     loop->Loop(10);

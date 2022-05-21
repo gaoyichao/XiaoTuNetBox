@@ -4,6 +4,7 @@
 #include <XiaoTuNetBox/Event/EventHandler.h>
 
 #include <sys/epoll.h>
+#include <iostream>
 
 namespace xiaotu {
 namespace net {

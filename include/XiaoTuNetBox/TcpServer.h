@@ -25,7 +25,7 @@ namespace net {
         protected:
             void OnNewConnection(int fd, IPv4Ptr const &peer_addr);
             void OnCloseConnection(ConnectionNode * con);
-            void OnMessage(ConnectionNode * con);
+            void OnMessage(ConnectionNode * con, uint8_t const * buf, ssize_t n);
             void OnTimeOut();
 
             EventLoopPtr mLoop;
@@ -40,10 +40,12 @@ namespace net {
 
         public:
             typedef std::function<void(ConnectionPtr const & con)> ConnCallBk;
+            typedef std::function<void(ConnectionPtr const & con,
+                                       uint8_t const * buf, ssize_t n)> ConnBufCallBk;
 
             void SetNewConnCallBk(ConnCallBk cb) { mNewConnCallBk = std::move(cb); }
             void SetCloseConnCallBk(ConnCallBk cb) { mCloseConnCallBk = std::move(cb); }
-            void SetMessageCallBk(ConnCallBk cb) { mMessageCallBk = std::move(cb); }
+            void SetMessageCallBk(ConnBufCallBk cb) { mMessageCallBk = std::move(cb); }
 
             /*
              * SetTimeOut - 超时关闭连接
@@ -60,7 +62,7 @@ namespace net {
         protected:
             ConnCallBk mNewConnCallBk;
             ConnCallBk mCloseConnCallBk;
-            ConnCallBk mMessageCallBk;
+            ConnBufCallBk mMessageCallBk;
     };
 }
 }

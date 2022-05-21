@@ -21,6 +21,7 @@ namespace net {
             Connection(int fd, IPv4Ptr const & peer, EventLoop const & loop);
             Connection(Connection const &) = delete;
             Connection & operator = (Connection const &) = delete;
+            ~Connection();
         private:
             void SetFd(int fd, EventLoop const & loop);
 
@@ -40,26 +41,27 @@ namespace net {
             int SendRawData(uint8_t const * buf, int num);
 
         public:
-            InputBuffer & GetInputBuffer() { return mReadBuf; }
             //! 用户定义的对象指针，其具体的数据类型和内存有用户自己管理
             ObjectWeakPtr mUserObject;
+            static const size_t mReadBufSize;
 
         private:
             std::string mInfoStr;
             EventHandlerPtr mEventHandler;
-            InputBuffer mReadBuf;
+            std::vector<uint8_t> mReadBuf;
             DataQueue<uint8_t> mWriteBuf;
             bool mIsClosed;
 
         public:
             typedef std::function<void()> EventCallBk;
+            typedef std::function<void(uint8_t const * buf, ssize_t n)> BufCallBk;
 
             void SetCloseCallBk(EventCallBk cb) { mCloseCallBk = std::move(cb); }
-            void SetMsgCallBk(EventCallBk cb) { mMsgCallBk = std::move(cb); }
+            void SetMsgCallBk(BufCallBk cb) { mMsgCallBk = std::move(cb); }
 
         private:
             EventCallBk mCloseCallBk;
-            EventCallBk mMsgCallBk;
+            BufCallBk mMsgCallBk;
     };
 }
 }

@@ -31,6 +31,8 @@ namespace net {
 
     ssize_t InputBuffer::Read(int fd)
     {
+        std::cout << "fd=" << fd << "--------------------------------------------------" << std::endl;
+
         // 清理队首数据
         size_t min_idx = mReadBuf.Size();
         for (size_t i = 0; i < mObservers.size(); ++i) {
@@ -46,13 +48,21 @@ namespace net {
             mObservers[i]->mStartIdx -= min_idx;
         }
         
-        if (mWriteIdx == mReadBuf.Capacity()) {
-            mReadBuf.AdjustCapacity(2 * mWriteIdx);
+        if (mWriteIdx == mReadBuf.Size()) {
+            mReadBuf.Resize(2 * mWriteIdx);
+            std::cout << "mWriteIdx = " << mWriteIdx << std::endl;
+            std::cout << "size = " << mReadBuf.Size() << std::endl;
         }
 
         // 搬运内核数据
         int iovcnt = 2;
         int nwrite = WritableBytes();
+
+        std::cout << "size = " << mReadBuf.Size() << std::endl;
+        std::cout << "mWriteIdx = " << mWriteIdx << std::endl;
+        std::cout << "nwrite = " << nwrite << std::endl;
+        std::cout << "fd=" << fd << "--------------------------------------------------" << std::endl;
+
         struct iovec vec[2];
         vec[0].iov_base = &mReadBuf[mWriteIdx];
         vec[0].iov_len = nwrite;

@@ -36,6 +36,7 @@ namespace net {
     void TcpAppServer::FinishTasks()
     {
         TaskPtr task = nullptr;
+        int ntask = 0;
 
         while (true) {
             {
@@ -46,9 +47,10 @@ namespace net {
                     break;
                 task = mTaskFifo.front();
                 mTaskFifo.pop_front();
+                ntask = mTaskFifo.size();
             }
 
-            std::cout << __FUNCTION__ << std::endl;
+            std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__  << ":" << ntask << std::endl;
             if (nullptr != task) {
                 task->Finish();
             }
@@ -83,7 +85,7 @@ namespace net {
         assert(mSessions[ptr->mIdx] == ptr);
 
         ptr->ReleaseWakeUpper(mServer.GetLoop());
-        ptr->mInBuf->Release();
+        //ptr->mInBuf->Release();
 
         size_t & idx = ptr->mIdx;
         mSessions[idx].reset();
