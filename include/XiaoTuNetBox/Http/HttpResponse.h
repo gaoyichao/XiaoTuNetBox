@@ -11,12 +11,14 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <cassert>
 
 namespace xiaotu {
 namespace net {
 
     class HttpResponse {
         public:
+            //! @brief 响应报文状态码
             enum EStatusCode {
                 eUnknown = 0,
                 e101_SwitchProtocol = 101,
@@ -25,19 +27,23 @@ namespace net {
                 e404_NotFound = 404,
                 e503_ServiceUnavilable = 503
             };
+            //! @brief 响应报文状态码解释字符串 map
             static std::map<EStatusCode, std::string> mEStatusCodeToStringMap;
+
         public:
-            HttpResponse(bool close = true)
-                : mStatusCode(eUnknown), mStatusMessage(""), mCloseConnection(close)
-            { }
+            //! @brief 构造函数
+            //! @param close 发送完该响应报文之后是否期望关闭连接
+            HttpResponse(bool close = true) { Reset(close); }
 
-            void SetStatusCode(EStatusCode code)
+            //! @brief 设定响应报文的状态码
+            inline void SetStatusCode(EStatusCode code)
             {
+                assert(mHeadEndIdx < 0);
                 mStatusCode = code;
-                mStatusMessage = GetStatusCodeStr();
             }
-
-            EStatusCode GetStatusCode() const { return mStatusCode; }
+            //! @brief 获取响应报文的状态码
+            inline EStatusCode GetStatusCode() const { return mStatusCode; }
+            //! @brief 获取响应报文状态的解释字符串
             inline std::string const & GetStatusCodeStr() const
             {
                 auto it = mEStatusCodeToStringMap.find(mStatusCode);
@@ -45,12 +51,20 @@ namespace net {
                     return mEStatusCodeToStringMap[eUnknown];
                 return it->second;
             }
+            
+            //! @brief 设定响应报文首部的键值对
+            void SetHeader(std::string const & key, std::string const & value)
+            {
+                assert(mHeadEndIdx < 0);
+                mHeaders[key] = value;
+            }
+            //! @brief 获取键值对列表
+            std::map<std::string, std::string> const & GetHeader() const { return mHeaders; }
 
-            void SetStatusMessage(std::string const & msg) { mStatusMessage = msg; }
-            std::string const & GetStatusMessage() const { return mStatusMessage; }
-
+            //! @brief 标记关闭连接
             void SetClosing(bool close) { mCloseConnection = close; }
 
+            //! @brief 判定报文是否期望关闭连接
             bool CloseConnection()
             {
                 return mCloseConnection || (e200_OK != mStatusCode &&
@@ -58,34 +72,69 @@ namespace net {
             }
 
         public:
-            void StartLine(std::string & sl);
+            //! @brief 获取报文的起始行
+            std::string StartLine();
+
+            //! @brief 序列化所有报文
+            //! @param buf 记录报文的缓存
             void ToUint8Vector(std::vector<uint8_t> & buf);
 
-            void AppendContent(std::string const & content)
+        private:
+            //! @brief 响应报文的状态码
+            EStatusCode mStatusCode;
+            //! @brief 响应报文首部的键值对
+            std::map<std::string, std::string> mHeaders;
+            //! @brief 发送该报文之后是否希望关闭连接
+            bool mCloseConnection;
+
+        public:
+            inline void AppendContent(uint8_t const * buf, uint32_t n)
             {
-                mContent.insert(mContent.end(), content.begin(), content.end());
+                assert(mHeadEndIdx >= 0);
+                mContent.insert(mContent.end(), buf, buf + n);
             }
 
-            void AppendContent(std::vector<uint8_t> const & content)
+            inline void AppendContent(std::string const & content)
             {
-                mContent.insert(mContent.end(), content.begin(), content.end());
+                AppendContent((uint8_t const *)content.data(), content.size());
             }
+
+            inline void AppendContent(std::vector<uint8_t> const & content)
+            {
+                AppendContent(content.data(), content.size());
+            }
+
+            //! @brief 将 cstr 字符串添加到 mContent 中。
+            //! 不安全，不推荐使用
+            void AppendContent(char const * buf);
 
             void AppendContent(std::string const & fname, uint64_t off, uint64_t len);
-            
-            void SetHeader(std::string const & key, std::string const & value)
-            {
-                mHeaders[key] = value;
-            }
+        public:
+            //! @brief 重置报文，包括状态码、首部键值对、正文
+            //! @param close 是否期望关闭连接
+            void Reset(bool close = true);
 
-            std::map<std::string, std::string> const & GetHeader() const { return mHeaders; }
+            //! @brief 生成首部数据，并加锁
+            //! @param size 正文长度
+            void LockHead(size_t size);
+
+            //! @brief 复位 mHeadEndIdx，该操作将导致 mContent 被清空
+            void UnlockHead();
+
+            //! @brief 获取报文内容
+            std::vector<uint8_t> const & GetContent() { return mContent; }
         private:
-            std::map<std::string, std::string> mHeaders;
-            std::vector<uint8_t> mContent;
+            //! @brief 报文首部结尾索引
+            //! mHeadEndIdx < 0，可以正常修改状态码和首部，此时 mContent 应当为空
+            //! mHeadEndIdx >= 0，不可以修改状态码和首部，需手动调用 UnlockHead 复位
+            int mHeadEndIdx;
 
-            EStatusCode mStatusCode;
-            std::string mStatusMessage;
-            bool mCloseConnection;
+            //! @brief 正文长度
+            size_t mDataSize;
+
+            //! @brief 响应报文的具体数据，分为首部和正文两个部分。
+            //! 区间 [0, mHeadEndIdx) 为首部，区间 [mHeadEndIdx, end) 为正文
+            std::vector<uint8_t> mContent;
     };
     typedef std::shared_ptr<HttpResponse> HttpResponsePtr;
 

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <stdio.h>
+#include <string.h>
 
 namespace xiaotu {
 namespace net {
@@ -16,35 +17,23 @@ namespace net {
     };
 
 
-    void HttpResponse::StartLine(std::string & sl)
+    const size_t _buf_len_ = 64;
+    char _cstr_buf_[_buf_len_];
+    std::string HttpResponse::StartLine()
     {
-        char buf[32];
-        snprintf(buf, 32, "HTTP/1.1 %d ", mStatusCode);
-        sl.append(buf);
-        sl.append(mStatusMessage);
+        std::string sl;
+        snprintf(_cstr_buf_, _buf_len_, "HTTP/1.1 %d ", mStatusCode);
+
+        sl.append(_cstr_buf_);
+        sl.append(GetStatusCodeStr());
         sl.append("\r\n");
+        return sl;
     }
 
-    void HttpResponse::ToUint8Vector(std::vector<uint8_t> & buf)
+    void HttpResponse::AppendContent(char const * cstr)
     {
-        char local_buf[64];
-        std::string head;
-        StartLine(head);
-        if (CloseConnection()) {
-            head.append("Connection: close\r\n");
-        } else {
-            snprintf(local_buf, 64, "Content-Length: %zd\r\n", mContent.size());
-            head.append(local_buf);
-            head.append("Connection: Keep-Alive\r\n");
-        }
-        for (auto it = mHeaders.begin(); it != mHeaders.end(); ++it)
-            head.append(it->first + ": " + it->second + "\r\n");
-        head.append("\r\n");
-
-        //std::cout << head << std::endl;
-
-        buf.insert(buf.end(), head.begin(), head.end());
-        buf.insert(buf.end(), mContent.begin(), mContent.end());
+        size_t len = strlen(cstr);
+        AppendContent((uint8_t const*)cstr, len);
     }
 
     void HttpResponse::AppendContent(std::string const & fname, uint64_t off, uint64_t len)
@@ -53,6 +42,45 @@ namespace net {
         
         mContent.resize(n_ori + len);
         ReadBinary(fname, mContent.data() + n_ori, 0, len);
+    }
+
+    void HttpResponse::Reset(bool close)
+    {
+        mStatusCode = eUnknown;
+        mHeaders.clear();
+        mDataSize = 0;
+        mContent.clear();
+        mCloseConnection = close;
+        mHeadEndIdx = -1;
+    }
+
+    void HttpResponse::LockHead(size_t size)
+    {
+        mDataSize = size;
+        mHeadEndIdx = 0;
+        mContent.clear();
+
+        AppendContent(StartLine());
+        if (CloseConnection()) {
+            AppendContent("Connection: close\r\n");
+        } else {
+            AppendContent("Content-Length: ");
+            AppendContent(std::to_string(mDataSize));
+            AppendContent("\r\nConnection: Keep-Alive\r\n");
+        }
+
+        for (auto it = mHeaders.begin(); it != mHeaders.end(); ++it)
+            AppendContent(it->first + ": " + it->second + "\r\n");
+        AppendContent("\r\n");
+
+        mHeadEndIdx = mContent.size();
+    }
+
+    void HttpResponse::UnlockHead()
+    {
+        mDataSize = 0;
+        mHeadEndIdx = -1;
+        mContent.clear();
     }
 }
 }

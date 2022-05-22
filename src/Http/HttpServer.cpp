@@ -59,8 +59,7 @@ namespace net {
             return;
         }
 
-        std::vector<uint8_t> buf;
-        res->ToUint8Vector(buf);
+        std::vector<uint8_t> const & buf = res->GetContent();
         con->SendBytes(buf.data(), buf.size());
         if (res->CloseConnection())
             con->Close();
@@ -81,7 +80,9 @@ namespace net {
         struct stat s;
         if (!IsReadable(path) || (-1 == stat(path.c_str(), &s))) {
             res->SetStatusCode(HttpResponse::e404_NotFound);
-            res->AppendContent("Error:404");
+            std::string errstr("Error:404");
+            res->LockHead(errstr.size());
+            res->AppendContent(errstr);
             return;
         }
 
@@ -102,6 +103,7 @@ namespace net {
                 res->SetHeader("Content-Type", "image/svg+xml");
         }
 
+        res->LockHead(s.st_size);
         res->AppendContent(path, 0, s.st_size);
     }
 

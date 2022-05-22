@@ -61,13 +61,14 @@ target_link_libraries(u_epoll_echo_server ${PROJECT_NAME})
 add_executable(u_http_server utils/u_http_server.cpp)
 target_link_libraries(u_http_server pthread ${PROJECT_NAME})
 
-# WebSocket 服务器
-add_executable(u_ws_server utils/u_ws_server.cpp)
-target_link_libraries(u_ws_server pthread ${PROJECT_NAME})
-
-# epoll echo 服务器
+# epoll http 服务器
 add_executable(u_epoll_http_server utils/u_epoll_http_server.cpp)
 target_link_libraries(u_epoll_http_server ${PROJECT_NAME})
+
+# epoll WebSocket 服务器
+add_executable(u_epoll_ws_server utils/u_epoll_ws_server.cpp)
+target_link_libraries(u_epoll_ws_server pthread ${PROJECT_NAME})
+
 
 ############################################################################
 #

@@ -26,7 +26,7 @@ namespace net {
     WebSocketServer::WebSocketServer(EventLoopPtr const & loop, int port, int max_conn)
         : TcpAppServer(loop, port, max_conn)
     {
-        mServer->SetTimeOut(10, 0, 5);
+        //mServer->SetTimeOut(10, 0, 5);
         mServer->SetNewConnCallBk(std::bind(&WebSocketServer::OnNewConnection, this, _1));
         mServer->SetCloseConnCallBk(std::bind(&WebSocketServer::OnCloseConnection, this, _1));
         mServer->SetMessageCallBk(std::bind(&WebSocketServer::OnMessage, this, _1, _2, _3));
@@ -61,8 +61,7 @@ namespace net {
             return;
         }
 
-        std::vector<uint8_t> buf;
-        res->ToUint8Vector(buf);
+        std::vector<uint8_t> const & buf = res->GetContent();
         con->SendBytes(buf.data(), buf.size());
         if (res->CloseConnection())
             con->Close();
@@ -82,8 +81,7 @@ namespace net {
         if (con->IsClosed())
             return;
 
-        std::vector<uint8_t> buf;
-        res->ToUint8Vector(buf);
+        std::vector<uint8_t> const & buf = res->GetContent();
         con->SendBytes(buf.data(), buf.size());
         if (res->CloseConnection())
             con->Close();
