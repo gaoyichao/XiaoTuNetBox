@@ -9,11 +9,15 @@
 ## 安装:
 
 ```
-$ make
-# 安装路径/usr/local，详细请查看Makefile
-$ sudo make install
+git clone https://github.com/gaoyichao/XiaoTuNetBox.git
+cd XiaoTuNetBox
+mkdir build
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=${HOME}/local ..
+make
+make install
 # 卸载
-$ sudo make uninstall
+make uninstall
 ```
 
 ## 依赖:

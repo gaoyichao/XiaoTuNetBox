@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1.0)
 project(XiaoTuNetBox)
-set(PACKAGE_VERSION "0.0.7")
+set(PACKAGE_VERSION "0.0.8")
 
 add_compile_options(-std=c++17)
 set(CMAKE_BUILD_TYPE DEBUG)
