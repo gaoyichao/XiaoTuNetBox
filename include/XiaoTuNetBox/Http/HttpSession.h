@@ -71,19 +71,18 @@ namespace net {
 
             EState GetState() const { return mState; }
 
-            bool ParseRequestLine(uint8_t const * begin, uint8_t const * end);
-            uint8_t const * HandleRequest(uint8_t const * begin, uint8_t const * end);
-
             HttpRequestPtr GetRequest() { return mRequest; }
             HttpResponsePtr GetResponse() { return mResponse; }
         
             virtual char const * ToCString() { return typeid(HttpSession).name(); }
 
+            bool ParseRequestLine(uint8_t const * begin, uint8_t const * end);
+            uint8_t const * HandleRequest(uint8_t const * begin, uint8_t const * end);
         private:
-            uint8_t const * GetLine(uint8_t const * & begin, uint8_t const * & end);
-            uint8_t const * OnExpectRequestLine(uint8_t const * begin, uint8_t const * end);
-            uint8_t const * OnReadingHeaders(uint8_t const * begin, uint8_t const * end);
-            uint8_t const * OnReadingBody(uint8_t const * begin, uint8_t const * end);
+            uint8_t const * GetLine             (uint8_t const * & begin, uint8_t const * & end);
+            uint8_t const * OnExpectRequestLine (uint8_t const *   begin, uint8_t const *   end);
+            uint8_t const * OnReadingHeaders    (uint8_t const *   begin, uint8_t const *   end);
+            uint8_t const * OnReadingBody       (uint8_t const *   begin, uint8_t const *   end);
 
             std::string mReadingLine;
         private:

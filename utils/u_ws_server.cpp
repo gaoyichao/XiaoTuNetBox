@@ -27,7 +27,8 @@ void OnNewMsg(WebSocketSessionPtr const & session, WebSocketMsgPtr const & msg)
     std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
     std::cout << msg->mPayload.size() << std::endl;
 
-    RawMsgPtr sendmsg = BuildWsRawMsg(EWsOpcode::eWS_OPCODE_BINARY, (uint8_t*)test_data, 4 * sizeof(float));
+    //RawMsgPtr sendmsg = BuildWsRawMsg(EWsOpcode::eWS_OPCODE_BINARY, (uint8_t*)test_data, 4 * sizeof(float));
+    RawMsgPtr sendmsg = msg->BuildWsRawMsg();
     session->SendRawMsg(sendmsg);
 }
 

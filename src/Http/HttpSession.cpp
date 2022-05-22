@@ -73,7 +73,7 @@ namespace net {
     //! @param begin [inout] 输入缓存的起始地址，输出字符串的起始地址
     //! @param end [inout] 输入缓存的结束地址，输出字符串的结束地址 
     //! @return 消费一行字符串之后的缓存起始地址，
-    //!         若消费完所有 n 个字节，仍然没有获得完整的一行，则返回 nullptr 
+    //!         若消费完所有缓存，仍然没有获得完整的一行，则返回 nullptr 
     //!         若 mReadingLine 过长，认为接收数据帧出错，切换状态 eError
     uint8_t const * HttpSession::GetLine(uint8_t const * & begin, uint8_t const * & end)
     {
@@ -85,6 +85,8 @@ namespace net {
             if (mReadingLine.size() > 1024) {
                 mReadingLine.clear();
                 mState = eError;
+                //! @todo 这个与我们的 return 状态有些不一致
+                //! 但是，似乎不影响系统运行
             }
 
             return nullptr;

@@ -64,10 +64,15 @@ namespace net {
                 mPayload.reserve(mPayloadLen);
                 mPayload.clear();
             }
-            uint64_t GetPayloadLen() { return mPayloadLen; }
+            inline uint64_t GetPayloadLen() { return mPayloadLen; }
+
+            inline RawMsgPtr BuildWsRawMsg(uint8_t opcode = EWsOpcode::eWS_OPCODE_BINARY)
+            {
+                return xiaotu::net::BuildWsRawMsg(opcode, mPayload.data(), mPayloadLen);
+            }
 
             void SetMask(uint32_t mask) { *(uint32_t*)mMask = mask; }
-            void PrintMask();
+            std::string MaskString();
             void PrintPayload();
             void UnMaskPayload();
 

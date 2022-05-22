@@ -30,7 +30,6 @@ namespace net {
         : Session()
     {
         mState = eConnecting;
-        mRcvdMsg = std::make_shared<WebSocketMsg>();
     }
 
     WebSocketSession::~WebSocketSession()
@@ -94,159 +93,208 @@ namespace net {
         return true;
     }
 
+    //! @brief 从缓存中获取指定字节长度的数据
+    //! 
+    //! @param n 字节长度
+    //! @param begin [inout] 输入缓存的起始地址，输出数据的起始地址
+    //! @param end [inout] 输入缓存的结束地址，输出数据的结束地址 
+    //! @return 消费 n 个字节之后的缓存起始地址，
+    //!         若缓存中字节不足 n 个，则返回 nullptr，参数 begin 和 end 保持不变
+    uint8_t const * WebSocketSession::GetData(int n, uint8_t const * & begin, uint8_t const * & end)
+    {
+        int nbuf = end - begin;
+        int need = n - mReadingData.size();
+
+        if (need <= 0) {
+            mReadingData.clear();
+            mState = eError;
+            //! @todo 这个与我们的 return 状态有些不一致
+            //! 但是，似乎不影响系统运行
+            return nullptr;
+        }
+
+        if (nbuf < need) {
+            mReadingData.insert(mReadingData.end(), begin, begin + nbuf); 
+            return nullptr;
+        }
+
+        uint8_t const * re = begin + need;
+        if (!mReadingData.empty()) {
+            mReadingData.insert(mReadingData.end(), begin, begin + need);
+
+            begin = (uint8_t const *)mReadingData.data();
+            end = begin + mReadingData.size();
+        } else {
+            end = re;
+        }
+        return re;
+    }
+
     //! @brief eOpen 状态，获取 ws 消息头
+    //!
     //! @param begin 接收缓存起始地址
     //! @param end 接收缓存结束地址
     //! @return 若切换状态，则返回消费数据之后的起始地址，
     //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr 
     uint8_t const * WebSocketSession::OnOpen(uint8_t const * begin, uint8_t const * end)
     {
-        return nullptr;
-        //size_t size = mInBuf->Size();
-        //if (size < 2)
-        //    return false;
+        uint8_t const * crlf = GetData(2, begin, end);
+        if (nullptr == crlf)
+            return nullptr;
 
-        //uint8_t const * begin = mInBuf->Begin();
-        //WsHead const * wshead = (WsHead const *)begin;
+        WsHead const * wshead = (WsHead const *)begin;
 
-        //if (wshead->resv != 0x0 || !IsOpcodeValide(*wshead)) {
-        //    mState = eError;
-        //    mInBuf->DropAll();
-        //    return true;
-        //}
+        if (wshead->resv != 0x0 || !IsOpcodeValide(*wshead)) {
+            mState = eError;
+            mReadingData.clear();
+            return nullptr;
+        }
 
-        //mRcvdMsg->SetWsHead(*wshead);
-        //mInBuf->DropFront(sizeof(WsHead));
+        mRcvdMsg = std::make_shared<WebSocketMsg>();
+        mRcvdMsg->SetWsHead(*wshead);
 
-        //uint64_t pl_len = wshead->PayloadLen & 127;
-        //if (pl_len < 126) {
-        //    mRcvdMsg->SetPayloadLen(pl_len);
-        //    mState = eReadingMask;
-        //    return true;
-        //} else if (pl_len == 126) {
-        //    mState = eReadingLen16;
-        //    return true;
-        //} else if (pl_len == 127) {
-        //    mState = eReadingLen64;
-        //    return true;
-        //}
-
-        //return false;
+        uint64_t pl_len = wshead->PayloadLen & 127;
+        if (pl_len < 126) {
+            mRcvdMsg->SetPayloadLen(pl_len);
+            mState = eReadingMask;
+        } else if (pl_len == 126) {
+            mState = eReadingLen16;
+        } else if (pl_len == 127) {
+            mState = eReadingLen64;
+        } else {
+            // 逻辑上，不可能有这个分支了
+            mState = eError;
+        }
+        mReadingData.clear();
+        return crlf;
     }
 
     //! @brief eReadingLen16 状态，获取 ws 帧的扩展长度
-    //! @param conn TCP通信连接
-    //! @return true 完整解析并切换状态, false 未切换状态
-    bool WebSocketSession::OnReadingLen16(ConnectionPtr const & conn)
+    //!
+    //! @param begin 接收缓存起始地址
+    //! @param end 接收缓存结束地址
+    //! @return 若切换状态，则返回消费数据之后的起始地址，
+    //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr 
+    uint8_t const * WebSocketSession::OnReadingLen16(uint8_t const * begin, uint8_t const * end)
     {
-        return false;
-        //size_t size = mInBuf->Size();
-        //if (size < 2)
-        //    return false;
+        uint8_t const * crlf = GetData(2, begin, end);
+        if (nullptr == crlf)
+            return nullptr;
 
-        //uint8_t const * begin = mInBuf->Begin();
-        //uint64_t pl_len = be16toh(*(uint16_t*)begin);
-        //mRcvdMsg->SetPayloadLen(pl_len);
+        uint64_t pl_len = be16toh(*(uint16_t*)begin);
+        mRcvdMsg->SetPayloadLen(pl_len);
 
-        //mInBuf->DropFront(2);
-        //mState = eReadingMask;
-
-        //return true;
+        mState = eReadingMask;
+        mReadingData.clear();
+        return crlf;
     }
 
-    bool WebSocketSession::OnReadingLen64(ConnectionPtr const & conn)
+    uint8_t const * WebSocketSession::OnReadingLen64(uint8_t const * begin, uint8_t const * end)
     {
-        return false;
-        //size_t size = mInBuf->Size();
-        //if (size < 8)
-        //    return false;
+        uint8_t const * crlf = GetData(8, begin, end);
+        if (nullptr == crlf)
+            return nullptr;
 
-        //uint8_t const * begin = mInBuf->Begin();
-        //uint64_t pl_len = be64toh(*(uint64_t*)begin) & ~(1ULL << 63);
-        //mRcvdMsg->SetPayloadLen(pl_len);
+        uint64_t pl_len = be64toh(*(uint64_t*)begin) & ~(1ULL << 63);
+        mRcvdMsg->SetPayloadLen(pl_len);
 
-        //mInBuf->DropFront(8);
-        //mState = eReadingMask;
-        //return true;
-
+        mState = eReadingMask;
+        mReadingData.clear();
+        return crlf;
     }
 
-    bool WebSocketSession::OnReadingMask(ConnectionPtr const & conn)
+    //! @brief eReadingMask 状态，获取 ws 帧的验证掩码
+    //!
+    //! @param begin 接收缓存起始地址
+    //! @param end 接收缓存结束地址
+    //! @return 若切换状态，则返回消费数据之后的起始地址，
+    //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr
+    uint8_t const * WebSocketSession::OnReadingMask(uint8_t const * begin, uint8_t const * end)
     {
-        return false;
-        //size_t size = mInBuf->Size();
-        //if (size < 4)
-        //    return false;
+        uint8_t const * crlf = GetData(4, begin, end);
+        if (nullptr == crlf)
+            return nullptr;
 
-        //uint8_t const * begin = mInBuf->Begin();
-        //mRcvdMsg->SetMask(*(uint32_t*)begin);
+        mRcvdMsg->SetMask(*(uint32_t*)begin);
 
-        //mRcvdMsg->PrintMask();
-
-        //mInBuf->DropFront(4);
-        //mState = eReadingPayload;
-        //DLOG(INFO) << "payloadlen:" << mRcvdMsg->GetPayloadLen();
-        //return true;
+        mState = eReadingPayload;
+        mReadingData.clear();
+        return crlf;
     }
 
-    bool WebSocketSession::OnReadingPayload(ConnectionPtr const & conn)
+    //! @brief eReadingPayload 状态，获取 ws 帧的数据内容
+    //!
+    //! @param begin 接收缓存起始地址
+    //! @param end 接收缓存结束地址
+    //! @return 若切换状态，则返回消费数据之后的起始地址，
+    //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr
+    uint8_t const * WebSocketSession::OnReadingPayload (uint8_t const * begin, uint8_t const * end)
     {
-        return false;
-        //size_t n0 = mRcvdMsg->mPayload.size();
-        //size_t need = mRcvdMsg->GetPayloadLen() - n0;
+        size_t nbuf = end - begin;
+        size_t n0 = mRcvdMsg->mPayload.size();
+        size_t need = mRcvdMsg->GetPayloadLen() - n0;
 
-        //size_t n = (need > mInBuf->Size()) ? mInBuf->Size() : need;
-        //mRcvdMsg->mPayload.resize(mRcvdMsg->mPayload.size() + n);
-        //mInBuf->PopFront(mRcvdMsg->mPayload.data() + n0, n);
+        size_t n = (need > nbuf) ? nbuf : need;
+        uint8_t const * crlf = begin + n;
+        mRcvdMsg->mPayload.insert(mRcvdMsg->mPayload.end(), begin, crlf);
 
-        //if (n == need) {
-        //    mRcvdMsg->UnMaskPayload();
-        //    mState = eNewMsg;
-        //    return true;
-        //}
-
-        //return false;
-    }
-
-    WebSocketMsgPtr WebSocketSession::HandleMsg(uint8_t const * begin, uint8_t const * end)
-    {
-        while (begin < end) {
-        //    if (eOpen == mState) {
-        //        if (!OnOpen(conn))
-        //            break;
-        //    }
-        
-            break;
-
-        //    if (eReadingLen16 == mState) {
-        //        if (!OnReadingLen16(conn))
-        //            break;
-        //    }
-
-        //    if (eReadingLen64 == mState) {
-        //        if (!OnReadingLen64(conn))
-        //            break;
-        //    }
-
-        //    if (eReadingMask == mState) {
-        //        if (!OnReadingMask(conn))
-        //            break;
-        //    }
-
-        //    if (eReadingPayload == mState)
-        //        OnReadingPayload(conn);
-
-        //    if (eNewMsg == mState || eError == mState)
-        //        break;
+        if (n == need) {
+            mRcvdMsg->UnMaskPayload();
+            mState = eNewMsg;
+            return crlf;
         }
 
-        //if (eNewMsg == mState || eError == mState) {
-        //    DLOG(INFO) << GetStateStr();
-        //    WebSocketMsgPtr re = mRcvdMsg;
-        //    mRcvdMsg = std::make_shared<WebSocketMsg>();
-        //    return re;
-        //}
         return nullptr;
+    }
+
+    //! @brief 解析 ws 消息报文
+    //! @param begin 接收缓存起始地址
+    //! @param end 接收缓存结束地址
+    //! @return 若切换状态，则返回消费数据之后的起始地址，
+    //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr 
+    uint8_t const * WebSocketSession::HandleMsg(uint8_t const * begin, uint8_t const * end)
+    {
+        while (begin < end) {
+            if (eOpen == mState) {
+                begin = OnOpen(begin, end);
+                if (nullptr == begin)
+                    break;
+            }
+        
+            if (eReadingLen16 == mState) {
+                begin = OnReadingLen16(begin, end);
+                if (nullptr == begin)
+                    break;
+            }
+
+            if (eReadingLen64 == mState) {
+                begin = OnReadingLen64(begin, end);
+                if (nullptr == begin)
+                    break;
+            }
+
+            if (eReadingMask == mState) {
+                begin = OnReadingMask(begin, end);
+                if (nullptr == begin)
+                    break;
+            }
+
+            if (eReadingPayload == mState) {
+                begin = OnReadingPayload(begin, end);
+                if (nullptr == begin)
+                    break;
+            }
+
+            if (eNewMsg == mState || eError == mState) {
+                DLOG(INFO) << GetStateStr();
+                DLOG(INFO) << "Mask:" << mRcvdMsg->MaskString();
+                DLOG(INFO) << "payloadlen:" << mRcvdMsg->GetPayloadLen();
+                break;
+            }
+        }
+
+        LOG(INFO) << GetStateStr() << std::endl;
+        return begin;
     }
 }
 }

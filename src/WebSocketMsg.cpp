@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <stdio.h>
+#include <string.h>
 
 namespace xiaotu {
 namespace net {
@@ -72,9 +73,11 @@ namespace net {
         }
     }
 
-    void WebSocketMsg::PrintMask()
+    std::string WebSocketMsg::MaskString()
     {
-        printf("%2x:%2x:%2x:%2x\n", mMask[0], mMask[1], mMask[2], mMask[3]);
+        char buf[12];
+        sprintf(buf, "%2x:%2x:%2x:%2x", mMask[0], mMask[1], mMask[2], mMask[3]);
+        return std::string(buf, strlen(buf));
     }
 
     void WebSocketMsg::PrintPayload()

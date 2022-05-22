@@ -273,29 +273,36 @@ namespace net {
     {
         LOG(INFO) << "接收到了 ws 消息";
         WebSocketSessionPtr session = std::static_pointer_cast<WebSocketSession>(con->mUserObject.lock());
-
         assert(session->InOpenState());
 
         uint8_t const * begin = buf;
         uint8_t const * end = buf + n;
 
-        WebSocketMsgPtr msg = session->HandleMsg(begin, end);
+        while (begin < end) {
+            begin = session->HandleMsg(begin, end);
 
-        if (WebSocketSession::eNewMsg == session->mState) {
+            if (WebSocketSession::eNewMsg == session->mState) {
+                WebSocketMsgPtr msg = session->GetRcvdMsg();
 
-            if (EWsOpcode::eWS_OPCODE_CLOSE == msg->mHead.opcode) {
-                LOG(INFO) << "关闭 WebSocket:" << msg->mHead;
+                if (EWsOpcode::eWS_OPCODE_CLOSE == msg->mHead.opcode) {
+                    LOG(INFO) << "关闭 WebSocket:" << msg->mHead;
+                    con->Close();
+                } else {
+                    TaskPtr task(new Task(std::bind(&WebSocketServer::HandleMessage, this, WebSocketSessionWeakPtr(session), msg)));
+                    AddTask(task);
+                    LOG(INFO) << session->GetStateStr() << " --> eOpen";
+                    session->mState = WebSocketSession::eOpen;
+                }
+            } else if (WebSocketSession::eError == session->mState) {
                 con->Close();
-            } else {
-                LOG(INFO) << session->GetStateStr() << " --> eOpen";
-                session->mState = WebSocketSession::eOpen;
-                TaskPtr task(new Task(std::bind(&WebSocketServer::HandleMessage, this, WebSocketSessionWeakPtr(session), msg)));
-                AddTask(task);
             }
-            
-        } else if (WebSocketSession::eError == session->mState) {
-            con->Close();
+
+            if (nullptr == begin)
+                break;
         }
+
+
+
     }
 
     //! @brief 处理连接上的消息

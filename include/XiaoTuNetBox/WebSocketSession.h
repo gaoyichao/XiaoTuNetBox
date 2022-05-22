@@ -86,19 +86,21 @@ namespace net {
             WebSocketMsgPtr GetRcvdMsg() { return mRcvdMsg; }
 
         private:
-            WebSocketMsgPtr HandleMsg(uint8_t const * begin, uint8_t const * end);
-            uint8_t const * OnOpen(uint8_t const * begin, uint8_t const * end);
-            bool OnReadingLen16(ConnectionPtr const & conn);
-            bool OnReadingLen64(ConnectionPtr const & conn);
-            bool OnReadingMask(ConnectionPtr const & conn);
-            bool OnReadingPayload(ConnectionPtr const & conn);
+            uint8_t const * HandleMsg        (uint8_t const * begin, uint8_t const * end);
+            uint8_t const * OnOpen           (uint8_t const * begin, uint8_t const * end);
+            uint8_t const * OnReadingLen16   (uint8_t const * begin, uint8_t const * end);
+            uint8_t const * OnReadingLen64   (uint8_t const * begin, uint8_t const * end);
+            uint8_t const * OnReadingMask    (uint8_t const * begin, uint8_t const * end);
+            uint8_t const * OnReadingPayload (uint8_t const * begin, uint8_t const * end);
 
+            uint8_t const * GetData(int n, uint8_t const * & begin, uint8_t const * & end);
         private:
             EState mState;
             HttpRequestPtr mHandShakeRequest;
             HttpResponsePtr mHandShakeResponse;
             WebSocketMsgPtr mRcvdMsg;
 
+            std::vector<uint8_t> mReadingData;
             std::string mSecKey;
             std::string mAccKey;
 
