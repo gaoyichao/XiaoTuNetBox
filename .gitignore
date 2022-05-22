@@ -4,6 +4,7 @@ build/
 *.o
 *.exe
 *.a
+*.orig
 
 .ycm_extra_conf.py
 tmp.sh

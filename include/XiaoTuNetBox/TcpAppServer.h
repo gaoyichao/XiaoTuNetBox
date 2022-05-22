@@ -7,8 +7,9 @@
 #define XTNB_TCP_APP_SERVER_H
 
 #include <XiaoTuNetBox/TcpServer.h>
-#include <XiaoTuNetBox/Task.h>
+#include <XiaoTuNetBox/ThreadWorker.h>
 
+#include <cassert>
 #include <memory>
 #include <deque>
 #include <thread>
@@ -21,10 +22,28 @@ namespace net {
     class TcpAppServer {
         public:
             TcpAppServer(EventLoopPtr const & loop, int port, int max_conn);
-            ~TcpAppServer();
             TcpAppServer(TcpAppServer const &) = delete;
             TcpAppServer & operator = (TcpAppServer const &) = delete;
 
+            void SetWorker(ThreadWorkerPtr const & worker)
+            {
+                mWorker = worker;
+            }
+
+            void AddTask(TaskFunc func)
+            {
+                assert(mWorker);
+                TaskPtr task = std::make_shared<Task>(std::move(func));
+                mWorker->AddTask(task);
+            }
+
+            void AddTask(TaskPtr const & task)
+            {
+                assert(mWorker);
+                mWorker->AddTask(task);
+            }
+
+            SessionPtr ReplaceSession(SessionPtr const & ori, SessionPtr const & ptr);
             std::string mWorkSpace;
         protected:
             virtual void OnNewConnection(ConnectionPtr const & conn) = 0;
@@ -37,20 +56,11 @@ namespace net {
             SessionPtr AddSession(SessionPtr const & ptr);
             void ReleaseSession(SessionPtr const & ptr);
 
-            TcpServer mServer;
+            TcpServerPtr mServer;
             std::vector<SessionPtr> mSessions;
             std::vector<size_t> mHoles;
 
-        public:
-            void AddTask(TaskPtr const & task);
-            void FinishTasks();
-        private:
-            std::mutex mFifoMutex;
-            std::condition_variable mFifoCV;
-            std::thread mTaskThread;
-            bool mDestroing;
-            std::deque<TaskPtr> mTaskFifo;
-
+            ThreadWorkerPtr mWorker;
     };
 
     typedef std::shared_ptr<TcpAppServer> TcpAppServerPtr;

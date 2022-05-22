@@ -12,10 +12,9 @@
 namespace xiaotu {
 namespace net {
  
-    class Task {
-        public:
-            typedef std::function< void ()> TaskFunc;
+    typedef std::function< void ()> TaskFunc;
 
+    class Task {
         public:
             Task() {}
             Task(TaskFunc func)

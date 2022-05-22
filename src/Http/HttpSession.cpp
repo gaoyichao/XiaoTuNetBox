@@ -6,11 +6,12 @@
 #include <XiaoTuNetBox/Http/HttpSession.h>
 #include <XiaoTuNetBox/Utils.h>
 
-
 #include <cassert>
 #include <iostream>
 #include <string>
 #include <map>
+
+#include <glog/logging.h>
 
 namespace xiaotu {
 namespace net {
@@ -30,7 +31,7 @@ namespace net {
 
     HttpSession::~HttpSession()
     {
-        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << ":释放会话" << std::endl;
+        LOG(INFO) << "释放会话";
     }
 
     //! @brief 解析 Http 请求的起始行

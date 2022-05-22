@@ -11,51 +11,10 @@ namespace xiaotu {
 namespace net {
 
     TcpAppServer::TcpAppServer(EventLoopPtr const & loop, int port, int max_conn)
-        : mServer(loop, port, max_conn)
     {
-        mDestroing = false;
-        mTaskThread = std::thread(std::bind(&TcpAppServer::FinishTasks, this));
-    }
- 
-    TcpAppServer::~TcpAppServer()
-    {
-        std::unique_lock<std::mutex> lock(mFifoMutex);
-        mDestroing = true;
-        mFifoCV.notify_all();
-
-        mTaskThread.join();
+        mServer = std::make_shared<TcpServer>(loop, port, max_conn);
     }
 
-    void TcpAppServer::AddTask(TaskPtr const & task)
-    {
-        std::unique_lock<std::mutex> lock(mFifoMutex);
-        mTaskFifo.push_back(task);
-        mFifoCV.notify_all();
-    }
-
-    void TcpAppServer::FinishTasks()
-    {
-        TaskPtr task = nullptr;
-        int ntask = 0;
-
-        while (true) {
-            {
-                std::unique_lock<std::mutex> lock(mFifoMutex);
-                while (mTaskFifo.empty() && !mDestroing)
-                    mFifoCV.wait(lock);
-                if (mDestroing)
-                    break;
-                task = mTaskFifo.front();
-                mTaskFifo.pop_front();
-                ntask = mTaskFifo.size();
-            }
-
-            std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__  << ":" << ntask << std::endl;
-            if (nullptr != task) {
-                task->Finish();
-            }
-        }
-    }
 
     int TcpAppServer::GetFreeSessionIdx()
     {
@@ -84,12 +43,30 @@ namespace net {
         assert(nullptr != ptr);
         assert(mSessions[ptr->mIdx] == ptr);
 
-        ptr->ReleaseWakeUpper(mServer.GetLoop());
+        ptr->ReleaseWakeUpper(mServer->GetLoop());
         //ptr->mInBuf->Release();
 
         size_t & idx = ptr->mIdx;
         mSessions[idx].reset();
         mHoles.push_back(idx);
+    }
+
+    //! @brief 替换会话对象
+    //!
+    //! @param ori 原始会话对象
+    //! @param ptr 替身
+    //! @return 替身, nullptr 若出错
+    SessionPtr TcpAppServer::ReplaceSession(SessionPtr const & ori, SessionPtr const & ptr)
+    {
+        assert(nullptr != ori && nullptr != ptr);
+        assert(mSessions[ori->mIdx] == ori);
+
+        int idx = ori->mIdx;
+        ptr->mWakeUpper = std::move(ori->mWakeUpper);
+
+        ptr->mIdx = idx;
+        mSessions[idx] = ptr;
+        return ptr;
     }
 
 }

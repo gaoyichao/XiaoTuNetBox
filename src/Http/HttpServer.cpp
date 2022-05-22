@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#include <glog/logging.h>
 
 
 namespace xiaotu {
@@ -19,23 +20,22 @@ namespace net {
     HttpServer::HttpServer(EventLoopPtr const & loop, int port, int max_conn)
         : TcpAppServer(loop, port, max_conn)
     {
-        //mServer.SetTimeOut(2, 0, 3);
-        mServer.SetNewConnCallBk(std::bind(&HttpServer::OnNewConnection, this, _1));
-        mServer.SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1));
-        mServer.SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1, _2, _3));
+        //mServer->SetTimeOut(2, 0, 3);
+        mServer->SetNewConnCallBk(std::bind(&HttpServer::OnNewConnection, this, _1));
+        mServer->SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1));
+        mServer->SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1, _2, _3));
     }
-
-    // loop 线程
-    void HttpServer::OnNewConnection(ConnectionPtr const & conn) {
-        std::cout << __FILE__ << ":" << __LINE__ << std::endl;
-        std::cout << "新建连接 :" << conn->GetInfo() << std::endl;
-        std::cout << "use count:" << conn.use_count() << std::endl;
-        std::cout << "idx:     :" << conn->GetHandler()->GetLoopIdx() << std::endl;
-        std::cout << "fd:      :" << conn->GetHandler()->GetFd() << std::endl;
+ 
+    //! @brief 新建连接，与 EventLoop 在同一个进程中
+    //!
+    //! @param conn 连接对象
+    void HttpServer::OnNewConnection(ConnectionPtr const & conn)
+    {
+        LOG(INFO) << "新建连接:" << conn->GetInfo();
         conn->GetHandler()->SetNonBlock(true);
 
         HttpSessionPtr ptr(new HttpSession());
-        ptr->BuildWakeUpper(mServer.GetLoop(),
+        ptr->BuildWakeUpper(mServer->GetLoop(),
                 std::bind(&HttpServer::HandleReponse, this, ConnectionWeakPtr(conn), HttpSessionWeakPtr(ptr)));
 
         conn->mUserObject = ptr;
@@ -45,7 +45,6 @@ namespace net {
     // loop 线程
     void HttpServer::HandleReponse(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & sessptr)
     {
-        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__  << std::endl;
         ConnectionPtr con = conptr.lock();
         if (nullptr == con)
             return;
@@ -77,7 +76,7 @@ namespace net {
             urlpath = "/index.html";
 
         std::string path = mWorkSpace + urlpath;
-        std::cout << path << std::endl;
+        LOG(INFO) << path;
 
         struct stat s;
         if (!IsReadable(path) || (-1 == stat(path.c_str(), &s))) {
@@ -126,6 +125,13 @@ namespace net {
         if (HttpRequest::eINVALID == req->GetMethod())
             res->SetStatusCode(HttpResponse::e400_BadRequest);
 
+        if (req->NeedUpgrade()) {
+            if (mUpgradeSessionCallBk)
+                mUpgradeSessionCallBk(con, session);
+            session->WakeUp();
+            return;
+        }
+
         if (HttpRequest::eGET == req->GetMethod())
             OnGetRequest(req, res);
 
@@ -133,17 +139,10 @@ namespace net {
     }
 
     // loop 线程
-    void HttpServer::OnMessage(ConnectionPtr const & con,
-                               uint8_t const * buf, ssize_t n)
+    void HttpServer::OnMessage(ConnectionPtr const & con, uint8_t const * buf, ssize_t n)
     {
-        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
-        std::cout << "接收到了 " << n << "个字节:" << con->GetInfo() << std::endl;
-        std::cout << "use count:" << con.use_count() << std::endl;
-        std::cout << "idx:     :" << con->GetHandler()->GetLoopIdx() << std::endl;
-        std::cout << "fd:      :" << con->GetHandler()->GetFd() << std::endl;
-
+        LOG(INFO) << "接收到了消息";
         HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(con->mUserObject.lock());
-        std::cout << ptr->GetStateStr() << std::endl;
 
         uint8_t const * begin = buf;
         uint8_t const * end = buf + n;
@@ -163,11 +162,7 @@ namespace net {
 
     // loop 线程
     void HttpServer::OnCloseConnection(ConnectionPtr const & conn) {
-        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
-        std::cout << "关闭连接 :" << conn->GetInfo() << std::endl;
-        std::cout << "fd       :" << conn->GetHandler()->GetFd() << std::endl;
-        std::cout << "Loop Idx :" << conn->GetHandler()->GetLoopIdx() << std::endl;
-
+        LOG(INFO) << "关闭连接:" << conn->GetInfo();
         HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(conn->mUserObject.lock());
         ReleaseSession(ptr);
     }

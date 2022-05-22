@@ -7,29 +7,26 @@
  *****************************************************************************/
 #include <XiaoTuNetBox/Event.h>
 #include <XiaoTuNetBox/Http/HttpServer.h>
+#include <XiaoTuNetBox/ThreadWorker.h>
 #include <XiaoTuNetBox/Utils.h>
 
-#include <functional>
-#include <iostream>
-#include <string>
-#include <map>
-#include <thread>
-
-#include <endian.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
+#include <glog/logging.h>
 
 using namespace std::placeholders;
 using namespace xiaotu::net;
 
 
-int main() {
-    PollLoopPtr loop = Create<PollLoop>();
+int main(int argc, char *argv[]) {
+    google::InitGoogleLogging(argv[0]);
+    FLAGS_alsologtostderr = true;
+    FLAGS_log_dir = "~/logs";
 
-    HttpServer http(loop, 65530, 30);
+    PollLoopPtr loop = Create<PollLoop>();
+    ThreadWorkerPtr worker(new ThreadWorker);
+    HttpServer http(loop, 65530, 3);
+
     http.mWorkSpace = ".";
+    http.SetWorker(worker);
 
     loop->Loop(10);
 
