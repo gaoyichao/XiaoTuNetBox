@@ -34,6 +34,9 @@ namespace net {
 
     bool HttpRequest::KeepAlive() const
     {
+        if (eINVALID == mMethod)
+            return false;
+
         std::string con_key("Connection");
         std::string con_header;
         if (!GetHeader(con_key, con_header))

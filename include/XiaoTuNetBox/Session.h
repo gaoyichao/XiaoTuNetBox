@@ -46,10 +46,6 @@ namespace net {
 
         protected:
             Session() = default;
-            Session(ConnectionPtr const & conn)
-            {
-            }
-
             ~Session() = default;
 
         protected:

@@ -36,7 +36,7 @@ namespace net {
 
         friend class HttpServer;
         public:
-            HttpSession(ConnectionPtr const & conn);
+            HttpSession();
             ~HttpSession();
             HttpSession(HttpSession const &) = delete;
             HttpSession & operator = (HttpSession const &) = delete;
@@ -72,7 +72,7 @@ namespace net {
             EState GetState() const { return mState; }
 
             bool ParseRequestLine(uint8_t const * begin, uint8_t const * end);
-            HttpRequestPtr HandleRequest(uint8_t const * buf, ssize_t n);
+            uint8_t const * HandleRequest(uint8_t const * begin, uint8_t const * end);
 
             HttpRequestPtr GetRequest() { return mRequest; }
             HttpResponsePtr GetResponse() { return mResponse; }

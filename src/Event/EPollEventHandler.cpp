@@ -58,9 +58,13 @@ namespace net {
     }
 
     void EPollEventHandler::SetClosing(bool en) {
+        std::cout << "--------------------------------------------------" << std::endl;
+        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
+
         mIsClosing = en;
         if (mClosingCallBk)
             mClosingCallBk();
+        close(mFd);
         mIsClosed = true;
     }
 
@@ -86,6 +90,7 @@ namespace net {
         if (mIsClosing && !mIsClosed) {
             if (mClosingCallBk)
                 mClosingCallBk();
+            close(mFd);
             mIsClosed = true;
         }
 

@@ -77,7 +77,6 @@ namespace net {
         int md = mEventHandler->GetFd();
         if (mCloseCallBk)
             mCloseCallBk();
-        close(md);
         mIsClosed = true;
     }
 

@@ -58,6 +58,7 @@ namespace net {
         if (mIsClosing && !mIsClosed) {
             if (mClosingCallBk)
                 mClosingCallBk();
+            close(mFd);
             mIsClosed = true;
         }
     }

@@ -23,8 +23,7 @@ namespace net {
         { eError,             "Error" },
     };
 
-    HttpSession::HttpSession(ConnectionPtr const & conn)
-        : Session(conn)
+    HttpSession::HttpSession()
     {
         Reset();
     }
@@ -123,7 +122,7 @@ namespace net {
 
     //! @brief 解析请求消息头
     //! @param begin 接收缓存起始地址
-    //! @param endn 接收缓存结束地址
+    //! @param end 接收缓存结束地址
     //! @return 若切换状态，则返回消费首部之后的起始地址，
     //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr 
     uint8_t const * HttpSession::OnReadingHeaders(uint8_t const * begin, uint8_t const * end)
@@ -167,7 +166,7 @@ namespace net {
 
     //! @brief 解析请求消息主体
     //! @param begin 接收缓存起始地址
-    //! @param endn 接收缓存结束地址
+    //! @param end 接收缓存结束地址
     //! @return 若切换状态，则返回消费数据之后的起始地址，
     //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr 
     uint8_t const * HttpSession::OnReadingBody(uint8_t const * begin, uint8_t const * end)
@@ -187,10 +186,13 @@ namespace net {
         return nullptr;
     }
 
-    HttpRequestPtr HttpSession::HandleRequest(uint8_t const * buf, ssize_t n)
+    //! @brief 解析请求消息报文
+    //! @param begin 接收缓存起始地址
+    //! @param end 接收缓存结束地址
+    //! @return 若切换状态，则返回消费数据之后的起始地址，
+    //!         若消费完所有 n 个字节，仍然没有切换状态，则返回 nullptr 
+    uint8_t const * HttpSession::HandleRequest(uint8_t const * begin, uint8_t const * end)
     {
-        uint8_t const * begin = buf;
-        uint8_t const * end = buf + n;
         while (begin < end) {
             if (eExpectRequestLine == mState) {
                 begin = OnExpectRequestLine(begin, end);
@@ -210,14 +212,15 @@ namespace net {
                     break;
             }
 
-            if (eResponsing == mState || eError == mState)
+            if (eError == mState) {
+                mRequest->SetMethod(HttpRequest::eINVALID);
+                break;
+            }
+            if (eResponsing == mState)
                 break;
         }
 
-        if (eResponsing == mState || eError == mState)
-            return mRequest;
-
-        return nullptr;
+        return begin;
     }
     
 

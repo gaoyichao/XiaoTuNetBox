@@ -33,6 +33,7 @@ namespace net {
             { }
 
             bool SetMethod(std::string const & str);
+            void SetMethod(EMethod method) { mMethod = method; }
             EMethod GetMethod() const { return mMethod; }
             inline std::string const & GetMethodStr() const
             {
