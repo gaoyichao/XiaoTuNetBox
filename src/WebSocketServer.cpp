@@ -6,6 +6,7 @@
  * 
  ***********************************************************************************/
 #include <XiaoTuNetBox/WebSocketServer.h>
+#include <XiaoTuNetBox/Http/HttpServer.h>
 #include <XiaoTuNetBox/Utils.h>
 
 #include <cassert>
@@ -42,56 +43,13 @@ namespace net {
 
         HttpSessionPtr ptr(new HttpSession());
         ptr->BuildWakeUpper(mServer->GetLoop(),
-                std::bind(&WebSocketServer::HandleReponse, this, ConnectionWeakPtr(conn)));
+                std::bind(&HttpServer::OnTaskFinished, ConnectionWeakPtr(conn)));
 
         conn->mUserObject = ptr;
         AddSession(ptr);
     }
 
-    //! @brief 处理Http的响应报文，与 EventLoop 在同一个进程中
-    //!
-    //! @param con 连接对象
-    //! @param session Http会话对象
-    void WebSocketServer::OnHttpResponse(ConnectionPtr const & con, HttpSessionPtr const & session)
-    {
-        HttpResponsePtr res = session->GetResponse();
-
-        if (con->IsClosed()) {
-            session->Reset();
-            return;
-        }
-
-        std::vector<uint8_t> const & buf = res->GetContent();
-        con->SendBytes(buf.data(), buf.size());
-        if (res->CloseConnection())
-            con->Close();
-
-        session->Reset();
-    }
-
-    //! @brief Websocket 握手响应，与 PollLoop 在同一个进程中
-    //! 切换状态 eConnecting --> eOpen
-    //!
-    //! @param con TCP 连接对象
-    //! @param session 会话对象
-    void WebSocketServer::OnWsConResponse(ConnectionPtr const & con, WebSocketSessionPtr const & session)
-    {
-        HttpResponsePtr res = session->GetHandShakeResponse();
-
-        if (con->IsClosed())
-            return;
-
-        std::vector<uint8_t> const & buf = res->GetContent();
-        con->SendBytes(buf.data(), buf.size());
-        if (res->CloseConnection())
-            con->Close();
-
-        LOG(INFO) << session->GetStateStr() << " --> eOpen";
-        session->mState = WebSocketSession::eOpen;
-    }
-
-    //! @brief 处理响应报文，与 EventLoop 在同一个进程中, 由wakeupper触发
-    void WebSocketServer::HandleReponse(ConnectionWeakPtr const & conptr)
+    void WebSocketServer::HandleWsReponse(ConnectionWeakPtr const & conptr)
     {
         ConnectionPtr con = conptr.lock();
         if (nullptr == con)
@@ -100,16 +58,19 @@ namespace net {
         if (nullptr == session)
             return;
 
-        if (typeid(HttpSession).name() == session->ToCString()) {
-            OnHttpResponse(con, std::static_pointer_cast<HttpSession>(session));
-            return;
-        }
-
-        assert (typeid(WebSocketSession).name() == session->ToCString());
+        assert(typeid(WebSocketSession).name() == session->ToCString());
         WebSocketSessionPtr ws = std::static_pointer_cast<WebSocketSession>(session);
 
         if (WebSocketSession::eConnecting == ws->mState) {
-            OnWsConResponse(con, ws);
+            HttpResponsePtr res = ws->GetHandShakeResponse();
+
+            std::vector<uint8_t> const & buf = res->GetContent();
+            con->SendBytes(buf.data(), buf.size());
+            if (res->CloseConnection())
+                con->Close();
+
+            LOG(INFO) << ws->GetStateStr() << " --> eOpen";
+            ws->mState = WebSocketSession::eOpen;
             return;
         }
 
@@ -120,44 +81,7 @@ namespace net {
             else
                 break;
         }
-    }
 
-    void WebSocketServer::OnGetRequest(HttpRequestPtr const & req, HttpResponsePtr const & res)
-    {
-        std::string urlpath = req->GetURLPath();
-        if ("/" == urlpath)
-            urlpath = "/index.html";
-
-        std::string path = mWorkSpace + urlpath;
-        LOG(INFO) << path;
-
-        if (!IsReadable(path)) {
-            res->SetStatusCode(HttpResponse::e404_NotFound);
-            std::string errstr("Error:404");
-            res->LockHead(errstr.size());
-            res->AppendContent("Error:404");
-            return;
-        }
-
-        if (!res->SetFile(path))
-            return;
-
-        //! @todo 检查文件类型, issue #3
-        int idx = GetSuffix((uint8_t*)urlpath.data(), urlpath.size(), '.');
-        if (idx > 0) {
-            std::string suffix = urlpath.substr(idx);
-            if (".js" == suffix)
-                res->SetHeader("Content-Type", "text/javascript");
-            else if (".html" == suffix)
-                res->SetHeader("Content-Type", "text/html");
-            else if (".svg" == suffix)
-                res->SetHeader("Content-Type", "image/svg+xml");
-        }
-
-        struct stat const & s = res->GetFileStat();
-        res->SetStatusCode(HttpResponse::e200_OK);
-        res->LockHead(s.st_size);
-        res->LoadContent(res->GetFileStat().st_size);
     }
 
     //! @brief 处理接收到的消息, 运行在ThreadWorker线程中。
@@ -176,41 +100,6 @@ namespace net {
         return true;
     }
 
-    bool WebSocketServer::HandleRequest(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & weakptr)
-    {
-        ConnectionPtr con = conptr.lock();
-        if (nullptr == con)
-            return false;
-
-        HttpSessionPtr session = weakptr.lock();
-        if (nullptr == session)
-            return false;
-
-        HttpRequestPtr req = session->GetRequest();
-        HttpResponsePtr res = session->GetResponse();
-
-        res->SetClosing(!req->KeepAlive());
-        res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
-
-        if (req->NeedUpgrade()) {
-            WebSocketSessionPtr webptr = UpgradeSession(con, session);
-            if (nullptr != webptr) {
-                if (mNewSessionCallBk)
-                    mNewSessionCallBk(webptr);
-                webptr->WakeUp();
-            } else {
-                session->WakeUp();
-            }
-            return true;
-        }
-
-        if (HttpRequest::eGET == req->GetMethod())
-            OnGetRequest(req, res);
-
-        session->WakeUp();
-        return true;
-    }
-
     void WebSocketServer::OnCloseConnection(ConnectionPtr const & conn)
     {
         LOG(INFO) << "关闭连接:" << conn->GetInfo();
@@ -221,24 +110,35 @@ namespace net {
 
     //! @brief 升级到 websocket 会话
     //!
-    //! @param con TCP 连接对象
-    //! @param session Http 握手会话
-    WebSocketSessionPtr WebSocketServer::UpgradeSession(ConnectionPtr const & con, HttpSessionPtr const & session)
+    //! @param conptr TCP 连接对象
+    //! @param weakptr Http 握手会话
+    bool WebSocketServer::UpgradeSession(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & weakptr)
     {
-        LOG(INFO) << "升级 websocket";
+        ConnectionPtr con = conptr.lock();
+        if (nullptr == con)
+            return false;
+
+        HttpSessionPtr session = weakptr.lock();
+        if (nullptr == session)
+            return false;
 
         HttpRequestPtr req = session->GetRequest();
-
         if (!WebSocketSession::CheckHandShake(req)) {
-            return nullptr;
+            session->WakeUp();
+            return false;
         }
 
         WebSocketSessionPtr ptr(new WebSocketSession);
         ptr->AcceptHandShake(req);
         con->mUserObject = ptr;
         ReplaceSession(session, ptr);
+        ptr->mWakeUpper->SetWakeUpCallBk(std::bind(&WebSocketServer::HandleWsReponse, this, ConnectionWeakPtr(con)));
 
-        return ptr;
+        if (mNewSessionCallBk)
+            mNewSessionCallBk(ptr);
+
+        ptr->WakeUp();
+        return true;
     }
 
     //! @brief 处理 Http 请求
@@ -258,8 +158,13 @@ namespace net {
             begin = ptr->HandleRequest(begin, end);
 
             if (HttpSession::eResponsing == ptr->GetState() || HttpSession::eError == ptr->GetState()) {
-                TaskPtr task(new Task(std::bind(&WebSocketServer::HandleRequest, this, ConnectionWeakPtr(con), HttpSessionWeakPtr(ptr))));
-                AddTask(task);
+                HttpRequestPtr req = ptr->GetRequest();
+                if (req->NeedUpgrade()) {
+                    TaskPtr task(new Task(std::bind(&WebSocketServer::UpgradeSession, this, ConnectionWeakPtr(con), HttpSessionWeakPtr(ptr))));
+                    AddTask(task);
+                } else {
+                    HttpServer::HandleRequest(con, mWorkSpace, mWorker);
+                }
             }
 
             if (nullptr == begin)

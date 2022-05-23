@@ -90,6 +90,7 @@ namespace net {
         mHandShakeResponse->SetHeader("Upgrade", "websocket");
         mHandShakeResponse->SetHeader("Sec-WebSocket-Accept", mAccKey);
 
+        mHandShakeResponse->LockHead(0);
         return true;
     }
 

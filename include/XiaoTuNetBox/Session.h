@@ -46,6 +46,9 @@ namespace net {
 
             //! 当前任务
             TaskPtr mCurrTask;
+
+            //! EventLoop 唤醒器
+            WakeUpperPtr mWakeUpper;
         protected:
             Session() = default;
             ~Session() = default;
@@ -53,9 +56,6 @@ namespace net {
         protected:
             //! 在 TcpAppServer 的会话列表中的索引
             size_t mIdx;
-
-            //! EventLoop 唤醒器
-            WakeUpperPtr mWakeUpper;
     };
 
     typedef std::shared_ptr<Session> SessionPtr;

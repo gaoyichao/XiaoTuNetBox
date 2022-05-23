@@ -27,18 +27,11 @@ namespace net {
 
         private:
             void OnHttpMessage(ConnectionPtr const & conn, uint8_t const * buf, ssize_t n);
-            void OnHttpResponse(ConnectionPtr const & con, HttpSessionPtr const & session);
-
             void OnWsMessage(ConnectionPtr const & con, uint8_t const * buf, ssize_t n);
-            void OnWsConResponse(ConnectionPtr const & con, WebSocketSessionPtr const & session);
-            WebSocketSessionPtr UpgradeSession(ConnectionPtr const & con, HttpSessionPtr const & session);
 
+            bool UpgradeSession(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & weakptr);
             bool HandleMessage(WebSocketSessionWeakPtr const & weakptr, WebSocketMsgPtr const & msg);
-            bool HandleRequest(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & weakptr);
-            void HandleReponse(ConnectionWeakPtr const & conptr);
-
-            void OnGetRequest(HttpRequestPtr const & req, HttpResponsePtr const & res);
-
+            void HandleWsReponse(ConnectionWeakPtr const & conptr);
 
         public:
             typedef std::function<void(WebSocketSessionPtr const & session)> SessionCallBk;
