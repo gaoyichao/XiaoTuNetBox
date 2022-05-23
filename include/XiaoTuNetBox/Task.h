@@ -12,27 +12,35 @@
 namespace xiaotu {
 namespace net {
  
-    typedef std::function< void ()> TaskFunc;
+    typedef std::function< bool ()> TaskFunc;
 
     class Task {
         public:
-            Task() {}
             Task(TaskFunc func)
             {
+                success = false;
                 mFunction = std::move(func);
             }
 
-            void operator () () {
-                if (mFunction)
-                    mFunction();
-            }
+            void SetSuccessFunc(TaskFunc func) { OnSuccess = std::move(func); }
+            void SetFailureFunc(TaskFunc func) { OnFailure = std::move(func); }
 
             void Finish() {
-                if (mFunction)
-                    mFunction();
+                success = mFunction();
             }
 
-            void SetTaskFunc(TaskFunc func) { mFunction = std::move(func); }
+            void Success() {
+                OnSuccess();
+            }
+
+            void Failure() {
+                OnFailure();
+            }
+
+            bool success;
+
+            TaskFunc OnSuccess;
+            TaskFunc OnFailure;
         private:
             TaskFunc mFunction;
     };

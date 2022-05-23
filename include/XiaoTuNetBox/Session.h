@@ -9,8 +9,8 @@
 #include <XiaoTuNetBox/Types.h>
 #include <XiaoTuNetBox/InBufObserver.h>
 #include <XiaoTuNetBox/Connection.h>
-#include <XiaoTuNetBox/Event/WakeUpper.h>
-#include <XiaoTuNetBox/Event/EventLoop.h>
+#include <XiaoTuNetBox/Task.h>
+#include <XiaoTuNetBox/Event.h>
 
 #include <memory>
 
@@ -44,6 +44,8 @@ namespace net {
                 mWakeUpper->WakeUp(4096);
             }
 
+            //! 当前任务
+            TaskPtr mCurrTask;
         protected:
             Session() = default;
             ~Session() = default;

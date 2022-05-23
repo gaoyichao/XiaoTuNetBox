@@ -128,6 +128,7 @@ namespace net {
             std::string mURLPath;
             std::string mURLQuery;
             std::string mVersion;
+            std::string mWorkSpace;
             std::map<std::string, std::string> mHeaders;
             std::vector<uint8_t> mContent;
     };

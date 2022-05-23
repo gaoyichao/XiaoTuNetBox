@@ -129,19 +129,18 @@ namespace net {
             urlpath = "/index.html";
 
         std::string path = mWorkSpace + urlpath;
-        LOG(INFO) << "GET:" << path;
+        LOG(INFO) << path;
 
-        struct stat s;
-        if (!IsReadable(path) || (-1 == stat(path.c_str(), &s))) {
+        if (!IsReadable(path)) {
             res->SetStatusCode(HttpResponse::e404_NotFound);
+            std::string errstr("Error:404");
+            res->LockHead(errstr.size());
             res->AppendContent("Error:404");
             return;
         }
 
-        if (!S_ISREG(s.st_mode))
+        if (!res->SetFile(path))
             return;
-
-        res->SetStatusCode(HttpResponse::e200_OK);
 
         //! @todo 检查文件类型, issue #3
         int idx = GetSuffix((uint8_t*)urlpath.data(), urlpath.size(), '.');
@@ -155,32 +154,37 @@ namespace net {
                 res->SetHeader("Content-Type", "image/svg+xml");
         }
 
-        res->AppendContent(path, 0, s.st_size);
+        struct stat const & s = res->GetFileStat();
+        res->SetStatusCode(HttpResponse::e200_OK);
+        res->LockHead(s.st_size);
+        res->LoadContent(res->GetFileStat().st_size);
     }
 
     //! @brief 处理接收到的消息, 运行在ThreadWorker线程中。
     //!
     //! @param weakptr ws会话指针
     //! @param msg ws消息对象
-    void WebSocketServer::HandleMessage(WebSocketSessionWeakPtr const & weakptr, WebSocketMsgPtr const & msg)
+    bool WebSocketServer::HandleMessage(WebSocketSessionWeakPtr const & weakptr, WebSocketMsgPtr const & msg)
     {
         WebSocketSessionPtr session = weakptr.lock();
         if (nullptr == session)
-            return;
+            return false;
 
         if (mMsgCallBk)
             mMsgCallBk(session, msg);
+
+        return true;
     }
 
-    void WebSocketServer::HandleRequest(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & weakptr)
+    bool WebSocketServer::HandleRequest(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & weakptr)
     {
         ConnectionPtr con = conptr.lock();
         if (nullptr == con)
-            return;
+            return false;
 
         HttpSessionPtr session = weakptr.lock();
         if (nullptr == session)
-            return;
+            return false;
 
         HttpRequestPtr req = session->GetRequest();
         HttpResponsePtr res = session->GetResponse();
@@ -197,13 +201,14 @@ namespace net {
             } else {
                 session->WakeUp();
             }
-            return;
+            return true;
         }
 
         if (HttpRequest::eGET == req->GetMethod())
             OnGetRequest(req, res);
 
         session->WakeUp();
+        return true;
     }
 
     void WebSocketServer::OnCloseConnection(ConnectionPtr const & conn)

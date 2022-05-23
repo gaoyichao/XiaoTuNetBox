@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <glog/logging.h>
+
 namespace xiaotu {
 namespace net {
     std::map<HttpResponse::EStatusCode, std::string> HttpResponse::mEStatusCodeToStringMap = {
@@ -36,14 +38,6 @@ namespace net {
         AppendContent((uint8_t const*)cstr, len);
     }
 
-    void HttpResponse::AppendContent(std::string const & fname, uint64_t off, uint64_t len)
-    {
-        size_t n_ori = mContent.size();
-        
-        mContent.resize(n_ori + len);
-        ReadBinary(fname, mContent.data() + n_ori, 0, len);
-    }
-
     void HttpResponse::Reset(bool close)
     {
         mStatusCode = eUnknown;
@@ -52,6 +46,9 @@ namespace net {
         mContent.clear();
         mCloseConnection = close;
         mHeadEndIdx = -1;
+
+        mLoadCount = 0;
+        mFilePtr = NULL;
     }
 
     void HttpResponse::LockHead(size_t size)
@@ -61,11 +58,12 @@ namespace net {
         mContent.clear();
 
         AppendContent(StartLine());
+        AppendContent("Content-Length: ");
+        AppendContent(std::to_string(mDataSize));
+
         if (CloseConnection()) {
-            AppendContent("Connection: close\r\n");
+            AppendContent("\r\nConnection: close\r\n");
         } else {
-            AppendContent("Content-Length: ");
-            AppendContent(std::to_string(mDataSize));
             AppendContent("\r\nConnection: Keep-Alive\r\n");
         }
 
@@ -81,6 +79,40 @@ namespace net {
         mDataSize = 0;
         mHeadEndIdx = -1;
         mContent.clear();
+    }
+
+    bool HttpResponse::SetFile(std::string const & fname)
+    {
+        assert(mHeadEndIdx < 0);
+        if (-1 == stat(fname.c_str(), &mFileStat) || !S_ISREG(mFileStat.st_mode))
+            return false;
+
+        mLoadCount = 0;
+        mFilePath = fname;
+        return true;
+    }
+
+    void HttpResponse::LoadContent(int len)
+    {
+        assert(mHeadEndIdx > 0);
+        if (NULL == mFilePtr)
+            mFilePtr = fopen(mFilePath.c_str(), "r");
+        LOG(INFO) << mFilePath << mLoadCount;
+        assert(NULL != mFilePtr);
+
+        size_t need = mHeadEndIdx + len;
+        if (mContent.size() < need)
+            mContent.resize(need);
+
+        uint8_t * begin = mContent.data() + mHeadEndIdx;
+        size_t aclen = fread((void*)begin, 1, len, mFilePtr);
+        mDataSize -= aclen;
+        mLoadCount++;
+
+        if (aclen < len) {
+            fclose(mFilePtr);
+            mFilePtr = NULL;
+        }
     }
 }
 }

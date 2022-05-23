@@ -13,6 +13,9 @@
 #include <iostream>
 #include <cassert>
 
+#include <stdio.h>
+#include <sys/stat.h>
+
 namespace xiaotu {
 namespace net {
 
@@ -34,6 +37,12 @@ namespace net {
             //! @brief 构造函数
             //! @param close 发送完该响应报文之后是否期望关闭连接
             HttpResponse(bool close = true) { Reset(close); }
+
+            ~HttpResponse()
+            {
+                if (NULL != mFilePtr)
+                    fclose(mFilePtr);
+            }
 
             //! @brief 设定响应报文的状态码
             inline void SetStatusCode(EStatusCode code)
@@ -107,8 +116,6 @@ namespace net {
             //! @brief 将 cstr 字符串添加到 mContent 中。
             //! 不安全，不推荐使用
             void AppendContent(char const * buf);
-
-            void AppendContent(std::string const & fname, uint64_t off, uint64_t len);
         public:
             //! @brief 重置报文，包括状态码、首部键值对、正文
             //! @param close 是否期望关闭连接
@@ -123,18 +130,50 @@ namespace net {
 
             //! @brief 获取报文内容
             std::vector<uint8_t> const & GetContent() { return mContent; }
+
+            int GetHeadEndIdx() { return mHeadEndIdx; }
+            //! @brief 获取剩余正文长度
+            size_t GetDataSize() { return mDataSize; }
         private:
             //! @brief 报文首部结尾索引
             //! mHeadEndIdx < 0，可以正常修改状态码和首部，此时 mContent 应当为空
             //! mHeadEndIdx >= 0，不可以修改状态码和首部，需手动调用 UnlockHead 复位
             int mHeadEndIdx;
 
-            //! @brief 正文长度
+            //! @brief 剩余正文长度
             size_t mDataSize;
 
             //! @brief 响应报文的具体数据，分为首部和正文两个部分。
             //! 区间 [0, mHeadEndIdx) 为首部，区间 [mHeadEndIdx, end) 为正文
             std::vector<uint8_t> mContent;
+
+        public:
+            //! @brief 读取文件，将数据放置在 mContent[mHeadEndIdx, end) 中，
+            //! 应当在 LockHead 之后调用
+            //!
+            //! @param len 待加载的数据长度
+            void LoadContent(int len);
+
+            //! @brief 记录目标文件名，应当在 LockHead 之前调用
+            bool SetFile(std::string const & fname);
+
+            //! @brief 获取文件状态
+            struct stat const & GetFileStat() { return mFileStat; }
+
+            int GetLoadCount() { return mLoadCount; }
+
+            //! @brief 目标文件路径
+            std::string mFilePath;
+
+        private:
+            //! @brief 目标文件的状态
+            struct stat mFileStat;
+
+            //! @brief 目标文件
+            FILE * mFilePtr;
+
+            //! @brief 加载文件次数
+            int mLoadCount;
     };
     typedef std::shared_ptr<HttpResponse> HttpResponsePtr;
 

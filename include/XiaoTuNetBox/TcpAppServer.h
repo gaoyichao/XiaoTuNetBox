@@ -30,13 +30,6 @@ namespace net {
                 mWorker = worker;
             }
 
-            void AddTask(TaskFunc func)
-            {
-                assert(mWorker);
-                TaskPtr task = std::make_shared<Task>(std::move(func));
-                mWorker->AddTask(task);
-            }
-
             void AddTask(TaskPtr const & task)
             {
                 assert(mWorker);

@@ -33,8 +33,8 @@ namespace net {
             void OnWsConResponse(ConnectionPtr const & con, WebSocketSessionPtr const & session);
             WebSocketSessionPtr UpgradeSession(ConnectionPtr const & con, HttpSessionPtr const & session);
 
-            void HandleMessage(WebSocketSessionWeakPtr const & weakptr, WebSocketMsgPtr const & msg);
-            void HandleRequest(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & weakptr);
+            bool HandleMessage(WebSocketSessionWeakPtr const & weakptr, WebSocketMsgPtr const & msg);
+            bool HandleRequest(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & weakptr);
             void HandleReponse(ConnectionWeakPtr const & conptr);
 
             void OnGetRequest(HttpRequestPtr const & req, HttpResponsePtr const & res);
