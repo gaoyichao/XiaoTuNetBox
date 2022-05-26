@@ -58,9 +58,10 @@ namespace net {
         uint8_t const * end = buf + n;
 
         while (begin < end) {
-            begin = ptr->HandleRequest(begin, end);
+            HttpRequestPtr req = ptr->GetRequest();
+            begin = req->Parse(begin, end);
 
-            if (HttpSession::eResponsing == ptr->mState || HttpSession::eError == ptr->mState) {
+            if (HttpRequest::eResponsing == req->GetState() || HttpRequest::eError == req->GetState()) {
                 HandleRequest(con, mWorkSpace, mWorker);
             }
 
@@ -129,6 +130,7 @@ namespace net {
         return true;
     }
 
+    //! @brief Get请求任务成功的处理方法，与 EventLoop 在同一个线程中
     bool HttpServer::OnTaskSuccessGet(ConnectionWeakPtr const & conptr, ThreadWorkerPtr const & worker)
     {
         ConnectionPtr con = conptr.lock();
@@ -175,6 +177,8 @@ namespace net {
         req->mWorkSpace = workspace;
         res->SetClosing(!req->KeepAlive());
 
+        //task = std::make_shared<Task>(std::bind(&HttpServer::HandleUnauthorized, HttpSessionWeakPtr(ptr)));
+
         switch (req->GetMethod()) {
             case HttpRequest::eINVALID:
                 task = std::make_shared<Task>(std::bind(&HttpServer::HandleInvalidRequest, HttpSessionWeakPtr(ptr)));
@@ -197,6 +201,7 @@ namespace net {
         return true;
     }
 
+    // task 线程
     bool HttpServer::HandleGetLoadContent(HttpSessionWeakPtr const & weakptr)
     {
         HttpSessionPtr session = weakptr.lock();
@@ -259,7 +264,13 @@ namespace net {
         return true;
     }
 
-    bool HttpServer::HandleUnSupportRequest (HttpSessionWeakPtr const & weakptr)
+    //! @brief 处理服务器不支持的请求方法，目前只支持 GET 和 HEAD
+    //!
+    //! 一般情况下，本函数都是作为 Task 的任务函数调用的
+    //!
+    //! @param weakptr 一个 HttpSession 的弱指针
+    //! @return 是否成功完成了任务
+    bool HttpServer::HandleUnSupportRequest(HttpSessionWeakPtr const & weakptr)
     {
         HttpSessionPtr session = weakptr.lock();
         if (nullptr == session)
@@ -267,9 +278,29 @@ namespace net {
 
         HttpResponsePtr res = session->GetResponse();
         res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
+        res->LockHead(0);
 
         session->WakeUp();
         return true;
+
+    }
+
+    //! @brief 处理没有身份认证的情况
+    bool HttpServer::HandleUnauthorized(HttpSessionWeakPtr const & weakptr)
+    {
+        HttpSessionPtr session = weakptr.lock();
+        if (nullptr == session)
+            return false;
+
+        HttpResponsePtr res = session->GetResponse();
+        res->SetStatusCode(HttpResponse::e401_Unauthorized);
+        res->SetHeader("WWW-authenticate", "Basic realm=\"ni shi shui\"");
+
+        res->LockHead(0);
+
+        session->WakeUp();
+        return true;
+
 
     }
 

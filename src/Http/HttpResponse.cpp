@@ -14,6 +14,7 @@ namespace net {
         { e101_SwitchProtocol,    "Switching Protocols"},
         { e200_OK,                "OK" },
         { e400_BadRequest,        "Bad Request" },
+        { e401_Unauthorized,      "Unauthorized" },
         { e404_NotFound,          "Not Found" },
         { e503_ServiceUnavilable, "Service Unavilable" },
     };

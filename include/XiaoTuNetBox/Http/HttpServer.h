@@ -30,7 +30,6 @@ namespace net {
             static void OnTaskFinished(ConnectionWeakPtr const & conptr);
             static bool OnTaskSuccessDefault(ConnectionPtr const &, HttpSessionPtr const &);
             static bool OnTaskFailureDefault(ConnectionPtr const &, HttpSessionPtr const &);
-
             static bool OnTaskSuccessGet(ConnectionWeakPtr const & conptr, ThreadWorkerPtr const & worker);
 
             static bool HandleRequest(ConnectionPtr const & con, std::string workspace, ThreadWorkerPtr const & worker);
@@ -40,6 +39,7 @@ namespace net {
             static bool HandleUnSupportRequest (HttpSessionWeakPtr const & weakptr);
 
             static bool HandleGetLoadContent   (HttpSessionWeakPtr const & weakptr);
+            static bool HandleUnauthorized    (HttpSessionWeakPtr const & weakptr);
 
             static void OnHeadRequest(HttpRequestPtr const & req, HttpResponsePtr const & res);
 

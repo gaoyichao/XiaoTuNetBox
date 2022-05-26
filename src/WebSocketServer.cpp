@@ -155,12 +155,14 @@ namespace net {
         uint8_t const * end = buf + n;
 
         while (begin < end) {
-            begin = ptr->HandleRequest(begin, end);
+            HttpRequestPtr req = ptr->GetRequest();
+            begin = req->Parse(begin, end);
 
-            if (HttpSession::eResponsing == ptr->GetState() || HttpSession::eError == ptr->GetState()) {
-                HttpRequestPtr req = ptr->GetRequest();
+            if (HttpRequest::eResponsing == req->GetState() || HttpRequest::eError == req->GetState()) {
+                req->PrintHeaders();
                 if (req->NeedUpgrade()) {
                     TaskPtr task(new Task(std::bind(&WebSocketServer::UpgradeSession, this, ConnectionWeakPtr(con), HttpSessionWeakPtr(ptr))));
+                    ptr->mCurrTask = task;
                     AddTask(task);
                 } else {
                     HttpServer::HandleRequest(con, mWorkSpace, mWorker);
@@ -208,9 +210,6 @@ namespace net {
             if (nullptr == begin)
                 break;
         }
-
-
-
     }
 
     //! @brief 处理连接上的消息

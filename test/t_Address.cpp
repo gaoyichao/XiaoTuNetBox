@@ -5,7 +5,6 @@
 
 using namespace xiaotu;
 
-
 TEST(Address, ipv4)
 {
     net::IPv4 addr;
@@ -19,5 +18,8 @@ TEST(Address, ipv4)
     EXPECT_EQ("127.0.0.1", addr1.GetIp());
     EXPECT_EQ(1234, addr1.GetPort());
     EXPECT_EQ("127.0.0.1:1234", addr1.GetIpPort());
+
+    std::cout << "\u1F600" << std::endl;    
 }
+
 

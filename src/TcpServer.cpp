@@ -74,13 +74,9 @@ namespace net {
         if (mCloseConnCallBk)
             mCloseConnCallBk(con->conn);
 
-        std::cout << __FILE__ << ":--------------------------:" << __LINE__ << std::endl;
-        std::cout << "use_count :" << con->conn.use_count() << std::endl;
         UnApplyOnLoop(con->conn, mLoop);
         Delete(con);
         con->conn.reset();
-        std::cout << "use_count :" << con->conn.use_count() << std::endl;
-        std::cout << __FILE__ << ":--------------------------:" << __LINE__ << std::endl;
         delete con;
         mConnNum--;
     }

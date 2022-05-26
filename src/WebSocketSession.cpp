@@ -41,11 +41,6 @@ namespace net {
     {
         std::string value;
 
-        if (!req->GetHeader("Connection", value))
-            return false;
-        if ("Upgrade" != value)
-            return false;
-
         if (!req->GetHeader("Upgrade", value))
             return false;
         if ("websocket" != value)

@@ -23,11 +23,12 @@ namespace net {
         public:
             //! @brief 响应报文状态码
             enum EStatusCode {
-                eUnknown = 0,
-                e101_SwitchProtocol = 101,
-                e200_OK = 200,
-                e400_BadRequest = 400,
-                e404_NotFound = 404,
+                eUnknown               = 0,
+                e101_SwitchProtocol    = 101,
+                e200_OK                = 200,
+                e400_BadRequest        = 400,
+                e401_Unauthorized      = 401,
+                e404_NotFound          = 404,
                 e503_ServiceUnavilable = 503
             };
             //! @brief 响应报文状态码解释字符串 map
