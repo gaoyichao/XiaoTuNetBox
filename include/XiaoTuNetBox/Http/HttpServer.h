@@ -7,7 +7,7 @@
 #define XTNB_HTTP_SERVER_H
 
 #include <XiaoTuNetBox/TcpAppServer.h>
-#include <XiaoTuNetBox/Http/HttpSession.h>
+#include <XiaoTuNetBox/Http/HttpHandler.h>
 
 #include <vector>
 
@@ -15,7 +15,7 @@ namespace xiaotu {
 namespace net {
  
     class HttpServer : public TcpAppServer {
-            typedef std::function<void(ConnectionPtr const &, HttpSessionPtr const &)> ConSessionFunc;
+            typedef std::function<void(ConnectionPtr const &, HttpHandlerPtr const &)> ConSessionFunc;
         public:
             static const int mDefaultLoadSize;
         public:
@@ -28,18 +28,18 @@ namespace net {
 
         public:
             static void OnTaskFinished(ConnectionWeakPtr const & conptr);
-            static bool OnTaskSuccessDefault(ConnectionPtr const &, HttpSessionPtr const &);
-            static bool OnTaskFailureDefault(ConnectionPtr const &, HttpSessionPtr const &);
+            static bool OnTaskSuccessDefault(ConnectionPtr const &, HttpHandlerPtr const &);
+            static bool OnTaskFailureDefault(ConnectionPtr const &, HttpHandlerPtr const &);
             static bool OnTaskSuccessGet(ConnectionWeakPtr const & conptr, ThreadWorkerPtr const & worker);
 
             static bool HandleRequest(ConnectionPtr const & con, std::string workspace, ThreadWorkerPtr const & worker);
-            static bool HandleHeadRequest      (HttpSessionWeakPtr const & weakptr);
-            static bool HandleGetRequest       (HttpSessionWeakPtr const & weakptr);
-            static bool HandleInvalidRequest   (HttpSessionWeakPtr const & weakptr);
-            static bool HandleUnSupportRequest (HttpSessionWeakPtr const & weakptr);
+            static bool HandleHeadRequest      (HttpHandlerWeakPtr const & weakptr);
+            static bool HandleGetRequest       (HttpHandlerWeakPtr const & weakptr);
+            static bool HandleInvalidRequest   (HttpHandlerWeakPtr const & weakptr);
+            static bool HandleUnSupportRequest (HttpHandlerWeakPtr const & weakptr);
 
-            static bool HandleGetLoadContent   (HttpSessionWeakPtr const & weakptr);
-            static bool HandleUnauthorized    (HttpSessionWeakPtr const & weakptr);
+            static bool HandleGetLoadContent   (HttpHandlerWeakPtr const & weakptr);
+            static bool HandleUnauthorized    (HttpHandlerWeakPtr const & weakptr);
 
             static void OnHeadRequest(HttpRequestPtr const & req, HttpResponsePtr const & res);
 

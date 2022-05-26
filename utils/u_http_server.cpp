@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
 
     PollLoopPtr loop = Create<PollLoop>();
     ThreadWorkerPtr worker(new ThreadWorker);
-    HttpServer http(loop, 65530, 3);
+    HttpServer http(loop, 65530, 30);
 
     http.mWorkSpace = ".";
     http.SetWorker(worker);

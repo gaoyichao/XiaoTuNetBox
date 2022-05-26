@@ -35,7 +35,7 @@ namespace net {
         LOG(INFO) << "新建连接:" << conn->GetInfo();
         conn->GetHandler()->SetNonBlock(true);
 
-        HttpSessionPtr ptr(new HttpSession());
+        HttpHandlerPtr ptr(new HttpHandler());
         ptr->BuildWakeUpper(mServer->GetLoop(),
                 std::bind(&HttpServer::OnTaskFinished, ConnectionWeakPtr(conn)));
 
@@ -52,7 +52,7 @@ namespace net {
     void HttpServer::OnMessage(ConnectionPtr const & con, uint8_t const * buf, ssize_t n)
     {
         LOG(INFO) << "接收到了消息";
-        HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(con->mUserObject.lock());
+        HttpHandlerPtr ptr = std::static_pointer_cast<HttpHandler>(con->mUserObject.lock());
 
         uint8_t const * begin = buf;
         uint8_t const * end = buf + n;
@@ -73,7 +73,7 @@ namespace net {
     // loop 线程
     void HttpServer::OnCloseConnection(ConnectionPtr const & conn) {
         LOG(INFO) << "关闭连接:" << conn->GetInfo();
-        HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(conn->mUserObject.lock());
+        HttpHandlerPtr ptr = std::static_pointer_cast<HttpHandler>(conn->mUserObject.lock());
         ReleaseSession(ptr);
     }
 
@@ -85,7 +85,7 @@ namespace net {
         ConnectionPtr con = conptr.lock();
         if (nullptr == con)
             return;
-        HttpSessionPtr session = std::static_pointer_cast<HttpSession>(con->mUserObject.lock());
+        HttpHandlerPtr session = std::static_pointer_cast<HttpHandler>(con->mUserObject.lock());
         if (nullptr == session)
             return;
 
@@ -109,7 +109,7 @@ namespace net {
     }
 
     //! @brief 任务成功，一般处理方法，与 EventLoop 在同一个线程中
-    bool HttpServer::OnTaskSuccessDefault(ConnectionPtr const & con, HttpSessionPtr const & session)
+    bool HttpServer::OnTaskSuccessDefault(ConnectionPtr const & con, HttpHandlerPtr const & session)
     {
         HttpResponsePtr res = session->GetResponse();
 
@@ -123,7 +123,7 @@ namespace net {
     }
 
     //! @brief 任务失败，一般处理方法，与 EventLoop 在同一个线程中
-    bool HttpServer::OnTaskFailureDefault(ConnectionPtr const & con, HttpSessionPtr const & session)
+    bool HttpServer::OnTaskFailureDefault(ConnectionPtr const & con, HttpHandlerPtr const & session)
     {
         con->Close();
         session->Reset();
@@ -136,7 +136,7 @@ namespace net {
         ConnectionPtr con = conptr.lock();
         if (nullptr == con)
             return true;
-        HttpSessionPtr session = std::static_pointer_cast<HttpSession>(con->mUserObject.lock());
+        HttpHandlerPtr session = std::static_pointer_cast<HttpHandler>(con->mUserObject.lock());
         if (nullptr == session)
             return true;
 
@@ -154,7 +154,7 @@ namespace net {
         }
 
         if (nleft > 0) {
-            TaskPtr task = std::make_shared<Task>(std::bind(&HttpServer::HandleGetLoadContent, HttpSessionWeakPtr(session)));
+            TaskPtr task = std::make_shared<Task>(std::bind(&HttpServer::HandleGetLoadContent, HttpHandlerWeakPtr(session)));
             task->SetSuccessFunc(std::bind(&HttpServer::OnTaskSuccessGet, ConnectionWeakPtr(con), worker));
             worker->AddTask(task);
         } else {
@@ -168,7 +168,7 @@ namespace net {
     //! @brief 与 EventLoop 在同一个线程中
     bool HttpServer::HandleRequest(ConnectionPtr const & con, std::string workspace, ThreadWorkerPtr const & worker)
     {
-        HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(con->mUserObject.lock());
+        HttpHandlerPtr ptr = std::static_pointer_cast<HttpHandler>(con->mUserObject.lock());
         HttpRequestPtr req = ptr->GetRequest();
         HttpResponsePtr res = ptr->GetResponse();
 
@@ -177,21 +177,21 @@ namespace net {
         req->mWorkSpace = workspace;
         res->SetClosing(!req->KeepAlive());
 
-        //task = std::make_shared<Task>(std::bind(&HttpServer::HandleUnauthorized, HttpSessionWeakPtr(ptr)));
+        //task = std::make_shared<Task>(std::bind(&HttpServer::HandleUnauthorized, HttpHandlerWeakPtr(ptr)));
 
         switch (req->GetMethod()) {
             case HttpRequest::eINVALID:
-                task = std::make_shared<Task>(std::bind(&HttpServer::HandleInvalidRequest, HttpSessionWeakPtr(ptr)));
+                task = std::make_shared<Task>(std::bind(&HttpServer::HandleInvalidRequest, HttpHandlerWeakPtr(ptr)));
                 break;
             case HttpRequest::eHEAD:
-                task = std::make_shared<Task>(std::bind(&HttpServer::HandleHeadRequest, HttpSessionWeakPtr(ptr)));
+                task = std::make_shared<Task>(std::bind(&HttpServer::HandleHeadRequest, HttpHandlerWeakPtr(ptr)));
                 break;
             case HttpRequest::eGET:
-                task = std::make_shared<Task>(std::bind(&HttpServer::HandleGetRequest, HttpSessionWeakPtr(ptr)));
+                task = std::make_shared<Task>(std::bind(&HttpServer::HandleGetRequest, HttpHandlerWeakPtr(ptr)));
                 task->SetSuccessFunc(std::bind(&HttpServer::OnTaskSuccessGet, ConnectionWeakPtr(con), worker));
                 break;
             default:
-                task = std::make_shared<Task>(std::bind(&HttpServer::HandleUnSupportRequest, HttpSessionWeakPtr(ptr)));
+                task = std::make_shared<Task>(std::bind(&HttpServer::HandleUnSupportRequest, HttpHandlerWeakPtr(ptr)));
                 break;
         }
 
@@ -202,9 +202,9 @@ namespace net {
     }
 
     // task 线程
-    bool HttpServer::HandleGetLoadContent(HttpSessionWeakPtr const & weakptr)
+    bool HttpServer::HandleGetLoadContent(HttpHandlerWeakPtr const & weakptr)
     {
-        HttpSessionPtr session = weakptr.lock();
+        HttpHandlerPtr session = weakptr.lock();
         if (nullptr == session)
             return false;
 
@@ -215,8 +215,8 @@ namespace net {
         return true;
     }
     // task 线程
-    bool HttpServer::HandleHeadRequest(HttpSessionWeakPtr const & weakptr) {
-        HttpSessionPtr session = weakptr.lock();
+    bool HttpServer::HandleHeadRequest(HttpHandlerWeakPtr const & weakptr) {
+        HttpHandlerPtr session = weakptr.lock();
         if (nullptr == session)
             return false;
 
@@ -230,9 +230,9 @@ namespace net {
     }
 
     // task 线程
-    bool HttpServer::HandleGetRequest(HttpSessionWeakPtr const & weakptr)
+    bool HttpServer::HandleGetRequest(HttpHandlerWeakPtr const & weakptr)
     {
-        HttpSessionPtr session = weakptr.lock();
+        HttpHandlerPtr session = weakptr.lock();
         if (nullptr == session)
             return false;
 
@@ -251,9 +251,9 @@ namespace net {
     }
 
     // task 线程
-    bool HttpServer::HandleInvalidRequest(HttpSessionWeakPtr const & weakptr)
+    bool HttpServer::HandleInvalidRequest(HttpHandlerWeakPtr const & weakptr)
     {
-        HttpSessionPtr session = weakptr.lock();
+        HttpHandlerPtr session = weakptr.lock();
         if (nullptr == session)
             return false;
 
@@ -268,11 +268,11 @@ namespace net {
     //!
     //! 一般情况下，本函数都是作为 Task 的任务函数调用的
     //!
-    //! @param weakptr 一个 HttpSession 的弱指针
+    //! @param weakptr 一个 HttpHandler 的弱指针
     //! @return 是否成功完成了任务
-    bool HttpServer::HandleUnSupportRequest(HttpSessionWeakPtr const & weakptr)
+    bool HttpServer::HandleUnSupportRequest(HttpHandlerWeakPtr const & weakptr)
     {
-        HttpSessionPtr session = weakptr.lock();
+        HttpHandlerPtr session = weakptr.lock();
         if (nullptr == session)
             return false;
 
@@ -286,9 +286,9 @@ namespace net {
     }
 
     //! @brief 处理没有身份认证的情况
-    bool HttpServer::HandleUnauthorized(HttpSessionWeakPtr const & weakptr)
+    bool HttpServer::HandleUnauthorized(HttpHandlerWeakPtr const & weakptr)
     {
-        HttpSessionPtr session = weakptr.lock();
+        HttpHandlerPtr session = weakptr.lock();
         if (nullptr == session)
             return false;
 

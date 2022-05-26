@@ -10,7 +10,7 @@
 
 #include <XiaoTuNetBox/TcpAppServer.h>
 #include <XiaoTuNetBox/WebSocketSession.h>
-#include <XiaoTuNetBox/Http/HttpSession.h>
+#include <XiaoTuNetBox/Http/HttpHandler.h>
 
 
 namespace xiaotu {
@@ -29,7 +29,7 @@ namespace net {
             void OnHttpMessage(ConnectionPtr const & conn, uint8_t const * buf, ssize_t n);
             void OnWsMessage(ConnectionPtr const & con, uint8_t const * buf, ssize_t n);
 
-            bool UpgradeSession(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & weakptr);
+            bool UpgradeSession(ConnectionWeakPtr const & conptr, HttpHandlerWeakPtr const & weakptr);
             bool HandleMessage(WebSocketSessionWeakPtr const & weakptr, WebSocketMsgPtr const & msg);
             void HandleWsReponse(ConnectionWeakPtr const & conptr);
 

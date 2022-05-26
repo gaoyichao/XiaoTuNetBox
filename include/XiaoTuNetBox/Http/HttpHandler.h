@@ -1,6 +1,6 @@
 /************************************************************************************
  * 
- * HttpSession - 一次Http会话
+ * HttpHandler - 一次Http会话
  * 
  ***********************************************************************************/
 #ifndef XTNB_HTTP_SESSION_H
@@ -23,7 +23,7 @@ namespace net {
     class HttpServer;
 
     //! @brief 一次 Http 会话
-    class HttpSession : public Session {
+    class HttpHandler : public Session {
         public:
             enum EState {
                 eExpectRequestLine,
@@ -36,10 +36,10 @@ namespace net {
 
         friend class HttpServer;
         public:
-            HttpSession();
-            ~HttpSession();
-            HttpSession(HttpSession const &) = delete;
-            HttpSession & operator = (HttpSession const &) = delete;
+            HttpHandler();
+            ~HttpHandler();
+            HttpHandler(HttpHandler const &) = delete;
+            HttpHandler & operator = (HttpHandler const &) = delete;
 
             inline void Reset()
             {
@@ -50,14 +50,14 @@ namespace net {
             HttpRequestPtr GetRequest() { return mRequest; }
             HttpResponsePtr GetResponse() { return mResponse; }
         
-            virtual char const * ToCString() { return typeid(HttpSession).name(); }
+            virtual char const * ToCString() { return typeid(HttpHandler).name(); }
         private:
             HttpRequestPtr mRequest;
             HttpResponsePtr mResponse;
     };
 
-    typedef std::shared_ptr<HttpSession> HttpSessionPtr;
-    typedef std::weak_ptr<HttpSession> HttpSessionWeakPtr;
+    typedef std::shared_ptr<HttpHandler> HttpHandlerPtr;
+    typedef std::weak_ptr<HttpHandler> HttpHandlerWeakPtr;
 
 
 }

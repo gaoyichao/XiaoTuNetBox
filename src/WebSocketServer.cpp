@@ -41,7 +41,7 @@ namespace net {
         LOG(INFO) << "新建连接:" << conn->GetInfo();
         conn->GetHandler()->SetNonBlock(true);
 
-        HttpSessionPtr ptr(new HttpSession());
+        HttpHandlerPtr ptr(new HttpHandler());
         ptr->BuildWakeUpper(mServer->GetLoop(),
                 std::bind(&HttpServer::OnTaskFinished, ConnectionWeakPtr(conn)));
 
@@ -112,13 +112,13 @@ namespace net {
     //!
     //! @param conptr TCP 连接对象
     //! @param weakptr Http 握手会话
-    bool WebSocketServer::UpgradeSession(ConnectionWeakPtr const & conptr, HttpSessionWeakPtr const & weakptr)
+    bool WebSocketServer::UpgradeSession(ConnectionWeakPtr const & conptr, HttpHandlerWeakPtr const & weakptr)
     {
         ConnectionPtr con = conptr.lock();
         if (nullptr == con)
             return false;
 
-        HttpSessionPtr session = weakptr.lock();
+        HttpHandlerPtr session = weakptr.lock();
         if (nullptr == session)
             return false;
 
@@ -149,7 +149,7 @@ namespace net {
     void WebSocketServer::OnHttpMessage(ConnectionPtr const & con, uint8_t const * buf, ssize_t n)
     {
         LOG(INFO) << "接收到了 Http 消息";
-        HttpSessionPtr ptr = std::static_pointer_cast<HttpSession>(con->mUserObject.lock());
+        HttpHandlerPtr ptr = std::static_pointer_cast<HttpHandler>(con->mUserObject.lock());
 
         uint8_t const * begin = buf;
         uint8_t const * end = buf + n;
@@ -161,7 +161,7 @@ namespace net {
             if (HttpRequest::eResponsing == req->GetState() || HttpRequest::eError == req->GetState()) {
                 req->PrintHeaders();
                 if (req->NeedUpgrade()) {
-                    TaskPtr task(new Task(std::bind(&WebSocketServer::UpgradeSession, this, ConnectionWeakPtr(con), HttpSessionWeakPtr(ptr))));
+                    TaskPtr task(new Task(std::bind(&WebSocketServer::UpgradeSession, this, ConnectionWeakPtr(con), HttpHandlerWeakPtr(ptr))));
                     ptr->mCurrTask = task;
                     AddTask(task);
                 } else {
@@ -221,7 +221,7 @@ namespace net {
     {
         SessionPtr session = std::static_pointer_cast<Session>(conn->mUserObject.lock());
 
-        if (typeid(HttpSession).name() == session->ToCString())
+        if (typeid(HttpHandler).name() == session->ToCString())
             OnHttpMessage(conn, buf, n);
         else if (typeid(WebSocketSession).name() == session->ToCString())
             OnWsMessage(conn, buf, n);

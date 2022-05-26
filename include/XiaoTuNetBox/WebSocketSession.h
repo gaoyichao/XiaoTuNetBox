@@ -9,7 +9,7 @@
 #define XTNB_WEB_SOCKET_SESSION_H
 
 #include <XiaoTuNetBox/ConnectionNode.h>
-#include <XiaoTuNetBox/Http/HttpSession.h>
+#include <XiaoTuNetBox/Http/HttpHandler.h>
 #include <XiaoTuNetBox/WebSocketMsg.h>
 #include <XiaoTuNetBox/Types.h>
 

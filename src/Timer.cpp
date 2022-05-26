@@ -5,6 +5,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <glog/logging.h>
 
 namespace xiaotu {
 namespace net {
@@ -97,7 +98,7 @@ namespace net {
         uint64_t exp;
         ssize_t s = read(mFd, &exp, sizeof(exp));
 
-        printf("0x%lx\n", exp);
+        LOG(INFO) << exp;
 
         if (mTimeOutCb) {
             mTimeOutCb();

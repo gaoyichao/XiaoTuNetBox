@@ -1,9 +1,9 @@
 /************************************************************************************
  * 
- * HttpSession - 一次Http会话
+ * HttpHandler - 一次Http会话
  * 
  ***********************************************************************************/
-#include <XiaoTuNetBox/Http/HttpSession.h>
+#include <XiaoTuNetBox/Http/HttpHandler.h>
 #include <XiaoTuNetBox/Utils.h>
 
 #include <cassert>
@@ -16,7 +16,7 @@
 namespace xiaotu {
 namespace net {
 
-    std::map<HttpSession::EState, std::string> HttpSession::mEStateToStringMap = {
+    std::map<HttpHandler::EState, std::string> HttpHandler::mEStateToStringMap = {
         { eExpectRequestLine, "Expect Request Line" },
         { eReadingHeaders,    "Reading Headers" },
         { eReadingBody,       "Reading Body" },
@@ -24,12 +24,12 @@ namespace net {
         { eError,             "Error" },
     };
 
-    HttpSession::HttpSession()
+    HttpHandler::HttpHandler()
     {
         Reset();
     }
 
-    HttpSession::~HttpSession()
+    HttpHandler::~HttpHandler()
     {
         LOG(INFO) << "释放会话";
     }
