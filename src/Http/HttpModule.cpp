@@ -1,6 +1,7 @@
 #include <XiaoTuNetBox/Http/HttpModule.h>
 #include <XiaoTuNetBox/Http/HttpServer.h>
 #include <XiaoTuNetBox/Task.h>
+#include <XiaoTuNetBox/Utils.h>
 
 #include <glog/logging.h>
 
@@ -49,6 +50,53 @@ namespace net {
         return true;
     }
 
+    //! @brief 解析请求报文中 Cookie
+    bool HttpModuleParseCookie::Process(HttpHandlerWeakPtr const & handler)
+    {
+        HttpHandlerPtr h = handler.lock();
+        if (nullptr == h)
+            return false;
+
+        HttpRequestPtr request = h->GetRequest();
+
+        request->PrintHeaders();
+
+        std::string cookiestr;
+        if (request->GetHeader("Cookie", cookiestr)) {
+            uint8_t const * begin = (uint8_t const *)cookiestr.data();
+            uint8_t const * end = begin + cookiestr.size();
+
+            while (begin <= end) {
+                uint8_t const * eq = FindString(begin, end, (uint8_t const *)"=", 1);
+                uint8_t const * sp = FindString(eq, end, (uint8_t const *)";", 1);
+                if (NULL == sp)
+                    sp = end;
+
+                uint8_t const * key_begin = EatByte(begin, eq, ' ');
+                uint8_t const * key_end = eq;
+                while (' ' == key_end[-1]) key_end--;
+ 
+                uint8_t const * val_begin = eq + 1;
+                while (*val_begin == ' ') val_begin++;
+                uint8_t const * val_end = sp;
+                while (' ' == val_end[-1]) val_end--;
+
+                uint32_t key_len = key_end - key_begin;
+                uint32_t val_len = val_end - val_begin;
+     
+                std::string key((char const *)key_begin, key_len);
+                std::string value((char const *)val_begin, val_len);
+                request->mCookies[key] = value;
+
+                std::cout << key << "=" << value << std::endl;
+                begin = sp + 1;
+            }
+        }
+
+        h->WakeUp();
+        return true;
+    }
+
     //! @brief 发送响应报文
     bool HttpModuleResponse::Process(HttpHandlerWeakPtr const & handler)
     {
@@ -70,9 +118,6 @@ namespace net {
         h->Reset();
         return true;
     }
-
-
-
 
 }
 }

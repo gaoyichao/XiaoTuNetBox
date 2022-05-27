@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace xiaotu {
 namespace net {
@@ -89,9 +90,15 @@ namespace net {
     //! @return 实际读取的字节数
     size_t ReadBinary(std::string const & path, uint8_t * buf, uint64_t off, uint64_t len);
 
-
     std::string Base64Encode(const std::string &in);
     std::string Base64Decode(const std::string &in);
+
+    //! @brief 分割字符串
+    //!
+    //! @param s 目标字符串
+    //! @param t [out] 分割后的字符串列表
+    //! @param d 分割字符集合
+    void StringSplit(std::string const & s, std::vector<std::string> & t, std::string const & d);
 }
 }
 

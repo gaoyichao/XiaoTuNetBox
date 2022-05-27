@@ -20,6 +20,19 @@ namespace net {
     };
 
 
+    //! @brief HTTP Cookie身份验证
+    class HttpModuleCookieIdentify final : public HttpModule {
+        public:
+            HttpModuleCookieIdentify()
+                : HttpModule(true)
+            {}
+
+            bool CheckId(HttpRequest const & request);
+        private:
+            virtual bool Process(HttpHandlerWeakPtr const & handler) override;
+    };
+
+
 
 }
 }

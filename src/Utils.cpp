@@ -109,6 +109,18 @@ namespace net {
         return NULL;
     }
 
+    void StringSplit(std::string const & s, std::vector<std::string> & t, std::string const & d)
+    {
+        std::string::size_type lastPos = s.find_first_not_of(d, 0);
+        std::string::size_type pos = s.find_first_of(d, lastPos);
+
+        while (std::string::npos != pos || std::string::npos != lastPos) {
+            t.push_back(s.substr(lastPos, pos - lastPos));
+            lastPos = s.find_first_not_of(d, pos);
+            pos = s.find_first_of(d, lastPos);
+        }
+    }
+
     const char UpperToLower = 'a' - 'A';
     void ToLower(std::string & str)
     {

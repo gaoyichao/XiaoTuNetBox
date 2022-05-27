@@ -45,6 +45,17 @@ namespace net {
             virtual bool Process(HttpHandlerWeakPtr const & handler) override;
     };
 
+    //! @brief HTTP 解析请求报文中 Cookie 的模块
+    class HttpModuleParseCookie final : public HttpModule {
+        public:
+            HttpModuleParseCookie()
+                : HttpModule(true)
+            {}
+        private:
+            virtual bool Process(HttpHandlerWeakPtr const & handler) override;
+    };
+
+
     //! @brief HTTP 发送响应报文的模块
     class HttpModuleResponse final : public HttpModule {
         public:

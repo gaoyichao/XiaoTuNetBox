@@ -18,7 +18,6 @@ namespace net {
         if (nullptr == h)
             return false;
 
-
         HttpRequestPtr req = h->GetRequest();
         HttpResponsePtr res = h->GetResponse();
 

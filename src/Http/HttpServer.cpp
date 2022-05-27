@@ -26,7 +26,7 @@ namespace net {
         : TcpAppServer(loop, port, max_conn, ws)
     {
         //! @todo 事件轮盘配置化
-        mServer->SetTimeOut(2, 0, 3);
+        mServer->SetTimeOut(10, 0, 5);
         mServer->SetNewConnCallBk(std::bind(&HttpServer::OnNewConnection, this, _1));
         mServer->SetCloseConnCallBk(std::bind(&HttpServer::OnCloseConnection, this, _1));
         mServer->SetMessageCallBk(std::bind(&HttpServer::OnMessage, this, _1, _2, _3));
@@ -34,19 +34,22 @@ namespace net {
         //! @todo 根据配置文件构建 Http 处理模块, mWorkSpace
         HttpModulePtr checkURLModule = std::make_shared<HttpModuleCheckURL>(mWorkSpace);
         HttpModulePtr invalidRequestModule = std::make_shared<HttpModuleInvalidRequest>();
-        HttpModulePtr basicIdentifyModule = std::make_shared<HttpModuleBasicIdentify>();
+        //HttpModulePtr parseCookieModule = std::make_shared<HttpModuleParseCookie>();
+        HttpModulePtr identifyModule = std::make_shared<HttpModuleBasicIdentify>();
         HttpModulePtr getModule = std::make_shared<HttpModuleGet>();
         HttpModulePtr responseModule = std::make_shared<HttpModuleResponse>();
 
         invalidRequestModule->SetSuccessModule(checkURLModule);
         invalidRequestModule->SetFailureModule(responseModule);
 
-        checkURLModule->SetSuccessModule(basicIdentifyModule);
-        //checkURLModule->SetSuccessModule(getModule);
+        //checkURLModule->SetSuccessModule(parseCookieModule);
+        checkURLModule->SetSuccessModule(identifyModule);
         checkURLModule->SetFailureModule(responseModule);
 
-        basicIdentifyModule->SetSuccessModule(getModule);
-        basicIdentifyModule->SetFailureModule(responseModule);
+        //parseCookieModule->SetSuccessModule(identifyModule);
+
+        identifyModule->SetSuccessModule(getModule);
+        identifyModule->SetFailureModule(responseModule);
 
         getModule->SetFailureModule(responseModule);
 

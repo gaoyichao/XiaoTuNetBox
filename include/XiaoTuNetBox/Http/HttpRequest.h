@@ -104,6 +104,16 @@ namespace net {
                 return false;
             }
 
+            bool GetCookie(std::string const & key, std::string & value) const
+            {
+                auto it = mCookies.find(key);
+                if (mCookies.end() != it) {
+                    value = it->second;
+                    return true;
+                }
+                return false;
+            }
+
             bool KeepAlive() const;
             bool NeedUpgrade() const;
 
@@ -124,6 +134,8 @@ namespace net {
             std::string mWorkSpace;
             std::map<std::string, std::string> mHeaders;
             std::vector<uint8_t> mContent;
+
+            std::map<std::string, std::string> mCookies;
     };
     typedef std::shared_ptr<HttpRequest> HttpRequestPtr;
 

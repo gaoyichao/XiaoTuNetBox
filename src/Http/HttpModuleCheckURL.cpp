@@ -20,6 +20,8 @@ namespace net {
         HttpResponsePtr res = h->GetResponse();
 
         std::string urlpath = request->GetURLPath();
+        DLOG(INFO) << "url: " << urlpath;
+
         std::string path = mWorkSpace + urlpath;
         res->SetClosing(!request->KeepAlive());
 
