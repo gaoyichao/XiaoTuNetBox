@@ -21,7 +21,8 @@ namespace net {
 
     class TcpAppServer {
         public:
-            TcpAppServer(EventLoopPtr const & loop, int port, int max_conn);
+            TcpAppServer(EventLoopPtr const & loop, int port,
+                         int max_conn, std::string const & ws = ".");
             TcpAppServer(TcpAppServer const &) = delete;
             TcpAppServer & operator = (TcpAppServer const &) = delete;
 
@@ -36,7 +37,7 @@ namespace net {
                 mWorker->AddTask(task);
             }
 
-            SessionPtr ReplaceSession(SessionPtr const & ori, SessionPtr const & ptr);
+            HandlerPtr ReplaceHandler(HandlerPtr const & ori, HandlerPtr const & ptr);
             std::string mWorkSpace;
         protected:
             virtual void OnNewConnection(ConnectionPtr const & conn) = 0;
@@ -45,12 +46,12 @@ namespace net {
                                    uint8_t const * buf, ssize_t n) = 0;
 
         protected:
-            int GetFreeSessionIdx();
-            SessionPtr AddSession(SessionPtr const & ptr);
-            void ReleaseSession(SessionPtr const & ptr);
+            int GetFreeHandlerIdx();
+            HandlerPtr AddHandler(HandlerPtr const & ptr);
+            void ReleaseHandler(HandlerPtr const & ptr);
 
             TcpServerPtr mServer;
-            std::vector<SessionPtr> mSessions;
+            std::vector<HandlerPtr> mHandlers;
             std::vector<size_t> mHoles;
 
             ThreadWorkerPtr mWorker;

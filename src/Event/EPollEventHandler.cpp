@@ -8,6 +8,8 @@
 #include <cassert>
 #include <iostream>
 
+#include <glog/logging.h>
+
 namespace xiaotu {
 namespace net {
 
@@ -58,8 +60,7 @@ namespace net {
     }
 
     void EPollEventHandler::SetClosing(bool en) {
-        std::cout << "--------------------------------------------------" << std::endl;
-        std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
+        LOG(INFO) << "即将关闭";
 
         mIsClosing = en;
         if (mClosingCallBk)

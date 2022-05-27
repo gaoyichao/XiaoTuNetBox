@@ -1,0 +1,62 @@
+#ifndef XTNB_HTTP_MODULE_H
+#define XTNB_HTTP_MODULE_H
+
+#include <XiaoTuNetBox/Event.h>
+#include <XiaoTuNetBox/Http/HttpHandler.h>
+
+#include <memory>
+
+namespace xiaotu {
+namespace net {
+
+    class HttpModule;
+    typedef std::shared_ptr<HttpModule> HttpModulePtr;
+
+    class HttpModule {
+        public:
+            HttpModule(bool immediately = false)
+                : mImmediately(immediately)
+            {}
+
+            bool Handle(HttpHandlerWeakPtr const & handler);
+            void SetSuccessModule(HttpModulePtr const & module) { mSuccessModule = module; }
+            void SetFailureModule(HttpModulePtr const & module) { mFailureModule = module; }
+
+        protected:
+            //! @brief 实际的处理过程
+            virtual bool Process(HttpHandlerWeakPtr const & handler) = 0;
+
+        protected:
+            //! Process 成功后的处理模块索引
+            HttpModulePtr mSuccessModule;
+            //! Process 失败后的处理模块索引
+            HttpModulePtr mFailureModule;
+
+            bool mImmediately;
+    };
+
+    //! @brief HTTP 处理非法请求报文的模块
+    class HttpModuleInvalidRequest final : public HttpModule {
+        public:
+            HttpModuleInvalidRequest()
+                : HttpModule(true)
+            {}
+        private:
+            virtual bool Process(HttpHandlerWeakPtr const & handler) override;
+    };
+
+    //! @brief HTTP 发送响应报文的模块
+    class HttpModuleResponse final : public HttpModule {
+        public:
+            HttpModuleResponse()
+                : HttpModule(true)
+            {}
+        private:
+            virtual bool Process(HttpHandlerWeakPtr const & handler) override;
+    };
+
+
+}
+}
+
+#endif

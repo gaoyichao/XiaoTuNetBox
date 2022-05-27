@@ -18,7 +18,7 @@
 using namespace std::placeholders;
 using namespace xiaotu::net;
 
-SessionPtr OnNewConnection(ConnectionPtr const & conn) {
+HandlerPtr OnNewConnection(ConnectionPtr const & conn) {
     std::cout << "新建连接:" << conn->GetInfo() << std::endl;
     conn->GetHandler()->SetNonBlock(true);
     return nullptr;

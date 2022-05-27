@@ -78,8 +78,21 @@ namespace net {
     uint8_t const * HttpRequest::OnExpectRequestLine(uint8_t const * begin, uint8_t const * end)
     {
         uint8_t const * re = GetLine(begin, end);
-        if (nullptr == re)
+        if (nullptr == re) {
+            if (mReadingLine.size() > 8) {
+                begin = (uint8_t const *)mReadingLine.data();
+                end = begin + mReadingLine.size();
+                uint8_t const * space = FindString(begin, end, (uint8_t const *)" ", 1);
+                if (NULL == space || mStringToEMethodMap.end()
+                        == mStringToEMethodMap.find(std::string(begin, space))) {
+                    mState = eError;
+                    mMethod = eINVALID;
+                    mReadingLine.clear();
+                    return re;
+                }
+            }
             return nullptr;
+        }
 
         if (ParseRequestLine(begin, end))
             mState = eReadingHeaders;
@@ -103,6 +116,7 @@ namespace net {
         if (nullptr == crlf) {
             mReadingLine.insert(mReadingLine.end(), begin, end);
 
+            //! @todo 最大长度需要配置化
             if (mReadingLine.size() > 1024) {
                 mReadingLine.clear();
                 mState = eError;

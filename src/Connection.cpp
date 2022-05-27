@@ -5,6 +5,7 @@
 #include <cassert>
 
 #include <sys/uio.h>
+#include <glog/logging.h>
 
 namespace xiaotu {
 namespace net {
@@ -33,6 +34,7 @@ namespace net {
         std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
         std::cout << "--------------------------------------------------" << std::endl;
     }
+
     void Connection::SetFd(int fd, EventLoop const & loop) {
         mEventHandler = loop.CreateEventHandler(fd);
         mEventHandler->EnableRead(true);
@@ -66,6 +68,7 @@ namespace net {
         ssize_t n = read(md, mReadBuf.data(), mReadBufSize);
 
         if (n <= 0) {
+            LOG(INFO) << "连接已经断开";
             Close();
         } else {
             if (mMsgCallBk)

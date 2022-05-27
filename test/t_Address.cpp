@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
+#include <regex>
 
 #include <XiaoTuNetBox/Address.h>
 
@@ -18,8 +19,6 @@ TEST(Address, ipv4)
     EXPECT_EQ("127.0.0.1", addr1.GetIp());
     EXPECT_EQ(1234, addr1.GetPort());
     EXPECT_EQ("127.0.0.1:1234", addr1.GetIpPort());
-
-    std::cout << "\u1F600" << std::endl;    
 }
 
 

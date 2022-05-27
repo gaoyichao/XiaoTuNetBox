@@ -1,6 +1,6 @@
 /************************************************************************************
  * 
- * Session
+ * Handler
  * 
  ***********************************************************************************/
 #ifndef XTNB_SESSION_H
@@ -18,11 +18,11 @@ namespace xiaotu {
 namespace net {
 
     class TcpAppServer;
-    class Session : public Object {
+    class Handler : public Object {
         friend class TcpAppServer;
         public:
-            Session(Session const &) = delete;
-            Session & operator = (Session const &) = delete;
+            Handler(Handler const &) = delete;
+            Handler & operator = (Handler const &) = delete;
 
             virtual char const * ToCString() = 0;
 
@@ -50,16 +50,16 @@ namespace net {
             //! EventLoop 唤醒器
             WakeUpperPtr mWakeUpper;
         protected:
-            Session() = default;
-            ~Session() = default;
+            Handler() = default;
+            ~Handler() = default;
 
         protected:
             //! 在 TcpAppServer 的会话列表中的索引
             size_t mIdx;
     };
 
-    typedef std::shared_ptr<Session> SessionPtr;
-    typedef std::weak_ptr<Session> SessionWeakPtr;
+    typedef std::shared_ptr<Handler> HandlerPtr;
+    typedef std::weak_ptr<Handler> HandlerWeakPtr;
 
 }
 }

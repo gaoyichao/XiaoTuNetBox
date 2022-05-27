@@ -88,6 +88,10 @@ namespace net {
     //! @param len 长度
     //! @return 实际读取的字节数
     size_t ReadBinary(std::string const & path, uint8_t * buf, uint64_t off, uint64_t len);
+
+
+    std::string Base64Encode(const std::string &in);
+    std::string Base64Decode(const std::string &in);
 }
 }
 

@@ -28,8 +28,8 @@ using namespace xiaotu::net;
 int main() {
     EPollLoopPtr loop = Create<EPollLoop>();
 
-    HttpServer http(loop, 65530, 30);
-    http.mWorkSpace = ".";
+    HttpServer http(loop, 65530, 30, ".");
+    //http.mWorkSpace = ".";
 
     loop->Loop(-1);
 

@@ -17,14 +17,11 @@ namespace xiaotu {
 namespace net {
 
     std::map<HttpHandler::EState, std::string> HttpHandler::mEStateToStringMap = {
-        { eExpectRequestLine, "Expect Request Line" },
-        { eReadingHeaders,    "Reading Headers" },
-        { eReadingBody,       "Reading Body" },
-        { eResponsing,        "Responsing" },
-        { eError,             "Error" },
+        { eWaitingRequest, "等待请求报文" },
     };
 
-    HttpHandler::HttpHandler()
+    HttpHandler::HttpHandler(ConnectionPtr const & con)
+        : mConnWeakPtr(con)
     {
         Reset();
     }

@@ -10,44 +10,46 @@
 namespace xiaotu {
 namespace net {
 
-    TcpAppServer::TcpAppServer(EventLoopPtr const & loop, int port, int max_conn)
+    TcpAppServer::TcpAppServer(EventLoopPtr const & loop, int port,
+                               int max_conn, std::string const & ws)
     {
         mServer = std::make_shared<TcpServer>(loop, port, max_conn);
+        mWorkSpace = ws;
     }
 
 
-    int TcpAppServer::GetFreeSessionIdx()
+    int TcpAppServer::GetFreeHandlerIdx()
     {
         int idx = 0;
         if (mHoles.empty()) {
-            idx = mSessions.size();
-            mSessions.push_back(nullptr);
+            idx = mHandlers.size();
+            mHandlers.push_back(nullptr);
         } else {
             idx = mHoles.back();
             mHoles.pop_back();
-            mSessions[idx] = nullptr;
+            mHandlers[idx] = nullptr;
         }
         return idx;
     }
 
-    SessionPtr TcpAppServer::AddSession(SessionPtr const & ptr)
+    HandlerPtr TcpAppServer::AddHandler(HandlerPtr const & ptr)
     {
-        int idx = GetFreeSessionIdx();
+        int idx = GetFreeHandlerIdx();
         ptr->mIdx = idx;
-        mSessions[idx] = ptr;
+        mHandlers[idx] = ptr;
         return ptr;
     }
 
-    void TcpAppServer::ReleaseSession(SessionPtr const & ptr)
+    void TcpAppServer::ReleaseHandler(HandlerPtr const & ptr)
     {
         assert(nullptr != ptr);
-        assert(mSessions[ptr->mIdx] == ptr);
+        assert(mHandlers[ptr->mIdx] == ptr);
 
         ptr->ReleaseWakeUpper(mServer->GetLoop());
         //ptr->mInBuf->Release();
 
         size_t & idx = ptr->mIdx;
-        mSessions[idx].reset();
+        mHandlers[idx].reset();
         mHoles.push_back(idx);
     }
 
@@ -56,16 +58,16 @@ namespace net {
     //! @param ori 原始会话对象
     //! @param ptr 替身
     //! @return 替身, nullptr 若出错
-    SessionPtr TcpAppServer::ReplaceSession(SessionPtr const & ori, SessionPtr const & ptr)
+    HandlerPtr TcpAppServer::ReplaceHandler(HandlerPtr const & ori, HandlerPtr const & ptr)
     {
         assert(nullptr != ori && nullptr != ptr);
-        assert(mSessions[ori->mIdx] == ori);
+        assert(mHandlers[ori->mIdx] == ori);
 
         int idx = ori->mIdx;
         ptr->mWakeUpper = std::move(ori->mWakeUpper);
 
         ptr->mIdx = idx;
-        mSessions[idx] = ptr;
+        mHandlers[idx] = ptr;
         return ptr;
     }
 

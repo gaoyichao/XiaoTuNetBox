@@ -22,6 +22,7 @@ namespace net {
                 mFunction = std::move(func);
             }
 
+            void SetFunction(TaskFunc func) { mFunction = func; }
             void SetSuccessFunc(TaskFunc func) { OnSuccess = std::move(func); }
             void SetFailureFunc(TaskFunc func) { OnFailure = std::move(func); }
 

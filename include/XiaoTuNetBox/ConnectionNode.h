@@ -2,7 +2,7 @@
 #define XTNB_CONNECTIONNODE_H
 
 #include <XiaoTuNetBox/Connection.h>
-#include <XiaoTuNetBox/Session.h>
+#include <XiaoTuNetBox/Handler.h>
 
 namespace xiaotu {
 namespace net {
