@@ -162,25 +162,3 @@ namespace net {
 }
 
 
-
-    //! @brief 处理服务器不支持的请求方法，目前只支持 GET 和 HEAD
-    //!
-    //! 一般情况下，本函数都是作为 Task 的任务函数调用的
-    //!
-    //! @param weakptr 一个 HttpHandler 的弱指针
-    //! @return 是否成功完成了任务
-    //bool HttpServer::HandleUnSupportRequest(HttpHandlerWeakPtr const & weakptr)
-    //{
-    //    HttpHandlerPtr session = weakptr.lock();
-    //    if (nullptr == session)
-    //        return false;
-
-    //    HttpResponsePtr res = session->GetResponse();
-    //    res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
-    //    res->LockHead(0);
-
-    //    session->WakeUp();
-    //    return true;
-
-    //}
-

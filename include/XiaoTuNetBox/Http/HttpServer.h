@@ -19,8 +19,6 @@ namespace net {
     class HttpHandler;
     class HttpServer : public TcpAppServer {
         public:
-            static const int mDefaultLoadSize;
-        public:
             HttpServer(EventLoopPtr const & loop, int port,
                        int max_conn, std::string const & ws);
 
