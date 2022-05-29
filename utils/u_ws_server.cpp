@@ -25,11 +25,14 @@ float test_data[4] = {
 void OnNewMsg(WebSocketHandlerPtr const & session, WebSocketMsgPtr const & msg)
 {
     std::cout << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << std::endl;
-    std::cout << msg->mPayload.size() << std::endl;
+    std::cout << msg->GetPayloadLen() << std::endl;
 
-    //RawMsgPtr sendmsg = BuildWsRawMsg(EWsOpcode::eWS_OPCODE_BINARY, (uint8_t*)test_data, 4 * sizeof(float));
-    RawMsgPtr sendmsg = msg->BuildWsRawMsg();
-    session->SendRawMsg(sendmsg);
+    WebSocketMsgPtr sendmsg = std::make_shared<WebSocketMsg>(EWsOpcode::eWS_OPCODE_BINARY,
+            (uint8_t*)test_data, 4 * sizeof(float));
+    session->SendMsg(sendmsg);
+
+    //msg->PreSend(EWsOpcode::eWS_OPCODE_BINARY);
+    //session->SendMsg(msg);
 }
 
 int main(int argc, char *argv[]) {
@@ -38,10 +41,8 @@ int main(int argc, char *argv[]) {
     FLAGS_log_dir = "~/logs";
 
     PollLoopPtr loop = Create<PollLoop>();
-    ThreadWorkerPtr worker(new ThreadWorker);
     WebSocketServer ws(loop, 65530, 300, ".");
 
-    ws.SetWorker(worker);
     ws.SetMsgCallBk(std::bind(&OnNewMsg, _1, _2));
 
     loop->Loop(1000);

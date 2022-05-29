@@ -33,12 +33,6 @@ namespace net {
                 eOpen = 1,
                 eClosing = 2,
                 eClosed = 3,
-
-                eReadingLen16 = 4,
-                eReadingLen64 = 5,
-                eReadingMask = 6,
-                eReadingPayload = 7,
-
                 eNewMsg = 8,
 
                 eError
@@ -52,12 +46,10 @@ namespace net {
             WebSocketHandler(WebSocketHandler const &) = delete;
             WebSocketHandler & operator = (WebSocketHandler const &) = delete;
 
+            EState GetState() const { return mState; }
             inline std::string const & GetStateStr() const
             {
-                auto it = mEStateToStringMap.find(mState);
-                if (mEStateToStringMap.end() == it)
-                    return mEStateToStringMap[eError];
-                return it->second;
+                return mEStateToStringMap[mState];
             }
 
             void Reset()
@@ -69,45 +61,31 @@ namespace net {
             bool InOpenState() const
             {
                 return (mState == eOpen ||
-                        mState == eReadingLen16 ||
-                        mState == eReadingLen64 ||
-                        mState == eReadingMask ||
-                        mState == eReadingPayload ||
                         mState == eNewMsg);
             }
-            EState GetState() const { return mState; }
+
             virtual char const * ToCString() { return typeid(WebSocketHandler).name(); }
 
             static bool CheckHandShake(HttpRequestPtr const & req);
             bool AcceptHandShake(HttpRequestPtr const & req);
+
             HttpRequestPtr GetHandShakeRequest() { return mHandShakeRequest; }
             HttpResponsePtr GetHandShakeResponse() { return mHandShakeResponse; }
-
             WebSocketMsgPtr GetRcvdMsg() { return mRcvdMsg; }
 
-            EState mState;
-        private:
-            uint8_t const * HandleMsg        (uint8_t const * begin, uint8_t const * end);
-            uint8_t const * OnOpen           (uint8_t const * begin, uint8_t const * end);
-            uint8_t const * OnReadingLen16   (uint8_t const * begin, uint8_t const * end);
-            uint8_t const * OnReadingLen64   (uint8_t const * begin, uint8_t const * end);
-            uint8_t const * OnReadingMask    (uint8_t const * begin, uint8_t const * end);
-            uint8_t const * OnReadingPayload (uint8_t const * begin, uint8_t const * end);
-
-            uint8_t const * GetData(int n, uint8_t const * & begin, uint8_t const * & end);
         private:
             HttpRequestPtr mHandShakeRequest;
             HttpResponsePtr mHandShakeResponse;
             WebSocketMsgPtr mRcvdMsg;
 
-            std::vector<uint8_t> mReadingData;
             std::string mSecKey;
             std::string mAccKey;
+            EState mState;
 
         public:
-            RawMsgPtr PopSendMsg()
+            WebSocketMsgPtr PopSendMsg()
             {
-                RawMsgPtr re = nullptr;
+                WebSocketMsgPtr re = nullptr;
                 {
                     std::unique_lock<std::mutex> lock(mSendMsgsMutex);
                     if (!mSendMsgs.empty()) {
@@ -118,7 +96,8 @@ namespace net {
                 return re;
             }
 
-            void SendRawMsg(RawMsgPtr const & msg)
+
+            void SendMsg(WebSocketMsgPtr const & msg)
             {
                 assert(nullptr != msg);
                 {
@@ -130,7 +109,7 @@ namespace net {
 
         private:
             std::mutex mSendMsgsMutex;
-            std::deque<RawMsgPtr> mSendMsgs;
+            std::deque<WebSocketMsgPtr> mSendMsgs;
     };
 
     typedef std::shared_ptr<WebSocketHandler> WebSocketHandlerPtr;

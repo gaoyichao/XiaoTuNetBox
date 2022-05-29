@@ -48,7 +48,7 @@ namespace net {
         std::vector<uint8_t> const & buf = res->GetContent();
         con->SendBytes(buf.data(), buf.size());
         
-        ptr->mState = WebSocketHandler::eOpen;
+        ptr->Reset();
         mWs->ReplaceHandler(h, ptr);
         ptr->mWakeUpper->SetWakeUpCallBk(std::bind(&WebSocketServer::HandleWsReponse,
                     ConnectionWeakPtr(con)));

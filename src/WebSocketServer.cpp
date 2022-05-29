@@ -120,30 +120,13 @@ namespace net {
         assert(typeid(WebSocketHandler).name() == session->ToCString());
         WebSocketHandlerPtr ws = std::static_pointer_cast<WebSocketHandler>(session);
 
-        while (true) {
-            RawMsgPtr sendmsg = ws->PopSendMsg();
-            if (nullptr != sendmsg)
-                con->SendBytes(sendmsg->data(), sendmsg->size());
-            else
-                break;
+        WebSocketMsgPtr sendmsg = ws->PopSendMsg();
+        while (nullptr != sendmsg) {
+            std::vector<uint8_t> const & buf = sendmsg->GetContent();
+            con->SendBytes(buf.data(), buf.size());
+            sendmsg = ws->PopSendMsg();
         }
 
-    }
-
-    //! @brief 处理接收到的消息, 运行在ThreadWorker线程中。
-    //!
-    //! @param weakptr ws会话指针
-    //! @param msg ws消息对象
-    bool WebSocketServer::HandleMessage(WebSocketHandlerWeakPtr const & weakptr, WebSocketMsgPtr const & msg)
-    {
-        WebSocketHandlerPtr session = weakptr.lock();
-        if (nullptr == session)
-            return false;
-
-        if (mMsgCallBk)
-            mMsgCallBk(session, msg);
-
-        return true;
     }
 
 
@@ -181,7 +164,6 @@ namespace net {
     //! @param n 接收消息字节数
     void WebSocketServer::OnWsMessage(ConnectionPtr const & con, uint8_t const * buf, ssize_t n)
     {
-        LOG(INFO) << "接收到了 ws 消息";
         WebSocketHandlerPtr session = std::static_pointer_cast<WebSocketHandler>(con->mUserObject.lock());
         assert(session->InOpenState());
 
@@ -189,19 +171,19 @@ namespace net {
         uint8_t const * end = buf + n;
 
         while (begin < end) {
-            begin = session->HandleMsg(begin, end);
+            WebSocketMsgPtr msg = session->GetRcvdMsg();
+            begin = msg->Parse(begin, end);
 
-            if (WebSocketHandler::eNewMsg == session->mState) {
-                WebSocketMsgPtr msg = session->GetRcvdMsg();
-
-                if (EWsOpcode::eWS_OPCODE_CLOSE == msg->mHead.opcode) {
-                    LOG(INFO) << "关闭 WebSocket:" << msg->mHead;
+            if (WebSocketMsg::eNewMsg == msg->GetState()) {
+                if (EWsOpcode::eWS_OPCODE_CLOSE == msg->GetHead()->opcode) {
+                    LOG(INFO) << "关闭 WebSocket:" << *(msg->GetHead());
                     con->Close();
                 } else {
-                    TaskPtr task(new Task(std::bind(&WebSocketServer::HandleMessage, this, WebSocketHandlerWeakPtr(session), msg)));
-                    AddTask(task);
+                    if (mMsgCallBk)
+                        mMsgCallBk(session, msg);
+
                     LOG(INFO) << session->GetStateStr() << " --> eOpen";
-                    session->mState = WebSocketHandler::eOpen;
+                    session->Reset();
                 }
             } else if (WebSocketHandler::eError == session->mState) {
                 con->Close();

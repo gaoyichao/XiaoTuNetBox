@@ -34,8 +34,6 @@ namespace net {
         public:
             static void HandleWsReponse(ConnectionWeakPtr const & conptr);
 
-            bool HandleMessage(WebSocketHandlerWeakPtr const & weakptr, WebSocketMsgPtr const & msg);
-
             typedef std::function<void(WebSocketHandlerPtr const & session)> HandlerCallBk;
             typedef std::function<void(WebSocketHandlerPtr const & session, WebSocketMsgPtr const & msg)> MsgCallBk;
 
