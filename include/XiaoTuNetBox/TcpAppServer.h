@@ -26,17 +26,6 @@ namespace net {
             TcpAppServer(TcpAppServer const &) = delete;
             TcpAppServer & operator = (TcpAppServer const &) = delete;
 
-            void SetWorker(ThreadWorkerPtr const & worker)
-            {
-                mWorker = worker;
-            }
-
-            void AddTask(TaskPtr const & task)
-            {
-                assert(mWorker);
-                mWorker->AddTask(task);
-            }
-
             HandlerPtr ReplaceHandler(HandlerPtr const & ori, HandlerPtr const & ptr);
             std::string mWorkSpace;
         protected:
@@ -53,8 +42,6 @@ namespace net {
             TcpServerPtr mServer;
             std::vector<HandlerPtr> mHandlers;
             std::vector<size_t> mHoles;
-
-            ThreadWorkerPtr mWorker;
     };
 
     typedef std::shared_ptr<TcpAppServer> TcpAppServerPtr;
