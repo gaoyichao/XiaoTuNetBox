@@ -33,7 +33,7 @@ namespace net {
 
         if (!WebSocketHandler::CheckHandShake(request)) {
             if (mHandShakeFailed) {
-                h->mCurrTask->SetSuccessFunc(std::bind(&HttpModule::Handle,
+                h->mCurrTask->SetFailureFunc(std::bind(&HttpModule::Handle,
                             mHandShakeFailed.get(), handler));
             }
             h->WakeUp();
@@ -48,13 +48,8 @@ namespace net {
         std::vector<uint8_t> const & buf = res->GetContent();
         con->SendBytes(buf.data(), buf.size());
         
-        ptr->Reset();
-        mWs->ReplaceHandler(h, ptr);
-        ptr->mWakeUpper->SetWakeUpCallBk(std::bind(&WebSocketServer::HandleWsReponse,
-                    ConnectionWeakPtr(con)));
-
-        if (mWs->mNewHandlerCallBk)
-            mWs->mNewHandlerCallBk(ptr);
+        if (mHandlerCallBk)
+            mHandlerCallBk(con, h, ptr);
 
         ptr->WakeUp();
         return true;

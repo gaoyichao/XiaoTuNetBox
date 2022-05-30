@@ -30,19 +30,25 @@ namespace net {
         private:
             void OnHttpMessage(ConnectionPtr const & conn, uint8_t const * buf, ssize_t n);
             void OnWsMessage(ConnectionPtr const & con, uint8_t const * buf, ssize_t n);
-
+            void OnWsHandler(ConnectionPtr const & con, HttpHandlerPtr const & h,
+                             WebSocketHandlerPtr const & wsh); 
+            static void HandleWsReponse(ConnectionPtr const & conptr);
         public:
-            static void HandleWsReponse(ConnectionWeakPtr const & conptr);
 
             typedef std::function<void(WebSocketHandlerPtr const & session)> HandlerCallBk;
             typedef std::function<void(WebSocketHandlerPtr const & session, WebSocketMsgPtr const & msg)> MsgCallBk;
 
             void SetMsgCallBk(MsgCallBk cb) { mMsgCallBk = std::move(cb); }
             void SetNewHandlerCallBk(HandlerCallBk cb) { mNewHandlerCallBk = std::move(cb); }
+            void SetReleaseHandlerCallBk(HandlerCallBk cb) { mReleaseHandlerCallBk = std::move(cb); }
 
-            HandlerCallBk mNewHandlerCallBk;
-            MsgCallBk mMsgCallBk;
         private:
+            //! 新建处理之后的回调函数
+            HandlerCallBk mNewHandlerCallBk;
+            //! 释放处理器之前的回调函数
+            HandlerCallBk mReleaseHandlerCallBk;
+            //! 新消息的回调函数
+            MsgCallBk mMsgCallBk;
 
             HttpModulePtr mFirstModule;
     };

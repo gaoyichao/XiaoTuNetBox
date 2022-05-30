@@ -44,7 +44,8 @@ namespace net {
         HttpModulePtr invalidRequestModule = std::make_shared<HttpModuleInvalidRequest>();
         //HttpModulePtr parseCookieModule = std::make_shared<HttpModuleParseCookie>();
         HttpModulePtr identifyModule = std::make_shared<HttpModuleBasicIdentify>();
-        HttpModulePtr wsModule = std::make_shared<HttpModuleUpgradeWs>(this);
+        HttpModulePtr wsModule = std::make_shared<HttpModuleUpgradeWs>(std::bind(
+                    &WebSocketServer::OnWsHandler, this, _1, _2, _3));
         HttpModulePtr getModule = std::make_shared<HttpModuleGet>();
         HttpModulePtr responseModule = std::make_shared<HttpModuleResponse>();
 
@@ -83,6 +84,22 @@ namespace net {
         AddHandler(ptr);
     }
 
+    //! @brief 从 Http 升级到 Websocket 协议
+    //!
+    //! @param con TCP连接
+    //! @param h   原来的 Http 消息处理器
+    //! @param wsh 新建的 Websocket 消息处理器
+    void WebSocketServer::OnWsHandler(ConnectionPtr const & con,
+                                      HttpHandlerPtr const & h,
+                                      WebSocketHandlerPtr const & wsh)
+    {
+        ReplaceHandler(h, wsh);
+        wsh->Reset();
+        wsh->mWakeUpper->SetWakeUpCallBk(std::bind(&WebSocketServer::HandleWsReponse, con));
+        if (mNewHandlerCallBk)
+            mNewHandlerCallBk(wsh);
+    }
+
     //! @brief 处理连接上的消息
     //!
     //! @param conn TCP 连接对象
@@ -90,11 +107,11 @@ namespace net {
     //! @param n 接收消息字节数
     void WebSocketServer::OnMessage(ConnectionPtr const & conn, uint8_t const * buf, ssize_t n)
     {
-        HandlerPtr session = std::static_pointer_cast<Handler>(conn->mUserObject.lock());
+        HandlerPtr h = std::static_pointer_cast<Handler>(conn->mUserObject.lock());
 
-        if (typeid(HttpHandler).name() == session->ToCString())
+        if (typeid(HttpHandler).name() == h->ToCString())
             OnHttpMessage(conn, buf, n);
-        else if (typeid(WebSocketHandler).name() == session->ToCString())
+        else if (typeid(WebSocketHandler).name() == h->ToCString())
             OnWsMessage(conn, buf, n);
 
     }
@@ -103,22 +120,22 @@ namespace net {
     {
         LOG(INFO) << "关闭连接:" << conn->GetInfo();
 
-        HandlerPtr session = std::static_pointer_cast<Handler>(conn->mUserObject.lock());
-        ReleaseHandler(session);
+        HandlerPtr h = std::static_pointer_cast<Handler>(conn->mUserObject.lock());
+        if (mReleaseHandlerCallBk)
+            mReleaseHandlerCallBk(std::static_pointer_cast<WebSocketHandler>(h));
+
+        ReleaseHandler(h);
     }
 
 
-    void WebSocketServer::HandleWsReponse(ConnectionWeakPtr const & conptr)
+    void WebSocketServer::HandleWsReponse(ConnectionPtr const & con)
     {
-        ConnectionPtr con = conptr.lock();
-        if (nullptr == con)
-            return;
-        HandlerPtr session = std::static_pointer_cast<Handler>(con->mUserObject.lock());
-        if (nullptr == session)
+        HandlerPtr h = std::static_pointer_cast<Handler>(con->mUserObject.lock());
+        if (nullptr == h)
             return;
 
-        assert(typeid(WebSocketHandler).name() == session->ToCString());
-        WebSocketHandlerPtr ws = std::static_pointer_cast<WebSocketHandler>(session);
+        assert(typeid(WebSocketHandler).name() == h->ToCString());
+        WebSocketHandlerPtr ws = std::static_pointer_cast<WebSocketHandler>(h);
 
         WebSocketMsgPtr sendmsg = ws->PopSendMsg();
         while (nullptr != sendmsg) {
@@ -164,14 +181,14 @@ namespace net {
     //! @param n 接收消息字节数
     void WebSocketServer::OnWsMessage(ConnectionPtr const & con, uint8_t const * buf, ssize_t n)
     {
-        WebSocketHandlerPtr session = std::static_pointer_cast<WebSocketHandler>(con->mUserObject.lock());
-        assert(session->InOpenState());
+        WebSocketHandlerPtr h = std::static_pointer_cast<WebSocketHandler>(con->mUserObject.lock());
+        assert(h->InOpenState());
 
         uint8_t const * begin = buf;
         uint8_t const * end = buf + n;
 
         while (begin < end) {
-            WebSocketMsgPtr msg = session->GetRcvdMsg();
+            WebSocketMsgPtr msg = h->GetRcvdMsg();
             begin = msg->Parse(begin, end);
 
             if (WebSocketMsg::eNewMsg == msg->GetState()) {
@@ -180,12 +197,12 @@ namespace net {
                     con->Close();
                 } else {
                     if (mMsgCallBk)
-                        mMsgCallBk(session, msg);
+                        mMsgCallBk(h, msg);
 
-                    LOG(INFO) << session->GetStateStr() << " --> eOpen";
-                    session->Reset();
+                    LOG(INFO) << h->GetStateStr() << " --> eOpen";
+                    h->Reset();
                 }
-            } else if (WebSocketHandler::eError == session->mState) {
+            } else if (WebSocketHandler::eError == h->mState) {
                 con->Close();
             }
 
