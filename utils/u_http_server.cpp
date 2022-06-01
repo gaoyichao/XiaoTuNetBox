@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     FLAGS_log_dir = "~/logs";
 
     PollLoopPtr loop = Create<PollLoop>();
-    HttpServer http(loop, 65530, 30, ".");
+    HttpServer http(loop, 65530, 30, "../backup/html");
 
     //ThreadWorkerPtr worker(new ThreadWorker);
     //http.SetWorker(worker);

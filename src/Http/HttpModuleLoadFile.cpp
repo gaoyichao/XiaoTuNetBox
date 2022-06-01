@@ -1,4 +1,4 @@
-#include <XiaoTuNetBox/Http/HttpModuleGet.h>
+#include <XiaoTuNetBox/Http/HttpModuleLoadFile.h>
 #include <XiaoTuNetBox/Utils.h>
 #include <XiaoTuNetBox/Task.h>
 
@@ -10,9 +10,9 @@
 
 namespace xiaotu {
 namespace net {
-    const int HttpModuleGet::mDefaultLoadSize = 8192;
+    const int HttpModuleLoadFile::mDefaultLoadSize = 8192;
 
-    bool HttpModuleGet::Process(HttpHandlerWeakPtr const & handler)
+    bool HttpModuleLoadFile::Process(HttpHandlerWeakPtr const & handler)
     {
         HttpHandlerPtr h = handler.lock();
         if (nullptr == h)
@@ -23,27 +23,14 @@ namespace net {
 
         struct stat const & s = res->GetFileStat();
 
-        if (HttpRequest::eGET == req->GetMethod()) {
-            res->LockHead(s.st_size);
-            res->LoadContent(mDefaultLoadSize);
-            h->mCurrTask->SetSuccessFunc(std::bind(&HttpModuleGet::NextLoad, this, h->mConnWeakPtr));
-        } else if (HttpRequest::eHEAD == req->GetMethod()) {
-            res->LockHead(s.st_size);
-        } else {
-            res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
-            std::string errstr("<h1>Error:503</h1>");
-            res->LockHead(errstr.size());
-            res->AppendContent(errstr);
-        
-            h->WakeUp();
-            return false;
-        }
-
+        res->LockHead(s.st_size);
+        res->LoadContent(mDefaultLoadSize);
+        h->mCurrTask->SetSuccessFunc(std::bind(&HttpModuleLoadFile::NextLoad, this, h->mConnWeakPtr));
         h->WakeUp();
         return true;
     }
 
-    bool HttpModuleGet::NextLoad(ConnectionWeakPtr const & conptr)
+    bool HttpModuleLoadFile::NextLoad(ConnectionWeakPtr const & conptr)
     {
         ConnectionPtr con = conptr.lock();
         if (nullptr == con)

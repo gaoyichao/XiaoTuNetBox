@@ -13,6 +13,8 @@ namespace net {
         { eUnknown,               "Unknown" },
         { e101_SwitchProtocol,    "Switching Protocols"},
         { e200_OK,                "OK" },
+        { e303_SeeOther,          "See Other" },
+        { e307_Redirect,          "Temporary Redirect" },
         { e400_BadRequest,        "Bad Request" },
         { e401_Unauthorized,      "Unauthorized" },
         { e404_NotFound,          "Not Found" },

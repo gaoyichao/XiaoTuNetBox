@@ -119,6 +119,63 @@ namespace net {
         return true;
     }
 
+    //! @brief 分发请求方法
+    bool HttpModuleCheckMethod::Process(HttpHandlerWeakPtr const & handler)
+    {
+        HttpHandlerPtr h = handler.lock();
+        if (nullptr == h)
+            return false;
+
+        HttpRequestPtr request = h->GetRequest();
+        bool re = false;
+
+        DLOG(INFO) << "分发请求:" << request->GetMethodStr();
+        if (HttpRequest::eGET == request->GetMethod()) {
+            if (nullptr != mOnGetModule) {
+                h->mCurrTask->SetSuccessFunc(std::bind(&HttpModule::Handle,
+                            mOnGetModule.get(), handler));
+                re = true;
+            }
+        } else if (HttpRequest::eHEAD == request->GetMethod()) {
+            if (nullptr != mOnHeadModule) {
+                h->mCurrTask->SetSuccessFunc(std::bind(&HttpModule::Handle,
+                            mOnHeadModule.get(), handler));
+                re = true;
+            }
+        } else if (HttpRequest::ePOST == request->GetMethod()) {
+            if (nullptr != mOnPostModule) {
+                h->mCurrTask->SetSuccessFunc(std::bind(&HttpModule::Handle,
+                            mOnPostModule.get(), handler));
+                re = true;
+            }
+        }
+
+        h->WakeUp();
+        return re;
+    }
+
+    //! @brief 暂不支持 
+    bool HttpModuleUnSupport::Process(HttpHandlerWeakPtr const & handler)
+    {
+        DLOG(INFO) << "暂不支持";
+
+        HttpHandlerPtr h = handler.lock();
+        if (nullptr == h)
+            return false;
+
+        HttpRequestPtr req = h->GetRequest();
+        HttpResponsePtr res = h->GetResponse();
+
+        struct stat const & s = res->GetFileStat();
+
+        res->SetStatusCode(HttpResponse::e503_ServiceUnavilable);
+        std::string errstr("<h1>Error:503</h1>");
+        res->LockHead(errstr.size());
+        res->AppendContent(errstr);
+        
+        h->WakeUp();
+        return true;
+    }
 }
 }
 

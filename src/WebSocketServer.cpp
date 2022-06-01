@@ -11,7 +11,8 @@
 
 #include <XiaoTuNetBox/Http/HttpModuleCheckURL.h>
 #include <XiaoTuNetBox/Http/HttpModuleIdentify.h>
-#include <XiaoTuNetBox/Http/HttpModuleGet.h>
+#include <XiaoTuNetBox/Http/HttpModuleLogin.h>
+#include <XiaoTuNetBox/Http/HttpModuleLoadFile.h>
 #include <XiaoTuNetBox/HttpModuleUpgradeWs.h>
 
 
@@ -40,30 +41,41 @@ namespace net {
         mServer->SetMessageCallBk(std::bind(&WebSocketServer::OnMessage, this, _1, _2, _3));
 
         //! @todo 根据配置文件构建 Http 处理模块, mWorkSpace
-        HttpModulePtr checkURLModule = std::make_shared<HttpModuleCheckURL>(mWorkSpace);
         HttpModulePtr invalidRequestModule = std::make_shared<HttpModuleInvalidRequest>();
-        //HttpModulePtr parseCookieModule = std::make_shared<HttpModuleParseCookie>();
-        HttpModulePtr identifyModule = std::make_shared<HttpModuleBasicIdentify>();
+        HttpModulePtr parseCookieModule    = std::make_shared<HttpModuleParseCookie>();
+        HttpModulePtr identifyModule       = std::make_shared<HttpModuleCookieIdentify>();
+        HttpModuleLoginPtr loginModule     = std::make_shared<HttpModuleLogin>();
+        HttpModulePtr checkURLModule       = std::make_shared<HttpModuleCheckURL>(mWorkSpace);
+        HttpModuleCheckMethodPtr checkMethodModule = std::make_shared<HttpModuleCheckMethod>();
+        HttpModulePtr unSupportModule      = std::make_shared<HttpModuleUnSupport>();
+        HttpModulePtr loadFileModule       = std::make_shared<HttpModuleLoadFile>();
+        HttpModulePtr responseModule       = std::make_shared<HttpModuleResponse>();
         HttpModulePtr wsModule = std::make_shared<HttpModuleUpgradeWs>(std::bind(
                     &WebSocketServer::OnWsHandler, this, _1, _2, _3));
-        HttpModulePtr getModule = std::make_shared<HttpModuleGet>();
-        HttpModulePtr responseModule = std::make_shared<HttpModuleResponse>();
 
-        invalidRequestModule->SetSuccessModule(identifyModule);
+        invalidRequestModule->SetSuccessModule(parseCookieModule);
         invalidRequestModule->SetFailureModule(responseModule);
 
-        //parseCookieModule->SetSuccessModule(identifyModule);
+        parseCookieModule->SetSuccessModule(identifyModule);
 
         identifyModule->SetSuccessModule(wsModule);
-        identifyModule->SetFailureModule(responseModule);
+        identifyModule->SetFailureModule(loginModule);
+
+        loginModule->mLoginHtml = "/login.html";
+        loginModule->SetSuccessModule(checkURLModule);
+        loginModule->SetFailureModule(responseModule);
 
         wsModule->SetFailureModule(checkURLModule);
 
-        //checkURLModule->SetSuccessModule(parseCookieModule);
-        checkURLModule->SetSuccessModule(getModule);
+        checkURLModule->SetSuccessModule(checkMethodModule);
         checkURLModule->SetFailureModule(responseModule);
 
-        getModule->SetFailureModule(responseModule);
+        checkMethodModule->mOnGetModule = loadFileModule;
+        checkMethodModule->mOnPostModule = loadFileModule;
+        checkMethodModule->SetFailureModule(unSupportModule);
+
+        loadFileModule->SetFailureModule(responseModule);
+        unSupportModule->SetSuccessModule(responseModule);
 
         mFirstModule = invalidRequestModule;
     }

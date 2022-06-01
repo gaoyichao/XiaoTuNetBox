@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     FLAGS_log_dir = "~/logs";
 
     PollLoopPtr loop = Create<PollLoop>();
-    WebSocketServer ws(loop, 65530, 300, ".");
+    WebSocketServer ws(loop, 65530, 300, "../backup/html");
 
     ws.SetMsgCallBk(std::bind(&OnNewMsg, _1, _2));
 

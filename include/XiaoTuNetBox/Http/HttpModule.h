@@ -66,6 +66,31 @@ namespace net {
             virtual bool Process(HttpHandlerWeakPtr const & handler) override;
     };
 
+    //! @brief HTTP 检查请求方法的模块
+    class HttpModuleCheckMethod final : public HttpModule {
+        public:
+            HttpModuleCheckMethod()
+                : HttpModule(true)
+            {}
+
+            HttpModulePtr mOnHeadModule;
+            HttpModulePtr mOnGetModule;
+            HttpModulePtr mOnPostModule;
+        private:
+            virtual bool Process(HttpHandlerWeakPtr const & handler) override;
+    };
+    typedef std::shared_ptr<HttpModuleCheckMethod> HttpModuleCheckMethodPtr;
+
+    //! @brief HTTP 发送响应报文的模块
+    class HttpModuleUnSupport final : public HttpModule {
+        public:
+            HttpModuleUnSupport()
+                : HttpModule(true)
+            {}
+        private:
+            virtual bool Process(HttpHandlerWeakPtr const & handler) override;
+    };
+
 
 }
 }

@@ -61,6 +61,7 @@ namespace net {
             std::string const & GetURLQuery() const { return mURLQuery; }
             std::string const & GetVersion() const { return mVersion; }
 
+            void SetURLPath(std::string const & str) { mURLPath = str; }
         public:
             uint8_t const * Parse(uint8_t const * begin, uint8_t const * end);
             bool ParseRequestLine(uint8_t const * begin, uint8_t const * end);
@@ -73,8 +74,7 @@ namespace net {
 
             void SetMethod(EMethod method) { mMethod = method; }
             bool SetMethod   (std::string const & str);
-            void SetURL      (std::string const & str) { mURL = str; }
-            void SetURLPath  (std::string const & str) { mURLPath = str; }
+            void SetURL(std::string const & str) { mURL = str; }
             void SetURLQuery (std::string const & str) { mURLQuery = str; }
             void SetVersion  (std::string const & str) { mVersion = str; }
             void SetHeader(std::string const & key, std::string const & value)
@@ -120,6 +120,7 @@ namespace net {
             void PrintHeaders() const 
             {
                 std::cout << "--------------------不要闹" << std::endl;
+                std::cout << "URL:" << mURL << std::endl;
                 for (auto it = mHeaders.begin(); it != mHeaders.end(); ++it)                
                     std::cout << it->first << ":" << it->second << std::endl;;
                 std::cout << "--------------------好的" << std::endl;

@@ -74,13 +74,12 @@ namespace net {
             return true;
         }
 
-        res->SetHeader("Set-cookie", "id=douniwan");
-
+        //res->SetHeader("Set-cookie", "id=douniwan");
         //res->SetStatusCode(HttpResponse::e401_Unauthorized);
         //res->LockHead(0);
 
         h->WakeUp();
-        return true;
+        return false;
     }
 
     bool HttpModuleCookieIdentify::CheckId(HttpRequest const & request)

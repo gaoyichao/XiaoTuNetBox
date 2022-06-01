@@ -8,11 +8,11 @@ namespace xiaotu {
 namespace net {
 
     //! @brief HTTP 基础验证
-    class HttpModuleGet final : public HttpModule {
+    class HttpModuleLoadFile final : public HttpModule {
         static const int mDefaultLoadSize;
 
         public:
-            HttpModuleGet()
+            HttpModuleLoadFile()
                 : HttpModule(true)
             {}
 

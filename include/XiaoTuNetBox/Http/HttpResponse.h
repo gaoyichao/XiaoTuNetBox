@@ -26,6 +26,8 @@ namespace net {
                 eUnknown               = 0,
                 e101_SwitchProtocol    = 101,
                 e200_OK                = 200,
+                e303_SeeOther          = 303,
+                e307_Redirect          = 307,
                 e400_BadRequest        = 400,
                 e401_Unauthorized      = 401,
                 e404_NotFound          = 404,
