@@ -29,7 +29,7 @@ file(GLOB PROJECT_SRC_FILES
 add_library(${PROJECT_NAME} SHARED
     ${PROJECT_SRC_FILES}
 )
-target_link_libraries(${PROJECT_NAME} glog gflags pthread)
+target_link_libraries(${PROJECT_NAME})
 
 ############################################################################
 #
@@ -39,35 +39,35 @@ target_link_libraries(${PROJECT_NAME} glog gflags pthread)
 
 # echo 服务器 - 原始 poll 接口实现
 add_executable(u_raw_poll_echo utils/u_raw_poll_echo.cpp)
-target_link_libraries(u_raw_poll_echo ${PROJECT_NAME})
+target_link_libraries(u_raw_poll_echo ${PROJECT_NAME} glog gflags pthread)
 
 # echo 服务器 - 原始 epoll 接口实现
 add_executable(u_raw_epoll_echo utils/u_raw_epoll_echo.cpp)
-target_link_libraries(u_raw_epoll_echo ${PROJECT_NAME})
+target_link_libraries(u_raw_epoll_echo ${PROJECT_NAME} glog gflags pthread)
 
 # 一个 TCP 客户端
 add_executable(u_stdin_ipv4_talk utils/u_stdin_ipv4_talk.cpp)
-target_link_libraries(u_stdin_ipv4_talk ${PROJECT_NAME})
+target_link_libraries(u_stdin_ipv4_talk ${PROJECT_NAME} glog gflags pthread)
 
 # echo 服务器
 add_executable(u_echo_server utils/u_echo_server.cpp)
-target_link_libraries(u_echo_server ${PROJECT_NAME})
+target_link_libraries(u_echo_server ${PROJECT_NAME} glog gflags pthread)
 
 # epoll echo 服务器
 add_executable(u_epoll_echo_server utils/u_epoll_echo_server.cpp)
-target_link_libraries(u_epoll_echo_server ${PROJECT_NAME})
+target_link_libraries(u_epoll_echo_server ${PROJECT_NAME} glog gflags pthread)
 
 # HTTP 服务器
 add_executable(u_http_server utils/u_http_server.cpp)
-target_link_libraries(u_http_server pthread ${PROJECT_NAME})
+target_link_libraries(u_http_server pthread ${PROJECT_NAME} glog gflags pthread)
 
 # epoll http 服务器
 add_executable(u_epoll_http_server utils/u_epoll_http_server.cpp)
-target_link_libraries(u_epoll_http_server ${PROJECT_NAME})
+target_link_libraries(u_epoll_http_server ${PROJECT_NAME} glog gflags pthread)
 
 # WebSocket 服务器
 add_executable(u_ws_server utils/u_ws_server.cpp)
-target_link_libraries(u_ws_server pthread ${PROJECT_NAME})
+target_link_libraries(u_ws_server pthread ${PROJECT_NAME} glog gflags pthread)
 #
 ## epoll WebSocket 服务器
 #add_executable(u_epoll_ws_server utils/u_epoll_ws_server.cpp)
@@ -90,7 +90,7 @@ function(build_test_case NAME EXEC TSRC)
     message(STATUS "TSRC = " ${TSRC})
 
     add_executable(${EXEC} ${TSRC})
-    target_link_libraries(${EXEC} ${TEST_DEPENDS} ${PROJECT_NAME})
+    target_link_libraries(${EXEC} ${TEST_DEPENDS} ${PROJECT_NAME} glog gflags pthread)
     add_test(NAME ${NAME} COMMAND ${EXEC})
 endfunction()
 
